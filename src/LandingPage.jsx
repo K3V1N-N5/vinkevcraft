@@ -32,9 +32,9 @@ function LandingPage() {
         ref={aboutSectionRef}
         className="py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full flex flex-col items-center justify-center min-h-screen"
       >
-        <div className="container mx-auto text-center px-4 max-w-2xl">
+        <div className="container mx-auto text-center px-4 max-w-4xl flex flex-col items-center justify-center">
           <h1 className="text-3xl font-bold mb-6 mt-20">About Me</h1>
-          <Blockquote className="my-4 mx-auto max-w-2xl border-l-4 border-gray-300 bg-gray-200 p-6 rounded-lg dark:border-gray-500 dark:bg-gray-800">
+          <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-300 bg-gray-200 p-6 rounded-lg dark:border-gray-500 dark:bg-gray-800">
             "Hi, I'm Kevin N.S., a Minecraft enthusiast and aspiring JSON UI Developer for Minecraft Bedrock. I love creating content on TikTok and YouTube related to my passion for Minecraft!"
           </Blockquote>
         </div>
@@ -43,18 +43,20 @@ function LandingPage() {
       {/* Section Minecraft Project */}
       <section className="w-full py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-center text-3xl font-bold mb-12">My Minecraft Projects</h1>
-        <div className="relative w-full pt-[56.25%] max-w-2xl mx-auto overflow-hidden rounded-lg shadow-lg">
-          <Carousel slideInterval={4000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
-            {data.map((slideItem, slideIndex) => (
-              <div key={slideIndex} className="flex items-center justify-center">
-                <img
-                  src={slideItem.img}
-                  alt={slideItem.title}
-                  className="object-cover rounded-lg"
-                />
-              </div>
-            ))}
-          </Carousel>
+        <div className="relative w-full max-w-4xl mx-auto overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
+          <div className="w-full pt-[56.25%] relative">
+            <Carousel slideInterval={4000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
+              {data.map((slideItem, slideIndex) => (
+                <div key={slideIndex} className="flex items-center justify-center">
+                  <img
+                    src={slideItem.img}
+                    alt={slideItem.title}
+                    className="object-cover rounded-lg"
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </div>
         </div>
         <div className="mt-10">
           <Button color="blue" pill size="lg">
