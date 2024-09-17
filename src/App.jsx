@@ -12,10 +12,14 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Toggle drawer open/close state
-  const toggleDrawer = () => setIsOpen(!isOpen);
+  const toggleDrawer = () => {
+    setIsOpen(!isOpen);
+  };
 
   // Close drawer
-  const closeDrawer = () => setIsOpen(false);
+  const closeDrawer = () => {
+    setIsOpen(false);
+  };
 
   // Handler for navigation link click
   const handleLinkClick = () => {
@@ -28,25 +32,29 @@ function App() {
     <Router>
       <Flowbite>
         <div className="dark:bg-[#1e1e1e]">
-          {/* Navbar */}
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center justify-start rtl:justify-end">
-                  <button
+                  <div
                     onClick={toggleDrawer}
-                    className="relative p-2 text-gray-500 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                    aria-label="Toggle sidebar"
+                    className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
+                    style={{ width: '40px', height: '40px' }}
                   >
-                    {isOpen ? <HiX className="w-6 h-6" aria-hidden="true" /> : <HiMenu className="w-6 h-6" aria-hidden="true" />}
-                  </button>
+                    <span className="sr-only">Toggle sidebar</span>
+                    {isOpen ? (
+                      <HiX className="w-6 h-6" aria-hidden="true" />
+                    ) : (
+                      <HiMenu className="w-6 h-6" aria-hidden="true" />
+                    )}
+                  </div>
                   <Link to="/" className="flex ms-2 md:me-24 items-center" onClick={handleLinkClick}>
                     <img src={vinkev} className="h-8 me-3" alt="VinKev Logo" />
                     <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                   </Link>
                 </div>
                 <div className="flex items-center ms-3">
-                  <DarkThemeToggle className="text-sm rounded-full focus:ring-4 dark:text-white mr-2" />
+                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2" />
                 </div>
               </div>
             </div>
@@ -55,32 +63,32 @@ function App() {
           {/* Drawer component with adjusted margin-top */}
           <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
             <Drawer.Items>
-              <Sidebar aria-label="Sidebar" className="bg-transparent p-0">
-                <Sidebar.Items>
-                  <Sidebar.ItemGroup>
-                    <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
-                      <Link to="/list" onClick={handleLinkClick}>
-                        <Sidebar.Item>List</Sidebar.Item>
-                      </Link>
-                      <Link to="/knz" onClick={handleLinkClick}>
-                        <Sidebar.Item>KNZ UI</Sidebar.Item>
-                      </Link>
-                    </Sidebar.Collapse>
-                    <Link to="/link" onClick={handleLinkClick}>
-                      <Sidebar.Item icon={HiOutlineExternalLink}>LinkTree</Sidebar.Item>
-                    </Link>
-                  </Sidebar.ItemGroup>
-                  <Sidebar.ItemGroup>
-                    <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
-                      Help
-                    </Sidebar.Item>
-                  </Sidebar.ItemGroup>
-                </Sidebar.Items>
+              <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
+                <div className="flex h-full flex-col justify-between py-2">
+                  <div>
+                    <Sidebar.Items>
+                      <Sidebar.ItemGroup>
+                        <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
+                          <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
+                          <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
+                        </Sidebar.Collapse>
+                        <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
+                          LinkTree
+                        </Sidebar.Item></Link>
+                      </Sidebar.ItemGroup>
+                      <Sidebar.ItemGroup>
+                        <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+                          Help
+                        </Sidebar.Item>
+                      </Sidebar.ItemGroup>
+                    </Sidebar.Items>
+                  </div>
+                </div>
               </Sidebar>
             </Drawer.Items>
           </Drawer>
 
-          {/* Main Content */}
+          {/* Tambahkan page baru di router ini */}
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/list" element={<Profile />} />
@@ -88,7 +96,6 @@ function App() {
             <Route path="/link" element={<LinktreePage />} />
           </Routes>
 
-          {/* Footer */}
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
               <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
