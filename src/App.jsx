@@ -50,7 +50,7 @@ function App() {
                   className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
                   style={{ width: '40px', height: '40px' }}
                 >
-                  <DarkThemeToggle className="relative flex text-sm rounded-full focus:ring-4 dark:text-white" />
+                  <DarkThemeToggle className="relative flex text-sm rounded-full dark:text-white" />
                 </div>
               </div>
             </div>
