@@ -10,22 +10,22 @@ function LandingPage() {
   const V = useInView(v);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-white">
       {/* Section Landing */}
-      <section id="landing" className="bg-gray-500 text-white py-20 mt-14 h-screen w-full">
+      <section id="landing" className="bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 text-white py-20 mt-14 h-screen w-full">
         <div className="container mx-auto text-center">
-          <TypingText text="Welcome To My Website!" loop={true} />
+          <TypingText text="Welcome To My Website!" loop={true} className="text-4xl font-bold mb-8"/>
           <motion.div
-            className="text-lg mb-8"
+            className="text-lg mb-8 max-w-2xl mx-auto"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
             transition={{ duration: 1 }}
           >
-            Please click "Start" below to read more about me and see some of my work!
+            Explore my work and projects. Click the "Start" button below to learn more about me!
           </motion.div>
           <a href="#about">
-            <Button className="mx-auto" color="blue" pill>
+            <Button className="mx-auto" color="light" pill size="lg">
               Start
             </Button>
           </a>
@@ -33,24 +33,24 @@ function LandingPage() {
       </section>
 
       {/* Section About */}
-      <section id="about" className="py-12 dark:bg-gray-900 dark:text-white w-full">
-        <div className="container mx-auto">
-          <h1 className="text-center text-2xl font-bold mb-6 mt-20">About Me</h1>
-          <Blockquote className="my-4 border-l-4 border-gray-300 bg-gray-200 p-6 dark:border-gray-500 dark:bg-gray-800 text-center">
-            "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
+      <section id="about" className="py-12 bg-gray-800 dark:bg-gray-900 text-white w-full">
+        <div className="container mx-auto text-center">
+          <h1 className="text-3xl font-bold mb-6 mt-20">About Me</h1>
+          <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-500 bg-gray-700 p-6 rounded-lg">
+            "Hi, I'm Kevin N.S., a Minecraft enthusiast and aspiring JSON UI Developer for Minecraft Bedrock. I love creating content on TikTok and YouTube related to my passion for Minecraft!"
           </Blockquote>
         </div>
 
         {/* Section Minecraft Project */}
-        <h1 className="text-center text-2xl xl:mt-0 font-bold mt-10 mb-10">Minecraft Project</h1>
-        <div className="relative w-full pt-[56.25%] max-w-3xl mx-auto overflow-hidden">
-          <Carousel slideInterval={3000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
+        <h1 className="text-center text-3xl font-bold mt-16 mb-12">My Minecraft Projects</h1>
+        <div className="relative w-full pt-[56.25%] max-w-4xl mx-auto overflow-hidden rounded-lg shadow-lg">
+          <Carousel slideInterval={4000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
             {data.map((slideItem, slideIndex) => (
-              <div key={slideIndex}>
+              <div key={slideIndex} className="flex items-center justify-center">
                 <img
                   src={slideItem.img}
                   alt={slideItem.title}
-                  className="object-cover"
+                  className="object-cover rounded-lg"
                 />
               </div>
             ))}
@@ -58,9 +58,9 @@ function LandingPage() {
         </div>
 
         {/* Button to View Project */}
-        <div className="text-center">
-          <Button className="mx-auto mt-10 xl:mt-0" color="blue" pill>
-            <Link to="/list">View My Project</Link>
+        <div className="text-center mt-10">
+          <Button className="mx-auto" color="light" pill size="lg">
+            <Link to="/list">View My Projects</Link>
           </Button>
         </div>
       </section>
