@@ -28,7 +28,7 @@ function App() {
   return (
     <Router>
       <Flowbite>
-        <div className="dark:bg-[#1e1e1e] relative">
+        <div className="dark:bg-[#1e1e1e]">
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3 flex justify-between items-center">
               <div className="flex items-center">
@@ -45,35 +45,37 @@ function App() {
                   <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                 </Link>
               </div>
-              <div className="relative">
+              <div className="flex items-center ms-3">
                 <DarkThemeToggle
-                  className="absolute top-0 right-0 flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-transform transform-gpu"
+                  className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
                   style={{ width: '40px', height: '40px' }}
                 />
               </div>
             </div>
           </nav>
 
-          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72 transition-transform duration-300">
+          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
             <Drawer.Items>
               <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                 <div className="flex h-full flex-col justify-between py-2">
-                  <Sidebar.Items>
-                    <Sidebar.ItemGroup>
-                      <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
-                        <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                        <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
-                      </Sidebar.Collapse>
-                      <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
-                        LinkTree
-                      </Sidebar.Item></Link>
-                    </Sidebar.ItemGroup>
-                    <Sidebar.ItemGroup>
-                      <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
-                        Help
-                      </Sidebar.Item>
-                    </Sidebar.ItemGroup>
-                  </Sidebar.Items>
+                  <div>
+                    <Sidebar.Items>
+                      <Sidebar.ItemGroup>
+                        <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
+                          <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
+                          <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
+                        </Sidebar.Collapse>
+                        <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
+                          LinkTree
+                        </Sidebar.Item></Link>
+                      </Sidebar.ItemGroup>
+                      <Sidebar.ItemGroup>
+                        <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+                          Help
+                        </Sidebar.Item>
+                      </Sidebar.ItemGroup>
+                    </Sidebar.Items>
+                  </div>
                 </div>
               </Sidebar>
             </Drawer.Items>
