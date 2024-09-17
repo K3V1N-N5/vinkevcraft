@@ -14,7 +14,7 @@ function LandingPage() {
       {/* Section Landing */}
       <section id="landing" className="bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 text-white py-20 mt-14 h-screen w-full">
         <div className="container mx-auto text-center">
-          <TypingText text="Welcome To My Website!" loop={true} className="text-4xl font-bold mb-8"/>
+          <TypingText text="Welcome To My Website!" loop={true} className="text-4xl font-bold mb-8" />
           <motion.div
             className="text-lg mb-8 max-w-2xl mx-auto"
             ref={v}
@@ -24,7 +24,7 @@ function LandingPage() {
           >
             Explore my work and projects. Click the "Start" button below to learn more about me!
           </motion.div>
-          <a href="#about">
+          <a href="#about" className="scroll-smooth">
             <Button className="mx-auto" color="light" pill size="lg">
               Start
             </Button>
@@ -33,7 +33,7 @@ function LandingPage() {
       </section>
 
       {/* Section About */}
-      <section id="about" className="py-12 bg-gray-800 dark:bg-gray-900 text-white w-full">
+      <section id="about" className="py-12 bg-gray-800 dark:bg-gray-900 text-white w-full scroll-mt-20">
         <div className="container mx-auto text-center">
           <h1 className="text-3xl font-bold mb-6 mt-20">About Me</h1>
           <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-500 bg-gray-700 p-6 rounded-lg">
