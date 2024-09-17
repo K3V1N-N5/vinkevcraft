@@ -45,10 +45,11 @@ function App() {
                   <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                 </Link>
               </div>
-              <div className="flex items-center">
-                <div className="relative">
-                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white bg-gray-200 dark:bg-gray-700 p-1" />
-                </div>
+              <div className="relative">
+                <DarkThemeToggle
+                  className="flex text-sm rounded-full focus:ring-4 dark:text-white"
+                  style={{ position: 'relative', zIndex: 10 }}
+                />
               </div>
             </div>
           </nav>
