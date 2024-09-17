@@ -50,7 +50,7 @@ function App() {
                   className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
                   style={{ width: '40px', height: '40px' }}
                 >
-                  <DarkThemeToggle className="relative flex text-sm rounded-full dark:text-white" />
+                  <DarkThemeToggle className="relative flex text-sm rounded-full dark:text-white cursor-pointer" />
                 </div>
               </div>
             </div>
@@ -71,7 +71,7 @@ function App() {
                       </Sidebar.Item></Link>
                     </Sidebar.ItemGroup>
                     <Sidebar.ItemGroup>
-                      <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+                      <Sidebar.Item href="https://wa.me/" icon={HiInformationCircle} onClick={handleLinkClick}>
                         Help
                       </Sidebar.Item>
                     </Sidebar.ItemGroup>
