@@ -61,7 +61,7 @@ function App() {
           </nav>
 
           {/* Drawer component with adjusted margin-top */}
-          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px]">
+          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
             <Drawer.Items>
               <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                 <div className="flex h-full flex-col justify-between py-2">
