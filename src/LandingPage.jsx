@@ -32,7 +32,7 @@ function LandingPage() {
         ref={aboutSectionRef}
         className="py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full flex flex-col items-center justify-center min-h-screen"
       >
-        <div className="container mx-auto text-center px-4 max-w-4xl flex flex-col items-center justify-center">
+        <div className="container mx-auto text-center px-4 max-w-4xl">
           <h1 className="text-3xl font-bold mb-6 mt-20">About Me</h1>
           <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-300 bg-gray-200 p-6 rounded-lg dark:border-gray-500 dark:bg-gray-800">
             "Hi, I'm Kevin N.S., a Minecraft enthusiast and aspiring JSON UI Developer for Minecraft Bedrock. I love creating content on TikTok and YouTube related to my passion for Minecraft!"
