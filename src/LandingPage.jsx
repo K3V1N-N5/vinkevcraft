@@ -38,27 +38,27 @@ function LandingPage() {
             "Hi, I'm Kevin N.S., a Minecraft enthusiast and aspiring JSON UI Developer for Minecraft Bedrock. I love creating content on TikTok and YouTube related to my passion for Minecraft!"
           </Blockquote>
         </div>
+      </section>
 
-        {/* Section Minecraft Project */}
-        <div className="mt-16 w-full flex flex-col items-center justify-center min-h-screen">
-          <h1 className="text-center text-3xl font-bold mb-12">My Minecraft Projects</h1>
-          <div className="relative w-full pt-[56.25%] max-w-4xl mx-auto overflow-hidden rounded-lg shadow-lg">
-            <Carousel slideInterval={4000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
-              {data.map((slideItem, slideIndex) => (
-                <div key={slideIndex} className="flex items-center justify-center">
-                  <img
-                    src={slideItem.img}
-                    alt={slideItem.title}
-                    className="object-cover rounded-lg"
-                  />
-                </div>
-              ))}
-            </Carousel>
-          </div>
-          <Button className="mt-10" color="blue" pill size="lg">
-            <Link to="/list" className="text-white">View My Projects</Link>
-          </Button>
+      {/* Section Minecraft Project */}
+      <section className="w-full py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-center text-3xl font-bold mb-12">My Minecraft Projects</h1>
+        <div className="relative w-full pt-[56.25%] max-w-4xl mx-auto overflow-hidden rounded-lg shadow-lg">
+          <Carousel slideInterval={4000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
+            {data.map((slideItem, slideIndex) => (
+              <div key={slideIndex} className="flex items-center justify-center">
+                <img
+                  src={slideItem.img}
+                  alt={slideItem.title}
+                  className="object-cover rounded-lg"
+                />
+              </div>
+            ))}
+          </Carousel>
         </div>
+        <Button className="mt-10" color="blue" pill size="lg">
+          <Link to="/list" className="text-white">View My Projects</Link>
+        </Button>
       </section>
     </div>
   );
