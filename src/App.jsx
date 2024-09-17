@@ -1,5 +1,5 @@
 import vinkev from './assets/vinkev_1.png';
-import { Footer, Button, Drawer, Sidebar, Flowbite, DarkThemeToggle } from 'flowbite-react';
+import { Footer, Drawer, Sidebar, Flowbite, DarkThemeToggle } from 'flowbite-react';
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle, HiMenu, HiX } from 'react-icons/hi';
@@ -11,17 +11,14 @@ import LinktreePage from './LinkTree';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Toggle drawer open/close state
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
   };
 
-  // Close drawer
   const closeDrawer = () => {
     setIsOpen(false);
   };
 
-  // Handler for navigation link click
   const handleLinkClick = () => {
     if (isOpen) {
       closeDrawer();
@@ -32,12 +29,9 @@ function App() {
     <Router>
       <Flowbite>
         <div className="dark:bg-[#1e1e1e]">
-          {/* Navbar */}
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3 flex justify-between items-center">
-              {/* Left side (Logo and Drawer) */}
               <div className="flex items-center">
-                {/* Drawer button */}
                 <div
                   onClick={toggleDrawer}
                   className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
@@ -46,21 +40,22 @@ function App() {
                   <span className="sr-only">Toggle sidebar</span>
                   {isOpen ? <HiX className="w-6 h-6" aria-hidden="true" /> : <HiMenu className="w-6 h-6" aria-hidden="true" />}
                 </div>
-                {/* Logo */}
                 <Link to="/" className="flex items-center ms-2" onClick={handleLinkClick}>
                   <img src={vinkev} className="h-8 me-3" alt="VinKev Logo" />
                   <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                 </Link>
               </div>
-
-              {/* Right side (Dark Mode Toggle) */}
               <div className="flex items-center">
-                <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2" />
+                <div
+                  className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
+                  style={{ width: '40px', height: '40px' }}
+                >
+                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white" />
+                </div>
               </div>
             </div>
           </nav>
 
-          {/* Drawer with adjusted margin-top */}
           <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
             <Drawer.Items>
               <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
@@ -86,7 +81,6 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
-          {/* Routes for different pages */}
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/list" element={<Profile />} />
@@ -94,7 +88,6 @@ function App() {
             <Route path="/link" element={<LinktreePage />} />
           </Routes>
 
-          {/* Footer */}
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
               <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
