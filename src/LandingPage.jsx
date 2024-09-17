@@ -5,16 +5,16 @@ import { Link } from 'react-router-dom';
 import { useRef } from 'react';
 
 function LandingPage() {
-  const aboutSectionRef = useRef(null); // Ref untuk bagian About
+  const aboutSectionRef = useRef(null);
 
   const handleScrollToAbout = () => {
     aboutSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-white">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Section Landing */}
-      <section id="landing" className="bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 text-white py-20 mt-14 h-screen w-full">
+      <section id="landing" className="bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 text-white py-20 mt-14 h-screen w-full flex items-center justify-center">
         <div className="container mx-auto text-center">
           <TypingText text="Welcome To My Website!" loop={true} className="text-4xl font-bold mb-8" />
           <div className="text-lg mb-8 max-w-2xl mx-auto">
@@ -27,10 +27,14 @@ function LandingPage() {
       </section>
 
       {/* Section About */}
-      <section id="about" ref={aboutSectionRef} className="py-12 bg-gray-800 dark:bg-gray-900 text-white w-full">
-        <div className="container mx-auto text-center">
+      <section
+        id="about"
+        ref={aboutSectionRef}
+        className="py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full"
+      >
+        <div className="container mx-auto text-center px-4">
           <h1 className="text-3xl font-bold mb-6 mt-20">About Me</h1>
-          <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-500 bg-gray-700 p-6 rounded-lg">
+          <Blockquote className="my-4 mx-auto max-w-4xl border-l-4 border-gray-300 bg-gray-200 p-6 rounded-lg dark:border-gray-500 dark:bg-gray-800">
             "Hi, I'm Kevin N.S., a Minecraft enthusiast and aspiring JSON UI Developer for Minecraft Bedrock. I love creating content on TikTok and YouTube related to my passion for Minecraft!"
           </Blockquote>
         </div>
