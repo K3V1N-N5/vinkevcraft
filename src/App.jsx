@@ -28,7 +28,7 @@ function App() {
   return (
     <Router>
       <Flowbite>
-        <div className="dark:bg-[#1e1e1e]">
+        <div className="dark:bg-[#1e1e1e] relative">
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3 flex justify-between items-center">
               <div className="flex items-center">
@@ -46,11 +46,8 @@ function App() {
                 </Link>
               </div>
               <div className="flex items-center">
-                <div
-                  className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
-                  style={{ width: '40px', height: '40px' }}
-                >
-                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white" />
+                <div className="relative">
+                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white bg-gray-200 dark:bg-gray-700 p-1" />
                 </div>
               </div>
             </div>
