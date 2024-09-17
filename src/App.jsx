@@ -45,11 +45,13 @@ function App() {
                   <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                 </Link>
               </div>
-              <div className="flex items-center ms-3">
-                <DarkThemeToggle
-                  className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
+              <div className="flex items-center">
+                <div
+                  className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
                   style={{ width: '40px', height: '40px' }}
-                />
+                >
+                  <DarkThemeToggle className="relative flex text-sm rounded-full focus:ring-4 dark:text-white" />
+                </div>
               </div>
             </div>
           </nav>
@@ -58,24 +60,22 @@ function App() {
             <Drawer.Items>
               <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                 <div className="flex h-full flex-col justify-between py-2">
-                  <div>
-                    <Sidebar.Items>
-                      <Sidebar.ItemGroup>
-                        <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
-                          <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                          <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
-                        </Sidebar.Collapse>
-                        <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
-                          LinkTree
-                        </Sidebar.Item></Link>
-                      </Sidebar.ItemGroup>
-                      <Sidebar.ItemGroup>
-                        <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
-                          Help
-                        </Sidebar.Item>
-                      </Sidebar.ItemGroup>
-                    </Sidebar.Items>
-                  </div>
+                  <Sidebar.Items>
+                    <Sidebar.ItemGroup>
+                      <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
+                        <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
+                        <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
+                      </Sidebar.Collapse>
+                      <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
+                        LinkTree
+                      </Sidebar.Item></Link>
+                    </Sidebar.ItemGroup>
+                    <Sidebar.ItemGroup>
+                      <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+                        Help
+                      </Sidebar.Item>
+                    </Sidebar.ItemGroup>
+                  </Sidebar.Items>
                 </div>
               </Sidebar>
             </Drawer.Items>
