@@ -47,14 +47,14 @@ function App() {
               </div>
               <div className="relative">
                 <DarkThemeToggle
-                  className="flex text-sm rounded-full focus:ring-4 dark:text-white"
-                  style={{ position: 'relative', zIndex: 10 }}
+                  className="absolute top-0 right-0 flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-transform transform-gpu"
+                  style={{ width: '40px', height: '40px' }}
                 />
               </div>
             </div>
           </nav>
 
-          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
+          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72 transition-transform duration-300">
             <Drawer.Items>
               <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                 <div className="flex h-full flex-col justify-between py-2">
