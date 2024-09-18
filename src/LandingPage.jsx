@@ -9,7 +9,7 @@ import { useRef, memo } from 'react';
 const Section = memo(({ id, title, children, className = '' }) => (
   <section id={id} className={`py-12 ${className} w-full`}>
     <div className="container mx-auto text-center">
-      {title && <h1 className="text-3xl font-bold mb-6 text-white">{title}</h1>}
+      {title && <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">{title}</h1>}
       {children}
     </div>
   </section>
@@ -20,10 +20,10 @@ const LandingPage = () => {
   const V = useInView(v);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <Section id="landing" className="relative bg-gray-500 text-white py-20 mt-14 h-screen">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-gray-500/70"></div> {/* Gradient Overlay */}
+      <Section id="landing" className="relative bg-gray-500 dark:bg-gray-800 text-white py-20 mt-14 h-screen">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-gray-500/70 dark:from-gray-900/70 dark:to-gray-800/70"></div> {/* Gradient Overlay */}
         <div className="relative z-10 container mx-auto">
           <TypingText text="Welcome To My Website!" loop={true} />
           <motion.div
@@ -37,7 +37,7 @@ const LandingPage = () => {
           </motion.div>
           <a href="#about">
             <Button
-              className="mx-auto hover:scale-105 transition-transform duration-300 bg-blue-600 text-white"
+              className="mx-auto bg-blue-600 text-white hover:bg-white hover:text-blue-600 hover:border-blue-600 dark:hover:bg-gray-700 dark:hover:text-white dark:bg-blue-600 border border-transparent transition-colors duration-300 transform hover:scale-105"
               pill
             >
               Start
@@ -47,15 +47,15 @@ const LandingPage = () => {
       </Section>
 
       {/* About Section */}
-      <Section id="about" className="bg-gray-800 text-white">
-        <h1 className="text-2xl font-bold mb-6 text-white">About Me</h1>
-        <Blockquote className="my-4 border-l-4 border-gray-300 bg-gray-700 p-6 text-center">
+      <Section id="about" className="bg-gray-200 dark:bg-gray-800 dark:text-white">
+        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">About Me</h1>
+        <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-6 text-center">
           "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
         </Blockquote>
       </Section>
 
       {/* Minecraft Project Section */}
-      <Section id="projects" title="Minecraft Project" className="bg-gray-900 text-white">
+      <Section id="projects" title="Minecraft Project" className="bg-gray-100 dark:bg-gray-900 dark:text-white">
         <div className="relative w-full pt-[56.25%] max-w-3xl mx-auto overflow-hidden">
           <Carousel slideInterval={3000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
             {data.map((slideItem, slideIndex) => (
@@ -70,7 +70,7 @@ const LandingPage = () => {
           </Carousel>
         </div>
         <Button
-          className="mx-auto mt-10 hover:bg-blue-700 hover:scale-105 transition-transform duration-300 bg-blue-600 text-white"
+          className="mx-auto mt-10 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300 transform hover:scale-105"
           pill
         >
           <Link to="/list">View My Project</Link>
