@@ -36,7 +36,7 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-4 dark:bg-gray-800 w-full">
+      <section id="about" className="py-4 dark:bg-gray-800 w-full pt-24">
         <div className="container mx-auto max-w-3xl text-center">
           <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
           <Blockquote className="my-3 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-3">
