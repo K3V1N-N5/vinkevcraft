@@ -1,7 +1,6 @@
 import TypingText from './utils/TypingText';
 import { Blockquote, Button, Carousel } from 'flowbite-react';
 import { motion, useInView } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { useRef } from 'react';
 import { data } from './utils/listdata';
 
