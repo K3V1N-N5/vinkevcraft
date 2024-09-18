@@ -73,30 +73,33 @@ function ListProject() {
         {/* Dropdown Filter */}
         {filterVisible && (
           <div className="flex flex-col absolute top-25 right-4 bg-gray-100 dark:bg-gray-800 p-2 rounded shadow-md z-20" ref={dropdownRef}>
-            <label>
+            <label className="mb-1">
               <input
                 type="radio"
                 name="category"
                 checked={selectedCategory === 'All'}
                 onChange={() => handleFilterChange('All')}
+                className="mr-2"
               />
               All
             </label>
-            <label>
+            <label className="mb-1">
               <input
                 type="radio"
                 name="category"
                 checked={selectedCategory === 'Resource Pack'}
                 onChange={() => handleFilterChange('Resource Pack')}
+                className="mr-2"
               />
               Resource Pack
             </label>
-            <label>
+            <label className="mb-1">
               <input
                 type="radio"
                 name="category"
                 checked={selectedCategory === 'Addon'}
                 onChange={() => handleFilterChange('Addon')}
+                className="mr-2"
               />
               Addon
             </label>
