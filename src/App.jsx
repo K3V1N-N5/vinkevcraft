@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import vinkev from './assets/vinkev_1.png';
 import { Footer, Drawer, Sidebar, Flowbite } from 'flowbite-react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle, HiMenu, HiX } from 'react-icons/hi';
 import LandingPage from './LandingPage';
@@ -41,7 +41,7 @@ function App() {
   return (
     <Router>
       <Flowbite>
-        <div className="dark:bg-[#1e1e1e]">
+        <div className={`dark:bg-[#1e1e1e] ${darkMode ? 'dark' : ''}`}>
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3 flex justify-between items-center">
               <div className="flex items-center">
@@ -62,7 +62,7 @@ function App() {
                 <button
                   onClick={toggleTheme}
                   className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
-                  style={{ width: '40px', height: '40px' }}
+                  style={{ width: '40px', height: '40px', transition: 'none' }}
                 >
                   {darkMode ? (
                     <span className="text-xl">🌙</span>
