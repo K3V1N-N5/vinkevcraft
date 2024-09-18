@@ -1,8 +1,8 @@
 import vinkev from './assets/vinkev_1.png'
-import { Footer, Button, Drawer, Sidebar, Flowbite, DarkThemeToggle } from "flowbite-react";
+import { Footer, DarkThemeToggle, Flowbite } from "flowbite-react";
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle, HiMenu, HiX } from "react-icons/hi";
+import { HiMenu, HiX } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
 import KNZPage from './KNZPage';
 import Profile from './list';
@@ -31,16 +31,18 @@ function App() {
   return (
     <Router>
       <Flowbite>
-        {/* Overflow-x hidden to prevent horizontal scrolling */}
+        {/* Navbar with proper alignment and spacing */}
         <div className="dark:bg-[#1e1e1e] overflow-x-hidden">
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-            <div className="px-3 py-3 lg:px-5 lg:pl-3">
+            <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center justify-start">
+
+                {/* Logo and Text */}
+                <div className="flex items-center">
                   {/* Button drawer */}
                   <div
                     onClick={toggleDrawer}
-                    className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
+                    className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
                     style={{ width: '40px', height: '40px' }}
                   >
                     <span className="sr-only">Toggle sidebar</span>
@@ -51,51 +53,23 @@ function App() {
                     )}
                   </div>
 
-                  {/* Logo and text */}
-                  <Link to="/" className="flex items-center space-x-3 ms-3 md:ms-5" onClick={handleLinkClick}>
+                  {/* Logo and Title */}
+                  <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5" onClick={handleLinkClick}>
                     <img src={vinkev} className="h-8" alt="VinKev Logo" />
                     <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                   </Link>
                 </div>
 
-                {/* Dark mode toggle */}
-                <div className="flex items-center ms-auto"> {/* Use ms-auto to push button to the right */}
-                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2 transition-none motion-reduce:transition-none" />
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center space-x-3">
+                  <DarkThemeToggle className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none" />
                 </div>
               </div>
             </div>
           </nav>
 
-          {/* Drawer component with adjusted margin-top */}
-          <Drawer open={isOpen} onClose={toggleDrawer} className="mt-[64px] w-72">
-            <Drawer.Items>
-              <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
-                <div className="flex h-full flex-col justify-between py-2">
-                  <div>
-                    <Sidebar.Items>
-                      <Sidebar.ItemGroup>
-                        <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
-                          <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                          <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
-                        </Sidebar.Collapse>
-                        <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
-                          LinkTree
-                        </Sidebar.Item></Link>
-                      </Sidebar.ItemGroup>
-                      <Sidebar.ItemGroup>
-                        <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
-                          Help
-                        </Sidebar.Item>
-                      </Sidebar.ItemGroup>
-                    </Sidebar.Items>
-                  </div>
-                </div>
-              </Sidebar>
-            </Drawer.Items>
-          </Drawer>
-
           {/* Tambahkan page baru di router ini */}
-          <div className="min-h-screen"> {/* Ensure content takes full height */}
+          <div className="min-h-screen pt-[64px]"> {/* Added padding-top to avoid overlap with navbar */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
@@ -104,6 +78,7 @@ function App() {
             </Routes>
           </div>
 
+          {/* Footer */}
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
               <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
