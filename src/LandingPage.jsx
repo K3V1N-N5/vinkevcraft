@@ -12,11 +12,11 @@ function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="bg-gray-500 dark:bg-gray-800 text-white py-16 mt-14 h-screen w-full">
+      <section id="landing" className="bg-gray-500 dark:bg-gray-800 text-white py-12 mt-14 h-screen w-full">
         <div className="container mx-auto text-center">
           <TypingText text="Welcome To My Website!" loop={true} />
           <motion.div
-            className="text-lg mb-6"
+            className="text-base mb-6"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
@@ -36,22 +36,22 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-8 dark:bg-gray-800 w-full">
+      <section id="about" className="py-6 dark:bg-gray-800 w-full">
         <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
+          <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
           <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-4">
             "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
           </Blockquote>
-          <p className="text-lg text-gray-700 dark:text-gray-300">
+          <p className="text-base text-gray-700 dark:text-gray-300">
             Feel free to click one of the links below!
           </p>
         </div>
       </section>
 
       {/* Minecraft Project Section */}
-      <section id="projects" className="py-8 bg-gray-100 dark:bg-gray-900 w-full">
+      <section id="projects" className="py-6 bg-gray-100 dark:bg-gray-900 w-full">
         <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Minecraft Project</h1>
+          <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Minecraft Project</h1>
           <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg">
             <Carousel slideInterval={3000} pauseOnHover>
               {data.map((slideItem, slideIndex) => (
@@ -64,7 +64,7 @@ function LandingPage() {
                 </div>
               ))}
             </Carousel>
-            <p className="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            <p className="text-base text-gray-700 dark:text-gray-300 mt-4">
               Just some mods for Minecraft that I made.
             </p>
             <Button
