@@ -36,7 +36,8 @@ function App() {
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center justify-start rtl:justify-end">
+                <div className="flex items-center justify-start">
+                  {/* Button drawer */}
                   <div
                     onClick={toggleDrawer}
                     className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
@@ -49,13 +50,16 @@ function App() {
                       <HiMenu className="w-6 h-6" aria-hidden="true" />
                     )}
                   </div>
-                  <Link to="/" className="flex ms-2 md:me-24 items-center" onClick={handleLinkClick}>
-                    <img src={vinkev} className="h-8 me-3" alt="VinKev Logo" />
+
+                  {/* Logo and text */}
+                  <Link to="/" className="flex items-center space-x-3 ms-3 md:ms-5" onClick={handleLinkClick}>
+                    <img src={vinkev} className="h-8" alt="VinKev Logo" />
                     <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                   </Link>
                 </div>
-                <div className="flex items-center ms-3">
-                  {/* Dark Theme Toggle without animation */}
+
+                {/* Dark mode toggle */}
+                <div className="flex items-center ms-auto"> {/* Use ms-auto to push button to the right */}
                   <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2 transition-none motion-reduce:transition-none" />
                 </div>
               </div>
