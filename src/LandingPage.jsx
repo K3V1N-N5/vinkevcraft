@@ -40,12 +40,12 @@ function LandingPage() {
 
       {/* About Section */}
       <section id="about" className="py-8 bg-gray-100 dark:bg-gray-800 w-full">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
-          <Blockquote className="my-6 border-l-4 border-blue-500 dark:border-blue-400 bg-gray-100 dark:bg-gray-700 p-5 italic">
+        <div className="container mx-auto max-w-xl text-center">
+          <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
+          <Blockquote className="my-6 border-l-4 border-blue-500 dark:border-blue-400 bg-gray-100 dark:bg-gray-700 p-4 italic">
             "Hey there! I'm Kevin N.S., a passionate Minecraft enthusiast. I love working on custom mods and creating content for Minecraft Bedrock Edition. When I’m not coding, you’ll find me sharing my creations on TikTok and YouTube."
           </Blockquote>
-          <p className="text-lg text-gray-700 dark:text-gray-300">
+          <p className="text-base text-gray-700 dark:text-gray-300">
             Click below to check out some of my favorite projects and creations!
           </p>
         </div>
@@ -53,9 +53,9 @@ function LandingPage() {
 
       {/* Minecraft Project Section */}
       <section id="projects" className="py-8 bg-white dark:bg-gray-900 w-full">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Projects</h1>
-          <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg shadow-lg">
+        <div className="container mx-auto max-w-xl text-center">
+          <h1 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Projects</h1>
+          <div className="relative w-full max-w-xl mx-auto overflow-hidden rounded-lg shadow-lg">
             <Carousel slideInterval={3000} pauseOnHover>
               {data.map((slideItem, slideIndex) => (
                 <div key={slideIndex} className="relative w-full h-full">
@@ -67,11 +67,11 @@ function LandingPage() {
                 </div>
               ))}
             </Carousel>
-            <p className="text-lg text-gray-700 dark:text-gray-300 mt-6">
+            <p className="text-base text-gray-700 dark:text-gray-300 mt-4">
               Here are some of the mods and creations I've developed for Minecraft. Take a look!
             </p>
             <Button
-              className="mx-auto mt-6 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300"
+              className="mx-auto mt-4 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300"
               pill
             >
               <Link to="/list" aria-label="View my Minecraft projects">Explore My Projects</Link>
