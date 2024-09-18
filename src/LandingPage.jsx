@@ -39,7 +39,7 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 bg-gray-100 dark:bg-gray-800 w-full">
+      <section id="about" className="py-8 bg-gray-100 dark:bg-gray-800 w-full">
         <div className="container mx-auto max-w-3xl text-center">
           <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
           <Blockquote className="my-6 border-l-4 border-blue-500 dark:border-blue-400 bg-gray-100 dark:bg-gray-700 p-5 italic">
@@ -52,7 +52,7 @@ function LandingPage() {
       </section>
 
       {/* Minecraft Project Section */}
-      <section id="projects" className="py-16 bg-white dark:bg-gray-900 w-full">
+      <section id="projects" className="py-8 bg-white dark:bg-gray-900 w-full">
         <div className="container mx-auto max-w-3xl text-center">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Projects</h1>
           <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg shadow-lg">
