@@ -12,33 +12,33 @@ function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white py-10 mt-14 h-screen w-full flex items-center justify-center">
+      <section id="landing" className="relative bg-gray-500 dark:bg-gray-800 text-white py-10 mt-14 h-screen w-full flex items-center justify-center">
         {/* Background overlay for added contrast */}
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="absolute inset-0 bg-black opacity-40 dark:opacity-50"></div>
 
         <div className="container relative mx-auto text-center z-10">
           {/* Typing Text */}
-          <TypingText text="Welcome To My Creative Space!" loop={true} />
+          <TypingText text="Welcome To My Website!" loop={true} />
 
           {/* Animated Subtitle */}
           <motion.div
-            className="text-lg mb-6 max-w-xl mx-auto leading-relaxed"
+            className="text-base mb-4 max-w-xl mx-auto"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
             transition={{ duration: 1, ease: "easeInOut" }}
           >
-            Explore my journey in Minecraft modding and content creation. Click below to start your adventure!
+            Please click "Start" below to read more about me and see some of my work!
           </motion.div>
 
           {/* Call to Action Button */}
           <a href="#about">
             <Button
-              className="mx-auto bg-blue-700 text-white hover:bg-white hover:text-blue-700 border border-transparent dark:bg-blue-700 dark:hover:bg-gray-700 dark:hover:text-white hover:border-blue-700 transition-all duration-300 transform hover:scale-105"
+              className="mx-auto bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white hover:border-blue-600 transition-all duration-300 transform hover:scale-105"
               pill
               size="lg"
             >
-              Start Journey
+              Start
             </Button>
           </a>
         </div>
