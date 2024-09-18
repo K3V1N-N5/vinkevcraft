@@ -3,14 +3,14 @@ import { Button } from "flowbite-react";
 
 function KNZPage() {
   return (
-    <div className="container mx-auto px-8 dark:text-white dark:bg-[#1e1e1e]"> {/* Only 'px-8' for horizontal padding */}
-      <h1 className="text-3xl font-bold mt-20 mb-6">KNZ UI - Resource Pack Minecraft Bedrock 1.21</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e]">
+      {/* Adjust margin-top for better alignment and readability */}
+      <h1 className="text-3xl font-bold mt-10 mb-6 text-center">KNZ UI - Resource Pack Minecraft Bedrock 1.21</h1>
 
-      <div className="relative w-full pt-[56.25%] mx-auto"> 
+      {/* Responsive iframe container */}
+      <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl">
         <iframe
-          className="absolute top-0 left-0 w-full h-full max-w-3xl max-h-[500px]"
-          width="853"
-          height="480"
+          className="absolute top-0 left-0 w-full h-full"
           src="https://www.youtube.com/embed/Psob_aQhHWI"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -20,7 +20,7 @@ function KNZPage() {
 
       <section className="mb-8 mt-8">
         <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-        <ul className="list-disc list-inside">
+        <ul className="list-disc list-inside space-y-2">
           <li>Perubahan kamera cepat: KNZ UI memungkinkan pemain untuk mengubah kamera dengan cepat tanpa harus membuka menu pengaturan.</li>
           <li>Tampilan yang lebih baik: KNZ UI memiliki tampilan yang lebih modern dan rapi dibandingkan dengan tampilan default Minecraft.</li>
           <li>Fitur tambahan: KNZ UI menambahkan berbagai fitur tambahan, seperti tampilan statistik, mode gelap, dan kemampuan untuk mengganti musik.</li>
@@ -29,20 +29,23 @@ function KNZPage() {
 
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Perhatian</h2>
-        <ul className="list-disc list-inside">
+        <ul className="list-disc list-inside space-y-2">
           <li>KNZ UI adalah resource pack yang gratis dan mudah digunakan.</li>
           <li>KNZ UI kompatibel dengan Minecraft Bedrock Edition versi 1.21 dan lebih tinggi.</li>
           <li>KNZ UI dapat diunduh dari situs web resmi atau dari beberapa situs web pihak ketiga.</li>
-          <li>KNZ UI dapat diinstal dengan mudah dengan menyalin file resource pack ke folder `resource_packs` di folder Minecraft.</li>
+          <li>KNZ UI dapat diinstal dengan mudah dengan menyalin file resource pack ke folder <code>resource_packs</code> di folder Minecraft.</li>
         </ul>
       </section>
       
-      <Button className="mx-auto mt-10" color="gray" pill>
-        <a href="https://pastelink.net/oc5sdjlw">Download KNZ UI (with password)</a>
-      </Button>
-      <Button className="mx-auto mt-10" color="gray" pill>
-        <a href="https://linkvertise.com/1165508/knz-ui-v100?o=sharing">Download KNZ UI (with ads)</a>
-      </Button>
+      {/* Center buttons */}
+      <div className="flex flex-col items-center space-y-4">
+        <Button color="gray" pill>
+          <a href="https://pastelink.net/oc5sdjlw" className="no-underline">Download KNZ UI (with password)</a>
+        </Button>
+        <Button color="gray" pill>
+          <a href="https://linkvertise.com/1165508/knz-ui-v100?o=sharing" className="no-underline">Download KNZ UI (with ads)</a>
+        </Button>
+      </div>
     </div>
   );
 }
