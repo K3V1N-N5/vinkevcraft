@@ -7,7 +7,7 @@ import LandingPage from './LandingPage';
 import KNZPage from './KNZPage';
 import Profile from './list';
 import LinktreePage from "./LinkTree";
-import Post from './Post';
+
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -107,7 +107,7 @@ function App() {
               <Route path="/list" element={<Profile />} />
               <Route path="/knz" element={<KNZPage />} />
               <Route path="/link" element={<LinktreePage />} />
-              <Route path="/post/:id" element={<Post />} />
+              
             </Routes>
           </div>
 
