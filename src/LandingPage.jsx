@@ -19,7 +19,7 @@ function LandingPage() {
         <div className="container mx-auto text-center">
           <TypingText text="Welcome To My Digital World!" loop={true} />
           <motion.div
-            className="text-lg mb-6"
+            className="text-base mb-6"
             ref={sectionRef}
             initial={{ opacity: 0, y: 50 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
@@ -39,23 +39,23 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-8 bg-gray-100 dark:bg-gray-800 w-full">
-        <div className="container mx-auto max-w-xl text-center">
-          <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
-          <Blockquote className="my-6 border-l-4 border-blue-500 dark:border-blue-400 bg-gray-100 dark:bg-gray-700 p-4 italic">
+      <section id="about" className="py-6 bg-gray-100 dark:bg-gray-800 w-full">
+        <div className="container mx-auto max-w-md text-center">
+          <h1 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">About Me</h1>
+          <Blockquote className="my-4 border-l-4 border-blue-500 dark:border-blue-400 bg-gray-100 dark:bg-gray-700 p-3 italic">
             "Hey there! I'm Kevin N.S., a passionate Minecraft enthusiast. I love working on custom mods and creating content for Minecraft Bedrock Edition. When I’m not coding, you’ll find me sharing my creations on TikTok and YouTube."
           </Blockquote>
-          <p className="text-base text-gray-700 dark:text-gray-300">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
             Click below to check out some of my favorite projects and creations!
           </p>
         </div>
       </section>
 
       {/* Minecraft Project Section */}
-      <section id="projects" className="py-8 bg-white dark:bg-gray-900 w-full">
-        <div className="container mx-auto max-w-xl text-center">
-          <h1 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Projects</h1>
-          <div className="relative w-full max-w-xl mx-auto overflow-hidden rounded-lg shadow-lg">
+      <section id="projects" className="py-6 bg-white dark:bg-gray-900 w-full">
+        <div className="container mx-auto max-w-md text-center">
+          <h1 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">Minecraft Projects</h1>
+          <div className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg">
             <Carousel slideInterval={3000} pauseOnHover>
               {data.map((slideItem, slideIndex) => (
                 <div key={slideIndex} className="relative w-full h-full">
@@ -67,7 +67,7 @@ function LandingPage() {
                 </div>
               ))}
             </Carousel>
-            <p className="text-base text-gray-700 dark:text-gray-300 mt-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mt-3">
               Here are some of the mods and creations I've developed for Minecraft. Take a look!
             </p>
             <Button
