@@ -130,11 +130,9 @@ function App() {
 
               {/* Add some padding and margin to ensure it shows correctly */}
               <div className="mt-2 text-sm">
-                <Footer.Copyright href="#" by="VinKev Craft" year={2024} />
-                <p className="mt-1">
-                  © 2024 VinKev Craft. All rights reserved. <br />
-                  This site is not affiliated with Mojang Studios.
-                </p>
+                <Footer.Copyright href="#" by="VinKev Craft. All rights reserved.<br />
+                  This site is not affiliated with Mojang Studios." year={2024} />
+                
               </div>
             </div>
           </Footer>
