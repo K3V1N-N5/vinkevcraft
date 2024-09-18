@@ -31,7 +31,8 @@ function App() {
   return (
     <Router>
       <Flowbite>
-        <div className="dark:bg-[#1e1e1e]">
+        {/* Overflow-x hidden to prevent horizontal scrolling */}
+        <div className="dark:bg-[#1e1e1e] overflow-x-hidden">
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-3 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
@@ -55,7 +56,7 @@ function App() {
                 </div>
                 <div className="flex items-center ms-3">
                   {/* Dark Theme Toggle without animation */}
-                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2 transition-none" />
+                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2 transition-none motion-reduce:transition-none" />
                 </div>
               </div>
             </div>
@@ -90,12 +91,14 @@ function App() {
           </Drawer>
 
           {/* Tambahkan page baru di router ini */}
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/list" element={<Profile />} />
-            <Route path="/knz" element={<KNZPage />} />
-            <Route path="/link" element={<LinktreePage />} />
-          </Routes>
+          <div className="min-h-screen"> {/* Ensure content takes full height */}
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/list" element={<Profile />} />
+              <Route path="/knz" element={<KNZPage />} />
+              <Route path="/link" element={<LinktreePage />} />
+            </Routes>
+          </div>
 
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
