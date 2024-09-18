@@ -54,7 +54,8 @@ function App() {
                   </Link>
                 </div>
                 <div className="flex items-center ms-3">
-                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2" />
+                  {/* Dark Theme Toggle without animation */}
+                  <DarkThemeToggle className="flex text-sm rounded-full focus:ring-4 dark:text-white mr-2 transition-none" />
                 </div>
               </div>
             </div>
