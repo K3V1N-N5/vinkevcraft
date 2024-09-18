@@ -48,16 +48,21 @@ const LandingPage = () => {
 
       {/* About Section */}
       <Section id="about" className="bg-gray-200 dark:bg-gray-800 dark:text-white">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">About Me</h1>
-        <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-6 text-center">
-          "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
-        </Blockquote>
+        <div className="max-w-2xl mx-auto"> {/* Adjust max-width for better centering */}
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">About Me</h1>
+          <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-6 text-center">
+            "Hello! My name is Dimz and I am a Minecraft enthusiast who enjoys working as a JSON UI Developer for Minecraft Bedrock. I also like to make content on YouTube related to Minecraft."
+          </Blockquote>
+          <p className="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Feel free to click one of the links below!
+          </p>
+        </div>
       </Section>
 
       {/* Minecraft Project Section */}
       <Section id="projects" title="Minecraft Project" className="bg-gray-100 dark:bg-gray-900 dark:text-white">
-        <div className="relative w-full pt-[56.25%] max-w-3xl mx-auto overflow-hidden">
-          <Carousel slideInterval={3000} pauseOnHover className="absolute top-0 left-0 w-full h-full">
+        <div className="max-w-2xl mx-auto"> {/* Center content with max-width */}
+          <Carousel slideInterval={3000} pauseOnHover className="relative overflow-hidden rounded-lg shadow-lg">
             {data.map((slideItem, slideIndex) => (
               <div key={slideIndex}>
                 <img
@@ -68,13 +73,16 @@ const LandingPage = () => {
               </div>
             ))}
           </Carousel>
+          <p className="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Just some mods for Minecraft that I made.
+          </p>
+          <Button
+            className="mx-auto mt-10 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300 transform hover:scale-105"
+            pill
+          >
+            <Link to="/list">View</Link>
+          </Button>
         </div>
-        <Button
-          className="mx-auto mt-10 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300 transform hover:scale-105"
-          pill
-        >
-          <Link to="/list">View My Project</Link>
-        </Button>
       </Section>
     </div>
   );
