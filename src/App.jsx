@@ -88,7 +88,7 @@ function App() {
                         </Link>
                       </Sidebar.ItemGroup>
                       <Sidebar.ItemGroup>
-                        <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+                        <Sidebar.Item href="https://wa.me/" icon={HiInformationCircle} onClick={handleLinkClick}>
                           Help
                         </Sidebar.Item>
                       </Sidebar.ItemGroup>
@@ -130,7 +130,7 @@ function App() {
 
               {/* Add some padding and margin to ensure it shows correctly */}
               <div className="mt-2 text-sm">
-                <Footer.Copyright href="#" by="VinKev Craft. All rights reserved.<br />
+                <Footer.Copyright href="#" by="VinKev Craft. All rights reserved.
                   This site is not affiliated with Mojang Studios." year={2024} />
                 
               </div>
