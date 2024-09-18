@@ -49,9 +49,9 @@ function LandingPage() {
       </section>
 
       {/* Minecraft Project Section */}
-      <section id="projects" className="py-6 bg-gray-100 dark:bg-gray-900 w-full">
+      <section id="projects" className="py-12 bg-gray-100 dark:bg-gray-900 w-full">
         <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Minecraft Project</h1>
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Project</h1>
           <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg">
             <Carousel slideInterval={3000} pauseOnHover>
               {data.map((slideItem, slideIndex) => (
