@@ -12,17 +12,31 @@ function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="relative bg-gray-500 dark:bg-gray-800 text-white py-10 mt-14 h-screen w-full flex items-center justify-center">
+      <section id="landing" className="relative bg-gradient-to-br from-blue-800 via-purple-700 to-indigo-600 text-white py-20 mt-14 h-screen w-full flex items-center justify-center">
         {/* Background overlay for added contrast */}
         <div className="absolute inset-0 bg-black opacity-40 dark:opacity-50"></div>
 
+        {/* Optional Particle Animation */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <motion.div
+            className="absolute top-0 left-0 w-32 h-32 bg-indigo-400 opacity-20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.3, 0.6] }}
+            transition={{ duration: 5, repeat: Infinity }}
+          ></motion.div>
+          <motion.div
+            className="absolute bottom-0 right-0 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0.3, 0.6] }}
+            transition={{ duration: 6, repeat: Infinity }}
+          ></motion.div>
+        </div>
+
         <div className="container relative mx-auto text-center z-10">
           {/* Typing Text */}
-          <TypingText text="Welcome To My Website!" loop={true} />
+          <TypingText text="Welcome To My Website!" loop={true} className="text-4xl font-extrabold sm:text-5xl" />
 
           {/* Animated Subtitle */}
           <motion.div
-            className="text-base mb-4 max-w-xl mx-auto"
+            className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto leading-relaxed"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
@@ -42,10 +56,6 @@ function LandingPage() {
             </Button>
           </a>
         </div>
-
-        {/* Optional decorative elements */}
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-300 rounded-full opacity-20 blur-lg"></div>
-        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-300 rounded-full opacity-20 blur-lg"></div>
       </section>
 
       {/* About Section */}
