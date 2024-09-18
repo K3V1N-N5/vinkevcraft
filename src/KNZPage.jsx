@@ -37,8 +37,8 @@ function KNZPage() {
         </ul>
       </section>
       
-      {/* Center buttons */}
-      <div className="flex flex-col items-center space-y-4">
+      {/* Center buttons and add margin at the top for spacing */}
+      <div className="flex flex-col items-center space-y-4 mt-12"> {/* Added mt-12 for space above buttons */}
         <Button color="gray" pill>
           <a href="https://pastelink.net/oc5sdjlw" className="no-underline">Download KNZ UI (with password)</a>
         </Button>
