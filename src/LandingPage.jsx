@@ -1,6 +1,7 @@
 import TypingText from './utils/TypingText';
 import { Blockquote, Button, Carousel } from 'flowbite-react';
 import { motion, useInView } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useRef } from 'react';
 import { data } from './utils/listdata';
 
@@ -13,8 +14,8 @@ function LandingPage() {
     const aboutSection = document.getElementById("about");
     if (aboutSection) {
       window.scrollTo({
-        top: aboutSection.offsetTop, // Posisi dari atas halaman
-        behavior: "smooth",          // Scroll dengan transisi smooth
+        top: aboutSection.offsetTop, 
+        behavior: "smooth",
       });
     }
   };
