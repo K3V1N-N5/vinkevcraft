@@ -68,6 +68,36 @@ function App() {
             </div>
           </nav>
 
+          <Drawer open={isOpen} onClose={handleClose} className="mt-14 w-72">
+  <Drawer.Items>
+    <Sidebar
+      aria-label="Sidebar with multi-level dropdown example"
+      className="[&>div]:bg-transparent [&>div]:p-0"
+    >
+    <div className="flex h-full flex-col justify-between py-2">
+      <div>
+        <Sidebar.Items>
+          <Sidebar.ItemGroup>
+            <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
+              <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
+              <Link to="/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
+            </Sidebar.Collapse>
+            <Link to="/link" onClick={handleLinkClick}><Sidebar.Item icon={HiOutlineExternalLink}>
+              LinkTree
+            </Sidebar.Item></Link>
+          </Sidebar.ItemGroup>
+          <Sidebar.ItemGroup>
+            <Sidebar.Item href="https://wa.me/6285600776747" icon={HiInformationCircle} onClick={handleLinkClick}>
+              Help
+            </Sidebar.Item>
+          </Sidebar.ItemGroup>
+        </Sidebar.Items>
+      </div>
+    </div>
+    </Sidebar>
+  </Drawer.Items>
+</Drawer>
+
           {/* Tambahkan page baru di router ini */}
           <div className="min-h-screen pt-[64px]"> {/* Added padding-top to avoid overlap with navbar */}
             <Routes>
