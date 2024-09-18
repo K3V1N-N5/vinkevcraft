@@ -5,6 +5,7 @@ import { data } from './utils/listdata';
 function ListProject() {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const filterButtonRef = useRef(null);  // Reference untuk tombol filter
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filterVisible, setFilterVisible] = useState(false);
@@ -25,8 +26,12 @@ function ListProject() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setFilterVisible(false);
+      // Cek apakah klik berada di luar dropdown dan tombol filter
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+        filterButtonRef.current && !filterButtonRef.current.contains(event.target)
+      ) {
+        setFilterVisible(false);  // Menutup dropdown jika klik di luar
       }
     };
 
@@ -34,7 +39,7 @@ function ListProject() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [dropdownRef]);
+  }, [dropdownRef, filterButtonRef]);
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -67,7 +72,13 @@ function ListProject() {
             onChange={handleSearch}
             className="px-2 py-1 w-full mx-2 bg-gray-100 dark:bg-gray-900 border border-gray-700 rounded text-white"
           />
-          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded" onClick={toggleFilter}>Filter</button>
+          <button 
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded"
+            onClick={toggleFilter}
+            ref={filterButtonRef}  // Tambahkan reference ke tombol filter
+          >
+            Filter
+          </button>
         </div>
 
         {/* Dropdown Filter */}
