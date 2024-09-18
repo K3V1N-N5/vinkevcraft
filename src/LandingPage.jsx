@@ -49,28 +49,26 @@ function LandingPage() {
       </section>
 
       {/* Minecraft Project Section */}
-      <section id="projects" className="py-12 bg-gray-100 dark:bg-gray-900 w-full">
+      <section id="projects" className="py-6 bg-gray-100 dark:bg-gray-900 w-full">
         <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Project</h1>
-          <div className="relative w-full mx-auto overflow-hidden rounded-lg">
-            <div className="pt-[56.25%]">
-              <Carousel slideInterval={3000} pauseOnHover>
-                {data.map((slideItem, slideIndex) => (
-                  <div key={slideIndex} className="relative w-full h-full">
-                    <img
-                      src={slideItem.img}
-                      alt={slideItem.title}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                ))}
-              </Carousel>
-            </div>
-            <p className="text-lg text-gray-700 dark:text-gray-300 mt-6">
+          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Minecraft Project</h1>
+          <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg">
+            <Carousel slideInterval={3000} pauseOnHover>
+              {data.map((slideItem, slideIndex) => (
+                <div key={slideIndex} className="relative w-full h-full">
+                  <img
+                    src={slideItem.img}
+                    alt={slideItem.title}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              ))}
+            </Carousel>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mt-4">
               Just some mods for Minecraft that I made.
             </p>
             <Button
-              className="mx-auto mt-10 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300"
+              className="mx-auto mt-6 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300"
               pill
             >
               <Link to="/list">View My Project</Link>
