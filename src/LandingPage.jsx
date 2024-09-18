@@ -10,9 +10,9 @@ function LandingPage() {
   const V = useInView(v);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="bg-gray-500 text-white py-20 mt-14 h-screen w-full">
+      <section id="landing" className="bg-gray-500 dark:bg-gray-800 text-white py-20 mt-14 h-screen w-full">
         <div className="container mx-auto text-center">
           <TypingText text="Welcome To My Website!" loop={true} />
           <motion.div
@@ -25,7 +25,10 @@ function LandingPage() {
             Please click "Start" below to read more about me and see some of my work!
           </motion.div>
           <a href="#about">
-            <Button className="mx-auto" color="blue" pill>
+            <Button
+              className="mx-auto bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white hover:border-blue-600 transition-colors duration-300"
+              pill
+            >
               Start
             </Button>
           </a>
@@ -33,33 +36,45 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-12 dark:bg-gray-900 dark:text-white w-full">
-        <div className="container mx-auto">
-          <h1 className="text-center text-2xl font-bold mb-6 mt-20">About Me</h1>
-          <Blockquote className="my-4 border-l-4 border-gray-300 bg-gray-200 p-6 dark:border-gray-500 dark:bg-gray-800 text-center">
+      <section id="about" className="py-12 dark:bg-gray-800 w-full">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">About Me</h1>
+          <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-6">
             "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
           </Blockquote>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
+            Feel free to click one of the links below!
+          </p>
         </div>
+      </section>
 
-        <h1 className="text-center text-2xl xl:mt-0 font-bold mt-10 mb-10">Minecraft Project</h1>
-
-        <div className="relative w-full max-w-3xl mx-auto overflow-hidden">
-          <Carousel slideInterval={3000} pauseOnHover>
-            {data.map((slideItem, slideIndex) => (
-              <div key={slideIndex} className="relative w-full h-full">
-                <img 
-                  src={slideItem.img} 
-                  alt={slideItem.title} 
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ))}
-          </Carousel>
+      {/* Minecraft Project Section */}
+      <section id="projects" className="py-12 bg-gray-100 dark:bg-gray-900 w-full">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Project</h1>
+          <div className="relative w-full pt-[56.25%] max-w-3xl mx-auto overflow-hidden rounded-lg">
+            <Carousel slideInterval={3000} pauseOnHover>
+              {data.map((slideItem, slideIndex) => (
+                <div key={slideIndex} className="relative w-full h-full">
+                  <img
+                    src={slideItem.img}
+                    alt={slideItem.title}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </div>
+          <p className="text-lg text-gray-700 dark:text-gray-300 mt-6">
+            Just some mods for Minecraft that I made.
+          </p>
+          <Button
+            className="mx-auto mt-10 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white border border-transparent transition-colors duration-300"
+            pill
+          >
+            <Link to="/list">View</Link>
+          </Button>
         </div>
-
-        <Button className="mx-auto mt-10 xl:mt-0" color="blue" pill>
-          <Link to="/list">View My Project</Link>
-        </Button>
       </section>
     </div>
   );
