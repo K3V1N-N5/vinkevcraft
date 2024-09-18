@@ -102,6 +102,7 @@ function App() {
 
           {/* Main content */}
           <div className="min-h-screen pt-[64px]"> {/* Added padding-top to avoid overlap with navbar */}
+           <Router>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
@@ -109,6 +110,7 @@ function App() {
               <Route path="/link" element={<LinktreePage />} />
               <Route path="/post/:id" element={<Post />} />
             </Routes>
+           </Router>
           </div>
 
           {/* Footer */}
