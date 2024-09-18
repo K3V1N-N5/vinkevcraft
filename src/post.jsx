@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { postData } from './content'; // Impor data postingan
+import { postData } from './utils/postdata'; // Impor data postingan
 import { Button } from "flowbite-react";
 
 function Post() {
