@@ -67,12 +67,12 @@ function LandingPage() {
 
       {/* About Section */}
       <section id="about" className="py-4 dark:bg-gray-800 w-full pt-16">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
+        <div className="container mx-auto max-w-3xl">
+          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white text-center">About Me</h1>
           <Blockquote className="my-3 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-3">
             "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
           </Blockquote>
-          <p className="text-base text-gray-700 dark:text-gray-300">
+          <p className="text-base text-gray-700 dark:text-gray-300 text-center">
             Feel free to click one of the links below!
           </p>
         </div>
@@ -80,8 +80,8 @@ function LandingPage() {
 
       {/* Minecraft Project Section */}
       <section id="projects" className="py-4 bg-gray-100 dark:bg-gray-900 w-full">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Minecraft Project</h1>
+        <div className="container mx-auto max-w-3xl">
+          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white text-center">Minecraft Project</h1>
           <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg">
             <Carousel slideInterval={3000} pauseOnHover>
               {data.map((slideItem, slideIndex) => (
@@ -94,7 +94,7 @@ function LandingPage() {
                 </div>
               ))}
             </Carousel>
-            <p className="text-base text-gray-700 dark:text-gray-300 mt-4">
+            <p className="text-base text-gray-700 dark:text-gray-300 mt-4 text-center">
               Just some mods for Minecraft that I made.
             </p>
             <Button
