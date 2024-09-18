@@ -52,10 +52,14 @@ function LandingPage() {
       <section id="projects" className="py-12 bg-gray-100 dark:bg-gray-900 w-full">
         <div className="container mx-auto max-w-3xl text-center">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Minecraft Project</h1>
-          <div className="relative w-full pt-[56.25%] max-w-3xl mx-auto overflow-hidden rounded-lg">
-            <Carousel slideInterval={3000} pauseOnHover>
+          <div className="relative w-full max-w-3xl mx-auto overflow-hidden rounded-lg">
+            <Carousel
+              slideInterval={3000} // Set the interval to 3000ms
+              pauseOnHover={true} // Pause on hover
+              indicators={true} // Show indicators
+            >
               {data.map((slideItem, slideIndex) => (
-                <div key={slideIndex}>
+                <div key={slideIndex} className="w-full h-full">
                   <img
                     src={slideItem.img}
                     alt={slideItem.title}
