@@ -66,13 +66,13 @@ function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-4 dark:bg-gray-800 w-full pt-16">
-        <div className="container mx-auto max-w-3xl">
-          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white text-center">About Me</h1>
-          <Blockquote className="my-3 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-3">
+      <section id="about" className="py-4 bg-white dark:bg-gray-800 w-full pt-16">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h1 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">About Me</h1>
+          <Blockquote className="my-3 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-50 dark:bg-gray-700 p-3 text-center">
             "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
           </Blockquote>
-          <p className="text-base text-gray-700 dark:text-gray-300 text-center">
+          <p className="text-base text-gray-700 dark:text-gray-300">
             Feel free to click one of the links below!
           </p>
         </div>
