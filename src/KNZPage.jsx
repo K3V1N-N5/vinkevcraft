@@ -3,7 +3,7 @@ import { Button } from "flowbite-react";
 
 function KNZPage() {
   return (
-    <div className="container mx-auto dark:text-white dark:bg-[#1e1e1e]">
+    <div className="container mx-auto px-8 dark:text-white dark:bg-[#1e1e1e]"> {/* Only 'px-8' for horizontal padding */}
       <h1 className="text-3xl font-bold mt-20 mb-6">KNZ UI - Resource Pack Minecraft Bedrock 1.21</h1>
 
       <div className="relative w-full pt-[56.25%] mx-auto"> 
