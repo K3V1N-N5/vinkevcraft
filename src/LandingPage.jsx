@@ -1,13 +1,24 @@
 import TypingText from './utils/TypingText';
-import { data } from './utils/listdata';
 import { Blockquote, Button, Carousel } from 'flowbite-react';
 import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useRef } from 'react';
+import { data } from './utils/listdata';
 
 function LandingPage() {
   const v = useRef(null);
   const V = useInView(v);
+
+  // Fungsi untuk scroll ke section "about" dengan smooth behavior
+  const handleScrollToAbout = () => {
+    const aboutSection = document.getElementById("about");
+    if (aboutSection) {
+      window.scrollTo({
+        top: aboutSection.offsetTop, // Posisi dari atas halaman
+        behavior: "smooth",          // Scroll dengan transisi smooth
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -46,12 +57,11 @@ function LandingPage() {
           </motion.div>
 
           {/* Call to Action Button */}
-          
-          <a href="#about">
-            <Button className="mx-auto" color="blue" pill>
+          <button onClick={handleScrollToAbout}>
+            <div className="mx-auto bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-white hover:text-blue-600 transition-colors">
               Start
-            </Button>
-          </a>
+            </div>
+          </button>
         </div>
       </section>
 
