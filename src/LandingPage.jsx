@@ -12,11 +12,11 @@ function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="bg-gray-500 dark:bg-gray-800 text-white py-16 mt-14 h-screen w-full flex flex-col justify-center">
+      <section id="landing" className="bg-gray-500 dark:bg-gray-800 text-white py-10 mt-14 h-screen w-full flex flex-col justify-center">
         <div className="container mx-auto text-center">
           <TypingText text="Welcome To My Website!" loop={true} />
           <motion.div
-            className="text-xl mb-6"
+            className="text-base mb-4"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
