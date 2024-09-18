@@ -36,7 +36,7 @@ function LandingPage() {
 
           {/* Animated Subtitle */}
           <motion.div
-            className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto leading-relaxed"
+            className="text-base sm:text-xl mb-8 max-w-2xl mx-auto"
             ref={v}
             initial={{ opacity: 0, y: 50 }}
             animate={V ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
@@ -48,7 +48,7 @@ function LandingPage() {
           {/* Call to Action Button */}
           <a href="#about">
             <Button
-              className="mx-auto bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent dark:bg-blue-600 dark:hover:bg-gray-700 dark:hover:text-white hover:border-blue-600 transition-all duration-300 transform hover:scale-105"
+              className="mx-auto bg-blue-600 text-white hover:bg-transparent hover:text-blue-600 border-2 border-blue-600 dark:bg-blue-600 dark:hover:bg-transparent dark:hover:text-white dark:border-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl"
               pill
               size="lg"
             >
