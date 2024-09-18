@@ -1,6 +1,6 @@
+import { useState, useEffect } from 'react';
 import vinkev from './assets/vinkev_1.png';
-import { Footer, Drawer, Sidebar, Flowbite, DarkThemeToggle } from 'flowbite-react';
-import { useState } from 'react';
+import { Footer, Drawer, Sidebar, Flowbite } from 'flowbite-react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle, HiMenu, HiX } from 'react-icons/hi';
 import LandingPage from './LandingPage';
@@ -10,6 +10,7 @@ import LinktreePage from './LinkTree';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -24,6 +25,18 @@ function App() {
       closeDrawer();
     }
   };
+
+  const toggleTheme = () => {
+    setDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      return newMode;
+    });
+  };
+
+  useEffect(() => {
+    document.body.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   return (
     <Router>
@@ -46,12 +59,17 @@ function App() {
                 </Link>
               </div>
               <div className="flex items-center">
-                <div
+                <button
+                  onClick={toggleTheme}
                   className="relative flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full cursor-pointer"
                   style={{ width: '40px', height: '40px' }}
                 >
-                  <DarkThemeToggle className="no-transition" />
-                </div>
+                  {darkMode ? (
+                    <span className="text-xl">🌙</span>
+                  ) : (
+                    <span className="text-xl">☀️</span>
+                  )}
+                </button>
               </div>
             </div>
           </nav>
