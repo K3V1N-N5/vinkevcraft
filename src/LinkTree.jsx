@@ -1,21 +1,22 @@
-import vinkev from './assets/vinkev.png'
+import vinkev from './assets/vinkev.png';
 import background from './assets/background.jpg';
-import { FaYoutube, FaTiktok, FaWhatsapp, FaDiscord } from 'react-icons/fa'; 
+import { FaYoutube, FaTiktok, FaWhatsapp, FaDiscord } from 'react-icons/fa';
 
 function LinktreePage() {
   return (
     <div id="landing" className="flex flex-col dark:bg-black dark:text-white items-center justify-center min-h-screen bg-gray-100 max-w-full">
-      <div className="bg-white dark:bg-gray-700 dark:text-white p-8 rounded-lg shadow-md w-96 max-w-full relative mt-2"> 
+      <div className="bg-white dark:bg-gray-700 dark:text-white px-4 py-10 rounded-lg shadow-md w-full max-w-md relative mt-2 mx-auto"> 
         <div 
-          className="absolute top-0 left-0 w-full h-36 bg-cover bg-center rounded-lg"
+          className="absolute top-0 left-0 w-full h-36 bg-cover bg-center rounded-t-lg"
           style={{ backgroundImage: `url(${background})` }}
         ></div>
-        <div className="flex flex-col items-center mb-6 relative z-10"> {/* Pastikan z-index lebih tinggi */}
+        <div className="flex flex-col items-center mb-6 relative z-10 mt-20"> {/* Adjust z-index and spacing */}
           <img 
             src={vinkev}
             className="rounded-full w-24 h-24 mb-3" 
+            alt="VinKev Craft Logo"
           />
-          <h1 className="text-2xl font-bold mt-4 dark:text-white">VinKev Craft</h1>
+          <h1 className="text-2xl font-bold dark:text-white">VinKev Craft</h1>
           <p className="text-gray-600 dark:text-white">@vinkevcraft</p>
         </div>
 
