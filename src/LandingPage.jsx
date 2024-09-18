@@ -48,7 +48,7 @@ function LandingPage() {
           {/* Call to Action Button */}
           <a href="#about">
             <Button
-              className="mx-auto bg-blue-600 text-white hover:bg-transparent hover:text-blue-600 border-2 border-blue-600 dark:bg-blue-600 dark:hover:bg-transparent dark:hover:text-white dark:border-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-white"
+              className="mx-auto bg-blue-600 text-white hover:bg-transparent hover:text-blue-600 border-2 border-blue-600 dark:bg-blue-600 dark:hover:bg-transparent dark:hover:text-blue-600 dark:border-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-white"
               pill
               size="lg"
             >
