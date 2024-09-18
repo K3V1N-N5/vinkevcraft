@@ -51,7 +51,7 @@ const LandingPage = () => {
         <div className="max-w-2xl mx-auto"> {/* Adjust max-width for better centering */}
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">About Me</h1>
           <Blockquote className="my-4 border-l-4 border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 p-6 text-center">
-            "Hello! My name is Dimz and I am a Minecraft enthusiast who enjoys working as a JSON UI Developer for Minecraft Bedrock. I also like to make content on YouTube related to Minecraft."
+            "Hello! My name is Kevin N.S. I enjoy playing Minecraft, and I might work as a JSON UI Developer for Minecraft Bedrock. I also like creating Minecraft-related content on TikTok and YouTube."
           </Blockquote>
           <p className="text-lg text-gray-700 dark:text-gray-300 mt-4">
             Feel free to click one of the links below!
