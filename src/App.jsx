@@ -7,7 +7,7 @@ import LandingPage from './LandingPage';
 import KNZPage from './KNZPage';
 import Profile from './list';
 import LinktreePage from "./LinkTree";
-import Post from './Post';
+import Post from './post';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
