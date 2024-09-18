@@ -1,22 +1,22 @@
 import React from 'react';
-import {Button} from "flowbite-react";
+import { Button } from "flowbite-react";
 
 function KNZPage() {
   return (
-    <div className="container mx-auto p-8 dark:text-white dark:bg-[#1e1e1e]">
+    <div className="container mx-auto dark:text-white dark:bg-[#1e1e1e]">
       <h1 className="text-3xl font-bold mt-20 mb-6">KNZ UI - Resource Pack Minecraft Bedrock 1.21</h1>
 
       <div className="relative w-full pt-[56.25%] mx-auto"> 
-      <iframe
-        className="absolute top-0 left-0 w-full h-full max-w-3xl max-h-[500px]"
-        width="853"
-        height="480"
-        src={`https://www.youtube.com/embed/Psob_aQhHWI`}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        title="KNZ UI"
-      />
-    </div>
+        <iframe
+          className="absolute top-0 left-0 w-full h-full max-w-3xl max-h-[500px]"
+          width="853"
+          height="480"
+          src="https://www.youtube.com/embed/Psob_aQhHWI"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="KNZ UI"
+        />
+      </div>
 
       <section className="mb-8 mt-8">
         <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
@@ -36,10 +36,15 @@ function KNZPage() {
           <li>KNZ UI dapat diinstal dengan mudah dengan menyalin file resource pack ke folder `resource_packs` di folder Minecraft.</li>
         </ul>
       </section>
-      <Button className="mx-auto mt-10" color="gray" pill><a href="https://pastelink.net/oc5sdjlw">Download KNZ UI (with password)</a></Button>
-      <Button className="mx-auto mt-10" color="gray" pill><a href="https://linkvertise.com/1165508/knz-ui-v100?o=sharing">Download KNZ UI (with ads)</a></Button>
+      
+      <Button className="mx-auto mt-10" color="gray" pill>
+        <a href="https://pastelink.net/oc5sdjlw">Download KNZ UI (with password)</a>
+      </Button>
+      <Button className="mx-auto mt-10" color="gray" pill>
+        <a href="https://linkvertise.com/1165508/knz-ui-v100?o=sharing">Download KNZ UI (with ads)</a>
+      </Button>
     </div>
   );
-};
+}
 
 export default KNZPage;
