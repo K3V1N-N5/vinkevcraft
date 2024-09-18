@@ -23,7 +23,7 @@ function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Hero Section */}
-      <section id="landing" className="relative bg-gradient-to-br from-blue-800 via-purple-700 to-indigo-600 text-white py-20 mt-14 h-screen w-full flex items-center justify-center">
+      <section id="landing" className="relative bg-gradient-to-br from-blue-800 via-purple-700 to-indigo-600 text-white py-20 h-screen w-full flex items-center justify-center">
         {/* Background overlay for added contrast */}
         <div className="absolute inset-0 bg-black opacity-40 dark:opacity-50"></div>
 
