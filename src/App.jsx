@@ -1,5 +1,5 @@
 import vinkev from './assets/vinkev_1.png';
-import { Footer, Button, Drawer, Sidebar, Flowbite, DarkThemeToggle } from "flowbite-react";
+import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
@@ -117,7 +117,7 @@ function App() {
                   href="#landing"
                   src={vinkev}
                   alt="Vinkev Logo"
-                  name="Vinkev Craft"
+                  name="VinKev Craft"
                 />
                 <Footer.LinkGroup>
                   <Footer.Link href="https://discord.com/invite/tMbjtxKfck">Discord</Footer.Link>
@@ -127,7 +127,10 @@ function App() {
                 </Footer.LinkGroup>
               </div>
               <Footer.Divider />
-              <Footer.Copyright href="https://github.com/SkulZOnTheYT" by="SK Store™  All rights reserved." year={2024} />
+              <Footer.Copyright href="#" by="VinKev Craft" year={2024}>
+                © 2024 VinKev Craft. All rights reserved. <br />
+                This site is not affiliated with Mojang Studios.
+              </Footer.Copyright>
             </div>
           </Footer>
         </div>
