@@ -7,7 +7,7 @@ import LandingPage from './LandingPage';
 import Profile from './list';
 import LinktreePage from "./LinkTree";
 import PostPage from './PostPage'; // Import PostPage
-import { posts } from './utils/postsData'; // Import data post
+import { posts } from './postsData'; // Import data post
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
