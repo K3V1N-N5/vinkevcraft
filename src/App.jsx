@@ -78,7 +78,7 @@ function App() {
                       <Sidebar.ItemGroup>
                         <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
                           <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                          <Link to="/post/knz" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link> {/* Dynamic Route to KNZ */}
+                          <Link to="/post/knz-ui" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link> {/* Dynamic Route to KNZ */}
                         </Sidebar.Collapse>
                         <Link to="/link" onClick={handleLinkClick}>
                           <Sidebar.Item icon={HiOutlineExternalLink}>LinkTree</Sidebar.Item>
