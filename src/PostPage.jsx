@@ -1,33 +1,50 @@
 import React from 'react';
 import { Button, Carousel } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { posts } from './utils/postsData'; // Perbarui path ke utils
+import { posts } from './utils/postsData';
 
 function PostPage() {
-  const { postId } = useParams(); // Ambil ID dari URL
-  const post = posts.find(p => p.id === postId); // Cari post berdasarkan ID
+  const { postId } = useParams();
+  const post = posts.find(p => p.id === postId);
 
   // Jika post tidak ditemukan
   if (!post) {
-    return <div>Post tidak ditemukan</div>;
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-4xl font-bold mt-10 mb-6 text-center">Post Tidak Ditemukan</h1>
+        <p className="text-lg mb-8 text-center">Maaf, kami tidak dapat menemukan post yang Anda cari.</p>
+        <Button color="gray" pill>
+          <a href="/" className="text-white">Kembali ke Beranda</a>
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e]">
       <h1 className="text-3xl font-bold mt-10 mb-6 text-center">{post.title}</h1>
 
-      {/* Carousel hanya jika ada carouselImages */}
+      {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
-        <div className="relative w-full max-w-4xl mx-auto mb-8">
-          <Carousel slideInterval={5000}>
+        <div className="relative w-full max-w-4xl mx-auto mb-8 overflow-hidden rounded-lg">
+          <Carousel slideInterval={3000} pauseOnHover>
             {post.carouselImages.map((image, index) => (
-              <img key={index} src={image} alt={`Carousel image ${index + 1}`} className="object-cover w-full h-[400px]" />
+              <div key={index} className="relative w-full h-[500px]">
+                <img
+                  src={image}
+                  alt={`Carousel image ${index + 1}`}
+                  className="object-cover w-full h-full rounded-lg"
+                />
+              </div>
             ))}
           </Carousel>
+          <p className="text-base text-gray-700 dark:text-gray-300 mt-4 text-center">
+            Beberapa gambar terkait project ini.
+          </p>
         </div>
       )}
 
-      {/* Menampilkan Video YouTube hanya jika videoUrl ada */}
+      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl">
           <iframe
@@ -40,7 +57,7 @@ function PostPage() {
         </div>
       )}
 
-      {/* Deskripsi (tanpa bullet points) */}
+      {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-8">
           <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
@@ -48,7 +65,7 @@ function PostPage() {
         </section>
       )}
 
-      {/* Fitur Utama hanya jika ada fitur */}
+      {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-8">
           <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
@@ -60,26 +77,16 @@ function PostPage() {
         </section>
       )}
 
-      {/* Perhatian Section (optional) */}
-      {post.attention && (
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Perhatian</h2>
-          <ul className="list-disc list-inside space-y-2">
-            {post.attention.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       {/* Download Links */}
-      <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
-        {post.downloadLinks.map((link, index) => (
-          <Button key={index} color="gray" pill>
-            <a href={link.url} target="_blank" rel="noopener noreferrer">{link.text}</a>
-          </Button>
-        ))}
-      </div>
+      {post.downloadLinks && post.downloadLinks.length > 0 && (
+        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
+          {post.downloadLinks.map((link, index) => (
+            <Button key={index} color="gray" pill>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">{link.text}</a>
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
