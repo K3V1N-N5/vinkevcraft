@@ -4,7 +4,7 @@ export const data = [
       description: "knz ui is very powerful, this resource pack has many features!!",
       img: "https://i.ytimg.com/vi/Psob_aQhHWI/hq720.jpg",
       category: "Resource Pack",
-      link: "/post/knz", //sesuaikan dengan path link
+      link: "/post/knz-ui", //sesuaikan dengan path link
     },
     {
       title: "Kaisar SMP (UPCOMMING)",
