@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Carousel } from "flowbite-react";
 import { useParams } from 'react-router-dom';
 import { posts } from './utils/postsData';
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi'; // Import Icon untuk navigasi
 
 function PostPage() {
   const { postId } = useParams();
@@ -26,11 +27,11 @@ function PostPage() {
 
       {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
-        <div className="relative w-full max-w-4xl mx-auto mb-8">
+        <div className="relative w-full max-w-3xl mx-auto mb-8">
           <Carousel
             slideInterval={3000}
-            leftControl="Prev"
-            rightControl="Next"
+            leftControl={<HiArrowLeft size={30} className="text-white" />} // Icon untuk navigasi kiri
+            rightControl={<HiArrowRight size={30} className="text-white" />} // Icon untuk navigasi kanan
             className="rounded-lg"
           >
             {post.carouselImages.map((image, index) => (
@@ -38,7 +39,7 @@ function PostPage() {
                 <img
                   src={image}
                   alt={`Carousel image ${index + 1}`}
-                  className="object-cover w-full h-[500px] sm:h-[400px] md:h-[500px] lg:h-[600px] rounded-lg"
+                  className="object-cover w-full h-[300px] sm:h-[400px] rounded-lg"
                 />
               </div>
             ))}
