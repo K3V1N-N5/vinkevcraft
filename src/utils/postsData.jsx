@@ -1,6 +1,6 @@
 export const posts = [
   {
-    id: 'knz',
+    id: 'knz-ui',
     title: 'KNZ UI - Resource Pack Minecraft Bedrock 1.21',
     videoUrl: 'https://www.youtube.com/embed/Psob_aQhHWI',
     description: 'KNZ UI adalah resource pack yang menghadirkan tampilan modern dan fitur-fitur tambahan untuk Minecraft Bedrock.',
