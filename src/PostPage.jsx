@@ -26,14 +26,19 @@ function PostPage() {
 
       {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
-        <div className="relative w-full max-w-4xl mx-auto mb-8 overflow-hidden rounded-lg">
-          <Carousel slideInterval={3000} pauseOnHover>
+        <div className="relative w-full max-w-4xl mx-auto mb-8">
+          <Carousel
+            slideInterval={3000}
+            leftControl="Prev"
+            rightControl="Next"
+            className="rounded-lg"
+          >
             {post.carouselImages.map((image, index) => (
-              <div key={index} className="relative w-full h-[500px]">
+              <div key={index} className="relative w-full">
                 <img
                   src={image}
                   alt={`Carousel image ${index + 1}`}
-                  className="object-cover w-full h-full rounded-lg"
+                  className="object-cover w-full h-[500px] sm:h-[400px] md:h-[500px] lg:h-[600px] rounded-lg"
                 />
               </div>
             ))}
