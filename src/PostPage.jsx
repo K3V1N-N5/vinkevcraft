@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { posts } from './utils/postsData';
+import { posts } from './postsData';
 
 function PostPage() {
   const { postId } = useParams(); // Ambil ID dari URL
