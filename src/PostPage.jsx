@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Carousel } from "flowbite-react";
 import { useParams } from 'react-router-dom';
 import { posts } from './utils/postsData';
-import { HiArrowLeft, HiArrowRight } from 'react-icons/hi'; // Import Icon untuk navigasi
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 function PostPage() {
   const { postId } = useParams();
@@ -25,13 +25,34 @@ function PostPage() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e]">
       <h1 className="text-3xl font-bold mt-10 mb-6 text-center">{post.title}</h1>
 
-      {/* Carousel */}
+      {/* Video Section */}
+      {post.videoUrl && (
+        <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={post.videoUrl}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={post.title}
+          />
+        </div>
+      )}
+
+      {/* Carousel (Ditempatkan di bawah video) */}
       {post.carouselImages && post.carouselImages.length > 0 && (
-        <div className="relative w-full max-w-3xl mx-auto mb-8">
+        <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
             slideInterval={3000}
-            leftControl={<HiArrowLeft size={30} className="text-white" />} // Icon untuk navigasi kiri
-            rightControl={<HiArrowRight size={30} className="text-white" />} // Icon untuk navigasi kanan
+            leftControl={
+              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                <HiArrowLeft size={35} className="text-white" />
+              </div>
+            }
+            rightControl={
+              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                <HiArrowRight size={35} className="text-white" />
+              </div>
+            }
             className="rounded-lg"
           >
             {post.carouselImages.map((image, index) => (
@@ -47,19 +68,6 @@ function PostPage() {
           <p className="text-base text-gray-700 dark:text-gray-300 mt-4 text-center">
             Beberapa gambar terkait project ini.
           </p>
-        </div>
-      )}
-
-      {/* Video Section */}
-      {post.videoUrl && (
-        <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl">
-          <iframe
-            className="absolute top-0 left-0 w-full h-full"
-            src={post.videoUrl}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={post.title}
-          />
         </div>
       )}
 
