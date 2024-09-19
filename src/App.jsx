@@ -7,7 +7,6 @@ import LandingPage from './LandingPage';
 import Profile from './list';
 import LinktreePage from "./LinkTree";
 import PostPage from './PostPage'; // Import PostPage
-import { posts } from './postsData'; // Import data post
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -105,9 +104,7 @@ function App() {
               <Route path="/link" element={<LinktreePage />} />
               
               {/* Dynamic Route for Posts */}
-              {posts.map((post) => (
-                <Route key={post.id} path={`/post/${post.id}`} element={<PostPage />} />
-              ))}
+              <Route path="/post/:postId" element={<PostPage />} /> {/* One route to handle all posts */}
             </Routes>
           </div>
 
