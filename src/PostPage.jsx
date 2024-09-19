@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "flowbite-react";
+import { Button, Carousel } from "flowbite-react";
 import { useParams } from 'react-router-dom';
 import { posts } from './utils/postsData'; // Perbarui path ke utils
 
@@ -16,6 +16,17 @@ function PostPage() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e]">
       <h1 className="text-3xl font-bold mt-10 mb-6 text-center">{post.title}</h1>
 
+      {/* Carousel hanya jika ada carouselImages */}
+      {post.carouselImages && post.carouselImages.length > 0 && (
+        <div className="relative w-full max-w-4xl mx-auto mb-8">
+          <Carousel slideInterval={5000}>
+            {post.carouselImages.map((image, index) => (
+              <img key={index} src={image} alt={`Carousel image ${index + 1}`} className="object-cover w-full h-[400px]" />
+            ))}
+          </Carousel>
+        </div>
+      )}
+
       {/* Menampilkan Video YouTube hanya jika videoUrl ada */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl">
@@ -29,15 +40,25 @@ function PostPage() {
         </div>
       )}
 
-      {/* Fitur Utama */}
-      <section className="mb-8 mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-        <ul className="list-disc list-inside space-y-2">
-          {post.features.map((feature, index) => (
-            <li key={index}>{feature}</li>
-          ))}
-        </ul>
-      </section>
+      {/* Deskripsi (tanpa bullet points) */}
+      {post.description && (
+        <section className="mb-8 mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
+          <p>{post.description}</p>
+        </section>
+      )}
+
+      {/* Fitur Utama hanya jika ada fitur */}
+      {post.features && post.features.length > 0 && (
+        <section className="mb-8 mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2">
+            {post.features.map((feature, index) => (
+              <li key={index}>{feature}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Perhatian Section (optional) */}
       {post.attention && (
