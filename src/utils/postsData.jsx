@@ -5,9 +5,9 @@ export const posts = [
     videoUrl: 'https://www.youtube.com/embed/Psob_aQhHWI',
     description: 'KNZ UI adalah resource pack yang menghadirkan tampilan modern dan fitur-fitur tambahan untuk Minecraft Bedrock.',
     carouselImages: [
-      'https://example.com/image1.jpg',
-      'https://example.com/image2.jpg',
-      'https://example.com/image3.jpg'
+      'https://i.ytimg.com/vi/Psob_aQhHWI/hq720.jpg',
+      'https://raw.githubusercontent.com/SkulZOnTheYT/myWebsite/main/src/assets/Kaisar.jpg'
+      
     ],
     features: [
       'Perubahan kamera cepat: KNZ UI memungkinkan pemain untuk mengubah kamera dengan cepat tanpa harus membuka menu pengaturan.',
