@@ -38,7 +38,7 @@ function PostPage() {
         </div>
       )}
 
-      {/* Carousel (Ditempatkan di bawah video) */}
+      {/* Carousel (Ditempatkan di bawah video, dengan rasio 16:9) */}
       {post.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
@@ -56,11 +56,11 @@ function PostPage() {
             className="rounded-lg"
           >
             {post.carouselImages.map((image, index) => (
-              <div key={index} className="relative w-full">
+              <div key={index} className="relative w-full aspect-video">
                 <img
                   src={image}
                   alt={`Carousel image ${index + 1}`}
-                  className="object-cover w-full h-[300px] sm:h-[400px] rounded-lg"
+                  className="object-cover w-full h-full rounded-lg"
                 />
               </div>
             ))}
