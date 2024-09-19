@@ -1,13 +1,18 @@
-// postsData.js
 export const posts = [
   {
     id: 'knz',
     title: 'KNZ UI - Resource Pack Minecraft Bedrock 1.21',
     videoUrl: 'https://www.youtube.com/embed/Psob_aQhHWI',
     features: [
-      'Perubahan kamera cepat',
-      'Tampilan modern dan rapi',
-      'Fitur tambahan seperti statistik, mode gelap, dan musik'
+      'Perubahan kamera cepat: KNZ UI memungkinkan pemain untuk mengubah kamera dengan cepat tanpa harus membuka menu pengaturan.',
+      'Tampilan yang lebih baik: KNZ UI memiliki tampilan yang lebih modern dan rapi dibandingkan dengan tampilan default Minecraft.',
+      'Fitur tambahan: KNZ UI menambahkan berbagai fitur tambahan, seperti tampilan statistik, mode gelap, dan kemampuan untuk mengganti musik.'
+    ],
+    attention: [
+      'KNZ UI adalah resource pack yang gratis dan mudah digunakan.',
+      'KNZ UI kompatibel dengan Minecraft Bedrock Edition versi 1.21 dan lebih tinggi.',
+      'KNZ UI dapat diunduh dari situs web resmi atau dari beberapa situs web pihak ketiga.',
+      'KNZ UI dapat diinstal dengan mudah dengan menyalin file resource pack ke folder `resource_packs` di folder Minecraft.'
     ],
     downloadLinks: [
       { text: 'Download KNZ UI (with password)', url: 'https://pastelink.net/oc5sdjlw' },
@@ -17,7 +22,6 @@ export const posts = [
   {
     id: 'post-lain',
     title: 'Post Lain - Contoh',
-    videoUrl: 'https://www.youtube.com/embed/contoh_video',
     features: ['Feature 1', 'Feature 2', 'Feature 3'],
     downloadLinks: [
       { text: 'Download Post Lain', url: 'https://example.com' }
