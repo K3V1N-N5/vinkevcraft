@@ -3,7 +3,7 @@ import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-rea
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
-import Loading from './components/Loading'; // Import komponen Loading
+import Loading from './utils/Loading'; // Import komponen Loading
 
 // Lazy loading untuk halaman-halaman
 const LandingPage = lazy(() => import('./LandingPage'));
