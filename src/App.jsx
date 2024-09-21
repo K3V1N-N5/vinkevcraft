@@ -47,7 +47,7 @@ function App() {
     <Router>
       <Flowbite>
         {/* Suspense untuk menampilkan Loading saat komponen sedang dimuat */}
-        <Suspense fallback={<Loading isDarkMode={isDarkMode} />}>
+        <Suspense fallback={<Loading />}>
           <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'}`}>
             
             <Routes>
