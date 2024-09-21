@@ -58,9 +58,10 @@ function ListProject() {
   }, [searchTerm, selectedCategory]);
 
   return (
-    <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white min-h-screen">
-      <div className="bg-white dark:bg-[#1e1e1e] pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl"> 
-        <div className="bg-white dark:bg-[#1e1e1e] flex mt-10 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2"> 
+    <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white min-h-screen flex flex-col">
+      <div className="pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl">
+        {/* Navigasi dan Search */}
+        <div className="flex mt-4 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2"> {/* Ganti mt-10 ke mt-4 untuk jarak */}
           <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded" onClick={() => navigate('/')}>Back</button>
           
           <input
@@ -68,7 +69,7 @@ function ListProject() {
             placeholder="Search..."
             value={searchTerm}
             onChange={handleSearch}
-            className="px-2 py-1 w-full mx-2 bg-gray-100 dark:bg-gray-900 border border-gray-700 rounded text-black dark:text-white"
+            className="px-2 py-1 w-full mx-2 bg-gray-100 dark:bg-gray-900 border border-gray-700 rounded text-white"
           />
           <button 
             className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded"
@@ -79,6 +80,7 @@ function ListProject() {
           </button>
         </div>
 
+        {/* Dropdown Filter */}
         {filterVisible && (
           <div className="flex flex-col absolute top-25 right-4 bg-gray-100 dark:bg-gray-800 p-2 rounded shadow-md z-20" ref={dropdownRef}>
             <label className="mb-1">
@@ -114,6 +116,7 @@ function ListProject() {
           </div>
         )}
 
+        {/* Loading Spinner */}
         {isLoading ? (
           <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
