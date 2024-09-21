@@ -123,11 +123,12 @@ function App() {
               </div>
               <Footer.Divider />
 
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                <Footer.Copyright href="#" by="VinKev Craft.  All rights reserved." year={2024} />
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                <Footer.Copyright href="#" by="VinKev Craft. All rights reserved." year={2024} />
               </div>
 
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {/* Adjust the margin and text size for a compact look */}
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 This site is not affiliated with Mojang Studios.
               </p>
             </div>
