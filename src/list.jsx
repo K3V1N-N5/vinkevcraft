@@ -59,7 +59,7 @@ function ListProject() {
 
   return (
     <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white min-h-screen">
-      <div className="pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl"> 
+      <div className="bg-white dark:bg-[#1e1e1e] pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl"> 
         <div className="flex mt-10 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2"> 
           <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded" onClick={() => navigate('/')}>Back</button>
           
