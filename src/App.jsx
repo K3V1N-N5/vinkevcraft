@@ -14,20 +14,19 @@ const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Langsung ambil preferensi dari localStorage saat inisialisasi state
-    return localStorage.getItem('isDarkMode') === 'true';
-  });
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Terapkan class 'dark' secara dinamis setiap kali isDarkMode berubah
+  // Check local storage for theme preference
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme);
     }
-    // Simpan preferensi ke localStorage
-    localStorage.setItem('isDarkMode', isDarkMode);
+  }, []);
+
+  // Save theme preference to local storage
+  useEffect(() => {
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
   const toggleDrawer = () => {
@@ -49,7 +48,7 @@ function App() {
       <Flowbite>
         {/* Suspense untuk menampilkan Loading saat komponen sedang dimuat */}
         <Suspense fallback={<Loading />}>
-          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden`}>
+          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'}`}>
             
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -59,7 +58,7 @@ function App() {
               <Route path="/post/:postId" element={<PostPage />} />
             </Routes>
 
-            {/* Navigasi */}
+            {/* Bagian navigasi dan footer akan hilang saat loading dan hanya muncul ketika halaman sudah dimuat */}
             <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
               <div className="px-4 py-3 lg:px-5 lg:pl-3">
                 <div className="flex items-center justify-between">
@@ -94,7 +93,6 @@ function App() {
               </div>
             </nav>
 
-            {/* Drawer */}
             <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
               <Drawer.Items>
                 <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
@@ -122,11 +120,10 @@ function App() {
               </Drawer.Items>
             </Drawer>
 
-            {/* Footer */}
             <Footer container className="bg-slate-200">
               <div className="w-full text-center">
                 <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
-                  <Footer.Brand href="#landing" src={vinkev} alt="VinKev Logo" name="VinKev Craft" />
+                  <Footer.Brand href="#landing" src={vinkev} alt="Vinkev Logo" name="VinKev Craft" />
                   <Footer.LinkGroup>
                     <Footer.Link href="https://discord.com/invite/tMbjtxKfck">Discord</Footer.Link>
                     <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z">WhatsApp</Footer.Link>
