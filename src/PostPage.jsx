@@ -1,24 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Carousel } from "flowbite-react";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { posts } from './utils/postsData';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 function PostPage() {
   const { postId } = useParams();
   const post = posts.find(p => p.id === postId);
+  const navigate = useNavigate();
 
-  // Jika post tidak ditemukan
+  // Jika post tidak ditemukan, arahkan ke halaman NotFound
+  useEffect(() => {
+    if (!post) {
+      navigate('*'); // Ganti '/notfound' dengan rute halaman NotFound kamu
+    }
+  }, [post, navigate]);
+
   if (!post) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-4xl font-bold mt-10 mb-6 text-center">Post Tidak Ditemukan</h1>
-        <p className="text-lg mb-8 text-center">Maaf, kami tidak dapat menemukan post yang Anda cari.</p>
-        <Button color="gray" pill>
-          <a href="/" className="text-white">Kembali ke Beranda</a>
-        </Button>
-      </div>
-    );
+    return null; // Pastikan tidak merender apa pun ketika post tidak ditemukan
   }
 
   return (
