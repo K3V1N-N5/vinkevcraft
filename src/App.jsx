@@ -124,7 +124,7 @@ function App() {
               <Footer.Divider />
 
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                <Footer.Copyright href="#" by="VinKev Craft" year={2024} /> All rights reserved.
+                <Footer.Copyright href="#" by="VinKev Craft.  All rights reserved." year={2024} />
               </div>
 
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
