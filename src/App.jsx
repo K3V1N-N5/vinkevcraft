@@ -28,12 +28,6 @@ function App() {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
-
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
   };
@@ -47,6 +41,12 @@ function App() {
       closeDrawer();
     }
   };
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Waktu loading
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   return (
     <Router>
