@@ -1,33 +1,27 @@
-*,*::before,*::after{
-  margin:0;
-  padding:0;
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-body{
- background-color:#1b1b1b;
-}
-
-.no-transition {
-  transition: none !important;
-}
-
-.App{
-  width:100vw;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
 body {
+  background-color: #1b1b1b;
   margin: 0;
+  min-height: 100vh; /* Pastikan body memenuhi seluruh tinggi viewport */
+}
+
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
 }
 
 .min-h-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Ganti center dengan flex-start */
   min-height: 100vh;
 }
