@@ -49,11 +49,12 @@ function App() {
   useEffect(() => {
     // Set loading ke true setiap kali lokasi berubah
     setLoading(true);
-    const timeout = setTimeout(() => {
-      setLoading(false); // Set loading ke false setelah beberapa detik (atau setelah halaman selesai dimuat)
-    }, 500); // Durasi loading (sesuaikan dengan waktu yang diinginkan)
 
-    return () => clearTimeout(timeout); // Membersihkan timeout ketika komponen unmount atau ketika rute berubah
+    const handleLoading = setTimeout(() => {
+      setLoading(false); // Set loading ke false setelah halaman selesai dimuat
+    }, 1000); // Tambahkan waktu yang cukup untuk memuat halaman (1 detik)
+
+    return () => clearTimeout(handleLoading); // Bersihkan timeout ketika komponen unmount
   }, [location]);
 
   return (
