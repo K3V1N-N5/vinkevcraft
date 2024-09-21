@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
 import Profile from './list';
@@ -12,10 +12,8 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isLoading, setIsLoading] = useState(false); // Ubah isLoading ke false
-  const location = useLocation(); // Menggunakan useLocation untuk deteksi perubahan rute
 
-  // Cek preferensi tema dari localStorage
+  // Check local storage for theme preference
   useEffect(() => {
     const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
     if (savedTheme !== null) {
@@ -23,19 +21,10 @@ function App() {
     }
   }, []);
 
-  // Simpan preferensi tema ke localStorage
+  // Save theme preference to local storage
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
-
-  // Spinner akan muncul sebentar setiap kali rute berubah
-  useEffect(() => {
-    setIsLoading(true); // Mulai loading ketika rute berubah
-    const timer = setTimeout(() => {
-      setIsLoading(false); // Stop loading setelah 500ms
-    }, 500); // Setel durasi loading
-    return () => clearTimeout(timer); // Bersihkan timer saat komponen di-unmount
-  }, [location]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -116,14 +105,6 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
-          {/* Spinner hanya saat loading */}
-          {isLoading && (
-            <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
-            </div>
-          )}
-
-          {/* Halaman konten */}
           <div className="min-h-screen pt-[64px]">
             <Routes>
               <Route path="/" element={<LandingPage />} />
