@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
-import { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { useState, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 
@@ -14,30 +14,34 @@ const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
-  const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
-  const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); // Ambil preferensi dari localStorage
+    return savedTheme !== null ? savedTheme : true; // Default: dark mode
+  });
+  const [loading, setLoading] = useState(false); // Untuk memantau loading halaman
 
-  // Check local storage for theme preference
-  useEffect(() => {
-    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); 
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme); // Mengambil preferensi tema dari localStorage
-    }
-  }, []);
+  // Custom hook untuk memantau pergantian rute dan menampilkan loading
+  const usePageLoader = () => {
+    const location = useLocation(); // Memantau perubahan path
 
-  // Save theme preference to local storage
-  useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
+    useState(() => {
+      // Set loading ke true setiap kali rute berubah
+      setLoading(true);
+
+      const timer = setTimeout(() => {
+        setLoading(false); // Set loading ke false setelah halaman selesai dimuat
+      }, 500); // Set waktu loading selama 500ms (bisa disesuaikan)
+
+      return () => clearTimeout(timer); // Bersihkan timer saat unmount
+    }, [location.pathname]); // Dipicu saat path berubah
+  };
+
+  usePageLoader(); // Memanggil custom hook untuk memantau perubahan rute
+
+  // Menyimpan preferensi tema ke localStorage setiap kali diubah
+  useState(() => {
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
-
-  // Mengatur loading screen saat aplikasi pertama kali di-refresh
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false); // Setelah beberapa detik, set loading ke false
-    }, 1000); // Set waktu loading selama 1 detik (sesuaikan sesuai kebutuhan)
-    
-    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
-  }, []);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
