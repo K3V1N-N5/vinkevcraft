@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 
@@ -17,8 +17,6 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
 
-  const location = useLocation(); // Gunakan untuk mendeteksi perubahan rute (halaman)
-
   // Check local storage for theme preference
   useEffect(() => {
     const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); 
@@ -32,15 +30,14 @@ function App() {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
   }, [isDarkMode]);
 
-  // Mengatur loading screen saat aplikasi pertama kali di-refresh dan setiap kali halaman berubah
+  // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
-    setLoading(true); // Tampilkan loading saat halaman berubah
     const timer = setTimeout(() => {
       setLoading(false); // Setelah beberapa detik, set loading ke false
     }, 1000); // Set waktu loading selama 1 detik (sesuaikan sesuai kebutuhan)
     
-    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount atau saat rute berubah
-  }, [location]); // Gunakan useEffect saat lokasi berubah (halaman baru)
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
+  }, []);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
