@@ -1,5 +1,5 @@
 import vinkev from './assets/vinkev_1.png';
-import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar, Spinner } from "flowbite-react";
+import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
@@ -12,7 +12,8 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const location = useLocation();
 
   // Check local storage for theme preference
@@ -28,12 +29,13 @@ function App() {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Handle route change
+  // Loading spinner ketika ganti rute
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000); // Simulate loading time
+      setIsLoading(false);
+    }, 1000); // Set waktu loading
+
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -58,6 +60,7 @@ function App() {
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
+
                 <div className="flex items-center">
                   <div
                     onClick={toggleDrawer}
@@ -116,17 +119,17 @@ function App() {
           </Drawer>
 
           <div className="min-h-screen pt-[64px]">
-            {loading ? (
-              <div className="fixed inset-0 flex justify-center items-center bg-gray-200 dark:bg-black bg-opacity-70 z-30">
-                <Spinner aria-label="Loading" className="animate-spin h-32 w-32 border-b-2 border-gray-900 dark:border-white" />
+            {isLoading ? (
+              <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
               </div>
             ) : (
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/list" element={<Profile />} />
                 <Route path="/link" element={<LinktreePage />} />
-                <Route path="/post/:postId" element={<PostPage />} />
                 <Route path="*" element={<NotFound />} />
+                <Route path="/post/:postId" element={<PostPage />} />
               </Routes>
             )}
           </div>
