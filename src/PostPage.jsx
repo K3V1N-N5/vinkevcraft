@@ -21,8 +21,8 @@ function PostPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e]">
-      <h1 className="text-3xl font-bold mt-10 mb-6 text-center">{post.title}</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen flex flex-col justify-center">
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center">{post.title}</h1>
 
       {/* Video Section */}
       {post.videoUrl && (
@@ -37,7 +37,7 @@ function PostPage() {
         </div>
       )}
 
-      {/* Carousel (Ditempatkan di bawah video, dengan rasio 16:9) */}
+      {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
@@ -72,7 +72,7 @@ function PostPage() {
 
       {/* Deskripsi */}
       {post.description && (
-        <section className="mb-8 mt-8">
+        <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
           <p>{post.description}</p>
         </section>
@@ -80,7 +80,7 @@ function PostPage() {
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
-        <section className="mb-8 mt-8">
+        <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
           <ul className="list-disc list-inside space-y-2">
             {post.features.map((feature, index) => (
