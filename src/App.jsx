@@ -33,7 +33,9 @@ function App() {
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 1000); // Simulate loading time
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000); // Simulate loading time
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -96,22 +98,22 @@ function App() {
         </Drawer.Items>
       </Drawer>
 
-      {/* Loading Spinner */}
-      {loading ? (
-        <div className="fixed inset-0 flex justify-center items-center bg-gray-200 dark:bg-black">
-          <Spinner aria-label="Loading" />
-        </div>
-      ) : (
-        <div className="min-h-screen pt-[64px]">
+      {/* Main content */}
+      <div className="min-h-screen pt-[64px]">
+        {loading ? (
+          <div className="fixed inset-0 flex justify-center items-center bg-gray-200 dark:bg-black">
+            <Spinner aria-label="Loading" />
+          </div>
+        ) : (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/list" element={<Profile />} />
             <Route path="/link" element={<LinktreePage />} />
-            <Route path="*" element={<NotFound />} />
             <Route path="/post/:postId" element={<PostPage />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Footer */}
       <Footer container className="bg-slate-200">
