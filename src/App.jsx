@@ -27,6 +27,13 @@ function App() {
   // Save theme preference to local storage
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+
+    // Update body class for global dark mode
+    if (isDarkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
   }, [isDarkMode]);
 
   const toggleDrawer = () => {
@@ -47,7 +54,7 @@ function App() {
     <Router>
       <Flowbite>
         {/* Suspense untuk menampilkan Loading saat komponen sedang dimuat */}
-        <Suspense fallback={<Loading isDarkMode={isDarkMode} />}>
+        <Suspense fallback={<Loading />}>
           <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'}`}>
             
             <Routes>
