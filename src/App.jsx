@@ -12,6 +12,26 @@ const LinktreePage = lazy(() => import('./LinkTree'));
 const PostPage = lazy(() => import('./PostPage'));
 const NotFound = lazy(() => import('./NotFound'));
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1 className="text-red-500">Something went wrong!</h1>;
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -126,15 +146,17 @@ function App() {
 
         {/* Konten Utama */}
         <div className="pt-16"> {/* Menambahkan padding-top agar konten tidak tertutup navbar */}
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/list" element={<Profile />} />
-              <Route path="/link" element={<LinktreePage />} />
-              <Route path="*" element={<NotFound />} />
-              <Route path="/post/:postId" element={<PostPage />} />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/list" element={<Profile />} />
+                <Route path="/link" element={<LinktreePage />} />
+                <Route path="*" element={<NotFound />} />
+                <Route path="/post/:postId" element={<PostPage />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
         {/* Footer */}
