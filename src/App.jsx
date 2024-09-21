@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
 import Profile from './list';
@@ -12,8 +12,6 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const location = useLocation();
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -42,12 +40,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 1000); // Waktu loading
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
-
   return (
     <Router>
       <Flowbite>
@@ -55,6 +47,7 @@ function App() {
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
+
                 <div className="flex items-center">
                   <div
                     onClick={toggleDrawer}
@@ -113,19 +106,13 @@ function App() {
           </Drawer>
 
           <div className="min-h-screen pt-[64px]">
-            {isLoading ? (
-              <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
-              </div>
-            ) : (
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/list" element={<Profile />} />
-                <Route path="/link" element={<LinktreePage />} />
-                <Route path="*" element={<NotFound />} />
-                <Route path="/post/:postId" element={<PostPage />} />
-              </Routes>
-            )}
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/list" element={<Profile />} />
+              <Route path="/link" element={<LinktreePage />} />
+              <Route path="*" element={<NotFound />} />
+              <Route path="/post/:postId" element={<PostPage />} />
+            </Routes>
           </div>
 
           <Footer container className="bg-slate-200">
