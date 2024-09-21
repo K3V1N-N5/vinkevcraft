@@ -5,7 +5,7 @@ import { data } from './utils/listdata';
 function ListProject() {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-  const filterButtonRef = useRef(null);  // Reference untuk tombol filter
+  const filterButtonRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filterVisible, setFilterVisible] = useState(false);
@@ -26,12 +26,11 @@ function ListProject() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Cek apakah klik berada di luar dropdown dan tombol filter
       if (
         dropdownRef.current && !dropdownRef.current.contains(event.target) &&
         filterButtonRef.current && !filterButtonRef.current.contains(event.target)
       ) {
-        setFilterVisible(false);  // Menutup dropdown jika klik di luar
+        setFilterVisible(false);
       }
     };
 
@@ -59,10 +58,10 @@ function ListProject() {
   }, [searchTerm, selectedCategory]);
 
   return (
-    <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white">
-      <div className="pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl"> 
+    <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white min-h-screen">
+      <div className="px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl"> 
         {/* Navigasi dan Search */}
-        <div className="flex mt-10 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2"> 
+        <div className="flex mt-10 justify-between items-center mb-5 border-b border-gray-700 pb-2"> 
           <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded" onClick={() => navigate('/')}>Back</button>
           
           <input
@@ -75,7 +74,7 @@ function ListProject() {
           <button 
             className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded"
             onClick={toggleFilter}
-            ref={filterButtonRef}  // Tambahkan reference ke tombol filter
+            ref={filterButtonRef}
           >
             Filter
           </button>
@@ -123,7 +122,7 @@ function ListProject() {
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mt-8"> {/* Grid Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mt-8"> 
             {filteredData.map((item, index) => (
               <Link
                 key={index}
