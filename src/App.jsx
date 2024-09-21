@@ -1,9 +1,8 @@
-import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
-import Loading from './utils/Loading'; // Import komponen Loading
+import Loading from './utils/Loading'; // Komponen loading
 
 // Lazy loading untuk halaman-halaman
 const LandingPage = lazy(() => import('./LandingPage'));
@@ -12,30 +11,12 @@ const LinktreePage = lazy(() => import('./LinkTree'));
 const PostPage = lazy(() => import('./PostPage'));
 const NotFound = lazy(() => import('./NotFound'));
 
-// Error Boundary Component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <h1 className="text-red-500">Something went wrong!</h1>;
-    }
-
-    return this.props.children;
-  }
-}
-
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [loading, setLoading] = useState(false); // Untuk mengatur loading setiap kali berpindah halaman
+  const [loading, setLoading] = useState(false); // Tambahkan state untuk loading
+
+  const location = useLocation(); // Ambil lokasi saat ini untuk mendeteksi perubahan rute
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -64,25 +45,39 @@ function App() {
     }
   };
 
-  // Mengelola loading saat rute berubah
-  const location = useLocation();
-
+  // Efek ketika rute berubah
   useEffect(() => {
-    setLoading(true); // Tampilkan loading saat rute berubah
-    setTimeout(() => {
-      setLoading(false); // Sembunyikan loading setelah 500ms (setelah halaman baru dimuat)
-    }, 500);
+    // Set loading ke true setiap kali lokasi berubah
+    setLoading(true);
+    const timeout = setTimeout(() => {
+      setLoading(false); // Set loading ke false setelah beberapa detik (atau setelah halaman selesai dimuat)
+    }, 500); // Durasi loading (sesuaikan dengan waktu yang diinginkan)
+
+    return () => clearTimeout(timeout); // Membersihkan timeout ketika komponen unmount atau ketika rute berubah
   }, [location]);
 
   return (
     <Flowbite>
-      {/* Suspense untuk menampilkan Loading saat komponen sedang dimuat */}
-      <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'}`}>
-        {/* Navbar */}
-        <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+      <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`}>
+        
+        {/* Tampilkan loading jika state loading adalah true */}
+        {loading ? (
+          <Loading /> // Tampilkan komponen loading saat loading = true
+        ) : (
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/list" element={<Profile />} />
+              <Route path="/link" element={<LinktreePage />} />
+              <Route path="*" element={<NotFound />} />
+              <Route path="/post/:postId" element={<PostPage />} />
+            </Routes>
+          </Suspense>
+        )}
+
+        <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-16">
           <div className="px-4 py-3 lg:px-5 lg:pl-3">
             <div className="flex items-center justify-between">
-
               <div className="flex items-center">
                 <div
                   onClick={toggleDrawer}
@@ -113,7 +108,6 @@ function App() {
           </div>
         </nav>
 
-        {/* Drawer */}
         <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
           <Drawer.Items>
             <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
@@ -141,25 +135,6 @@ function App() {
           </Drawer.Items>
         </Drawer>
 
-        {/* Loading */}
-        {loading && <Loading />}
-
-        {/* Konten Utama */}
-        <div className="pt-16"> {/* Menambahkan padding-top agar konten tidak tertutup navbar */}
-          <ErrorBoundary>
-            <Suspense fallback={<Loading />}>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/list" element={<Profile />} />
-                <Route path="/link" element={<LinktreePage />} />
-                <Route path="*" element={<NotFound />} />
-                <Route path="/post/:postId" element={<PostPage />} />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-
-        {/* Footer */}
         <Footer container className="bg-slate-200">
           <div className="w-full text-center">
             <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
