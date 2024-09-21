@@ -6,56 +6,49 @@ import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationC
 import LandingPage from './LandingPage'; 
 import Profile from './list';
 import LinktreePage from "./LinkTree";
-import PostPage from './PostPage'; // Import PostPage
+import PostPage from './PostPage';
 import NotFound from './NotFound';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Load theme from localStorage when app loads
+  // Check local storage for theme preference
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
+    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme);
     }
   }, []);
 
-  // Toggle drawer open/close state
+  // Save theme preference to local storage
+  useEffect(() => {
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
+
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
   };
 
-  // Close drawer
   const closeDrawer = () => {
     setIsOpen(false);
   };
 
-  // Handler for navigation link click
   const handleLinkClick = () => {
     if (isOpen) {
       closeDrawer();
     }
   };
 
-  // Toggle theme mode
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('theme', !isDarkMode ? 'dark' : 'light');
-  };
-
   return (
     <Router>
-      <Flowbite theme={{ dark: isDarkMode }}>
-        {/* Navbar */}
-        <div className={`overflow-x-hidden ${isDarkMode ? 'dark:bg-[#1e1e1e]' : ''}`}>
+      <Flowbite>
+        <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'}`}>
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
 
-                {/* Logo and Text */}
                 <div className="flex items-center">
-                  {/* Button drawer */}
                   <div
                     onClick={toggleDrawer}
                     className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer"
@@ -69,36 +62,32 @@ function App() {
                     )}
                   </div>
 
-                  {/* Logo and Title */}
                   <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5" onClick={handleLinkClick}>
                     <img src={vinkev} className="h-8" alt="VinKev Logo" />
                     <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                   </Link>
                 </div>
 
-                {/* Dark Mode Toggle */}
                 <div className="flex items-center space-x-3">
                   <DarkThemeToggle
+                    onClick={() => setIsDarkMode(prev => !prev)}
                     className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none"
-                    onClick={toggleTheme} // Add theme toggle functionality
-                    checked={isDarkMode} // Sync with the state
                   />
                 </div>
               </div>
             </div>
           </nav>
 
-          {/* Drawer for Sidebar */}
           <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
             <Drawer.Items>
-              <Sidebar aria-label="Sidebar with multi-level dropdown example" className="[&>div]:bg-transparent [&>div]:p-0">
+              <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                 <div className="flex h-full flex-col justify-between py-2">
                   <div>
                     <Sidebar.Items>
                       <Sidebar.ItemGroup>
                         <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
                           <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                          <Link to="/post/knz-ui" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link> {/* Dynamic Route to KNZ */}
+                          <Link to="/post/knz-ui" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
                         </Sidebar.Collapse>
                         <Link to="/link" onClick={handleLinkClick}>
                           <Sidebar.Item icon={HiOutlineExternalLink}>LinkTree</Sidebar.Item>
@@ -116,19 +105,16 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
-          {/* Main content */}
-          <div className="min-h-screen pt-[64px]"> {/* Added padding-top to avoid overlap with navbar */}
+          <div className="min-h-screen pt-[64px]">
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
               <Route path="/link" element={<LinktreePage />} />
               <Route path="*" element={<NotFound />} />
-              {/* Dynamic Route for Posts */}
-              <Route path="/post/:postId" element={<PostPage />} /> {/* One route to handle all posts */}
+              <Route path="/post/:postId" element={<PostPage />} />
             </Routes>
           </div>
 
-          {/* Footer */}
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
               <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
@@ -141,12 +127,9 @@ function App() {
                 </Footer.LinkGroup>
               </div>
               <Footer.Divider />
-
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 <Footer.Copyright href="#" by="VinKev Craft. All rights reserved." year={2024} />
               </div>
-
-              {/* Adjust the margin and text size for a compact look */}
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 This site is not affiliated with Mojang Studios.
               </p>
