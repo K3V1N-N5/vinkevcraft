@@ -110,27 +110,44 @@ function App() {
           </div>
 
           {/* Footer */}
-          <Footer container className="bg-slate-200">
-            <div className="w-full text-center">
-              <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
-                <Footer.Brand href="#landing" src={vinkev} alt="Vinkev Logo" name="VinKev Craft" />
-                <Footer.LinkGroup>
-                  <Footer.Link href="https://discord.com/invite/tMbjtxKfck">Discord</Footer.Link>
-                  <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z">WhatsApp</Footer.Link>
-                  <Footer.Link href="https://www.tiktok.com/@vinkevcraft">Tiktok</Footer.Link>
-                  <Footer.Link href="https://www.youtube.com/@vinkevcraft">Youtube</Footer.Link>
+          <Footer container className="bg-gradient-to-r from-gray-700 via-gray-900 to-black text-white py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-wrap items-center justify-between space-y-4 sm:space-y-0">
+                {/* Footer Logo and Name */}
+                <Footer.Brand href="#landing" src={vinkev} alt="VinKev Logo" name="VinKev Craft" className="text-white" />
+
+                {/* Social Media Links */}
+                <Footer.LinkGroup className="flex items-center space-x-4">
+                  <Footer.Link href="https://discord.com/invite/tMbjtxKfck" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
+                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
+                    <span>Discord</span>
+                  </Footer.Link>
+                  <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
+                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
+                    <span>WhatsApp</span>
+                  </Footer.Link>
+                  <Footer.Link href="https://www.tiktok.com/@vinkevcraft" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
+                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
+                    <span>Tiktok</span>
+                  </Footer.Link>
+                  <Footer.Link href="https://www.youtube.com/@vinkevcraft" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
+                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
+                    <span>Youtube</span>
+                  </Footer.Link>
                 </Footer.LinkGroup>
               </div>
-              <Footer.Divider />
+              
+              <Footer.Divider className="my-4 border-gray-600" />
 
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                <Footer.Copyright href="#" by="VinKev Craft. All rights reserved." year={2024} />
+              {/* Copyright and Disclaimer */}
+              <div className="text-center text-sm text-gray-400">
+                <div>
+                  <Footer.Copyright href="#" by="VinKev Craft. All rights reserved." year={2024} />
+                </div>
+                <p className="mt-1">
+                  This site is not affiliated with Mojang Studios.
+                </p>
               </div>
-
-              {/* Adjust the margin and text size for a compact look */}
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                This site is not affiliated with Mojang Studios.
-              </p>
             </div>
           </Footer>
         </div>
