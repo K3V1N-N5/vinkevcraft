@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'; // Gunakan useLocation
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
 import Profile from './list';
@@ -12,6 +12,8 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Tambahkan state untuk loading
+  const location = useLocation(); // Digunakan untuk mendeteksi perubahan rute
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -25,6 +27,15 @@ function App() {
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
+
+  // Efek ketika rute berubah
+  useEffect(() => {
+    setIsLoading(true); // Tampilkan spinner ketika rute berubah
+    const timer = setTimeout(() => {
+      setIsLoading(false); // Sembunyikan spinner setelah 500ms
+    }, 500);
+    return () => clearTimeout(timer); // Bersihkan timer
+  }, [location]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -105,14 +116,24 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
+          {/* Loading Spinner */}
+          {isLoading && (
+            <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
+            </div>
+          )}
+
+          {/* Content tetap dirender */}
           <div className="min-h-screen pt-[64px]">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/list" element={<Profile />} />
-              <Route path="/link" element={<LinktreePage />} />
-              <Route path="*" element={<NotFound />} />
-              <Route path="/post/:postId" element={<PostPage />} />
-            </Routes>
+            {!isLoading && (
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/list" element={<Profile />} />
+                <Route path="/link" element={<LinktreePage />} />
+                <Route path="*" element={<NotFound />} />
+                <Route path="/post/:postId" element={<PostPage />} />
+              </Routes>
+            )}
           </div>
 
           <Footer container className="bg-slate-200">
