@@ -28,11 +28,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
 
-    // Update body class for global dark mode
+    // Update html class for global dark mode
     if (isDarkMode) {
-      document.body.classList.add('dark');
+      document.documentElement.classList.add('dark');
     } else {
-      document.body.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
 
