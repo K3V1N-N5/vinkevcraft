@@ -33,7 +33,7 @@ function App() {
     <Router>
       <Flowbite>
         {/* Navbar */}
-        <div className="dark:bg-[#1e1e1e] overflow-x-hidden">
+        <div className="dark:bg-[#1e1e1e] bg-white overflow-x-hidden">
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
@@ -98,7 +98,7 @@ function App() {
           </Drawer>
 
           {/* Main content */}
-          <div className="min-h-screen pt-[64px]"> {/* Added padding-top to avoid overlap with navbar */}
+          <div className="min-h-screen pt-[64px] bg-white dark:bg-[#1e1e1e]"> {/* Added padding-top to avoid overlap with navbar */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
@@ -110,7 +110,7 @@ function App() {
           </div>
 
           {/* Footer */}
-          <Footer container className="bg-gradient-to-r from-gray-700 via-gray-900 to-black text-white py-6">
+          <Footer container className="bg-gradient-to-r from-gray-700 via-gray-900 to-black text-white py-6 dark:bg-[#1e1e1e]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex flex-wrap items-center justify-between space-y-4 sm:space-y-0">
                 {/* Footer Logo and Name */}
@@ -118,21 +118,17 @@ function App() {
 
                 {/* Social Media Links */}
                 <Footer.LinkGroup className="flex items-center space-x-4">
-                  <Footer.Link href="https://discord.com/invite/tMbjtxKfck" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
-                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
-                    <span>Discord</span>
+                  <Footer.Link href="https://discord.com/invite/tMbjtxKfck" className="hover:text-gray-300 transition-colors">
+                    Discord
                   </Footer.Link>
-                  <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
-                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
-                    <span>WhatsApp</span>
+                  <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z" className="hover:text-gray-300 transition-colors">
+                    WhatsApp
                   </Footer.Link>
-                  <Footer.Link href="https://www.tiktok.com/@vinkevcraft" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
-                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
-                    <span>Tiktok</span>
+                  <Footer.Link href="https://www.tiktok.com/@vinkevcraft" className="hover:text-gray-300 transition-colors">
+                    Tiktok
                   </Footer.Link>
-                  <Footer.Link href="https://www.youtube.com/@vinkevcraft" className="flex items-center space-x-2 hover:text-gray-300 transition-colors">
-                    <HiOutlineExternalLink className="w-5 h-5" /> {/* Icon */}
-                    <span>Youtube</span>
+                  <Footer.Link href="https://www.youtube.com/@vinkevcraft" className="hover:text-gray-300 transition-colors">
+                    Youtube
                   </Footer.Link>
                 </Footer.LinkGroup>
               </div>
