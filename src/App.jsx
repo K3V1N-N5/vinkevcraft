@@ -1,40 +1,54 @@
+import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
+import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
+import { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
+import Loading from './utils/Loading'; // Import komponen Loading
+
+// Lazy loading untuk halaman-halaman
+const LandingPage = lazy(() => import('./LandingPage'));
+const Profile = lazy(() => import('./list'));
+const LinktreePage = lazy(() => import('./LinkTree'));
+const PostPage = lazy(() => import('./PostPage'));
+const NotFound = lazy(() => import('./NotFound'));
+
 function App() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
+  const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
 
   // Check local storage for theme preference
   useEffect(() => {
-    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
+    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); 
     if (savedTheme !== null) {
-      setIsDarkMode(savedTheme);
+      setIsDarkMode(savedTheme); // Mengambil preferensi tema dari localStorage
     }
   }, []);
 
   // Save theme preference to local storage
   useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
   }, [isDarkMode]);
 
   const toggleDrawer = () => {
-    setIsOpen(!isOpen);
+    setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
   };
 
   const closeDrawer = () => {
-    setIsOpen(false);
+    setIsOpen(false); // Menutup Drawer ketika dibutuhkan
   };
 
   const handleLinkClick = () => {
     if (isOpen) {
-      closeDrawer();
+      closeDrawer(); // Menutup Drawer ketika klik pada salah satu link
     }
   };
 
   return (
     <Router>
       <Flowbite>
-        <Suspense fallback={<Loading />}>
-          {/* Tambahkan padding top untuk menghindari konten tertutupi oleh navbar */}
-          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`}>
+        <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
+          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`}> {/* Padding top untuk menghindari navbar */}
+            {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
@@ -43,9 +57,11 @@ function App() {
               <Route path="/post/:postId" element={<PostPage />} />
             </Routes>
 
+            {/* Navbar */}
             <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-16">
               <div className="px-4 py-3 lg:px-5 lg:pl-3">
                 <div className="flex items-center justify-between">
+                  {/* Bagian Kiri: Icon untuk toggle sidebar + logo */}
                   <div className="flex items-center">
                     <div
                       onClick={toggleDrawer}
@@ -54,21 +70,22 @@ function App() {
                     >
                       <span className="sr-only">Toggle sidebar</span>
                       {isOpen ? (
-                        <HiX className="w-6 h-6" aria-hidden="true" />
+                        <HiX className="w-6 h-6" aria-hidden="true" /> // Icon ketika drawer dibuka
                       ) : (
-                        <HiMenu className="w-6 h-6" aria-hidden="true" />
+                        <HiMenu className="w-6 h-6" aria-hidden="true" /> // Icon ketika drawer ditutup
                       )}
                     </div>
 
                     <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5" onClick={handleLinkClick}>
-                      <img src={vinkev} className="h-8" alt="VinKev Logo" />
+                      <img src={vinkev} className="h-8" alt="VinKev Logo" /> {/* Logo */}
                       <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
                     </Link>
                   </div>
 
+                  {/* Bagian Kanan: Toggle untuk Dark Mode */}
                   <div className="flex items-center space-x-3">
                     <DarkThemeToggle
-                      onClick={() => setIsDarkMode(prev => !prev)}
+                      onClick={() => setIsDarkMode(prev => !prev)} // Mengubah tema
                       className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none"
                     />
                   </div>
@@ -76,6 +93,7 @@ function App() {
               </div>
             </nav>
 
+            {/* Drawer (Sidebar) */}
             <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
               <Drawer.Items>
                 <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
@@ -103,6 +121,7 @@ function App() {
               </Drawer.Items>
             </Drawer>
 
+            {/* Footer */}
             <Footer container className="bg-slate-200">
               <div className="w-full text-center">
                 <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
@@ -129,3 +148,5 @@ function App() {
     </Router>
   );
 }
+
+export default App;
