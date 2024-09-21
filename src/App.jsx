@@ -27,13 +27,6 @@ function App() {
   // Save theme preference to local storage
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-
-    // Update html class for global dark mode
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, [isDarkMode]);
 
   const toggleDrawer = () => {
