@@ -12,7 +12,7 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isLoading, setIsLoading] = useState(true); // Tambahkan state isLoading
+  const [isLoading, setIsLoading] = useState(false); // Ubah default jadi false
   const location = useLocation(); // Untuk mendeteksi perubahan rute
 
   // Check local storage for theme preference
@@ -30,9 +30,11 @@ function App() {
 
   // Toggle loading spinner when route changes
   useEffect(() => {
+    console.log("Route changed, showing spinner...");
     setIsLoading(true); // Tampilkan spinner saat berpindah halaman
     const timer = setTimeout(() => {
       setIsLoading(false); // Sembunyikan spinner setelah halaman selesai dimuat
+      console.log("Spinner hidden, page loaded.");
     }, 1000); // Durasi loading (1 detik)
     return () => clearTimeout(timer); // Bersihkan timer
   }, [location]); // Efek akan berjalan setiap kali rute berubah
