@@ -1,20 +1,20 @@
 import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
-import LandingPage from './LandingPage'; 
-import Profile from './list';
-import LinktreePage from "./LinkTree";
-import PostPage from './PostPage';
-import NotFound from './NotFound';
 import Loading from './utils/Loading'; // Import komponen Loading
+
+// Lazy loading untuk halaman-halaman
+const LandingPage = lazy(() => import('./LandingPage'));
+const Profile = lazy(() => import('./list'));
+const LinktreePage = lazy(() => import('./LinkTree'));
+const PostPage = lazy(() => import('./PostPage'));
+const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [loading, setLoading] = useState(true); // State untuk loading
-  const location = useLocation(); // Hook untuk mengetahui perubahan rute
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -28,13 +28,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
-
-  // Set loading saat route berubah
-  useEffect(() => {
-    setLoading(true); // Set loading ke true saat route berubah
-    const timer = setTimeout(() => setLoading(false), 1000); // Simulasi delay loading 1 detik
-    return () => clearTimeout(timer); // Hapus timer jika user navigate cepat
-  }, [location]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -115,11 +108,9 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
-          {/* Tampilkan Loading saat loading true */}
-          {loading ? (
-            <Loading />
-          ) : (
-            <div className="min-h-screen pt-[64px]">
+          <div className="min-h-screen pt-[64px]">
+            {/* Suspense untuk menampilkan Loading saat komponen sedang dimuat */}
+            <Suspense fallback={<Loading />}>
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/list" element={<Profile />} />
@@ -127,8 +118,8 @@ function App() {
                 <Route path="*" element={<NotFound />} />
                 <Route path="/post/:postId" element={<PostPage />} />
               </Routes>
-            </div>
-          )}
+            </Suspense>
+          </div>
 
           <Footer container className="bg-slate-200">
             <div className="w-full text-center">
