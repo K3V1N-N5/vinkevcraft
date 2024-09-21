@@ -1,6 +1,6 @@
 import vinkev from './assets/vinkev_1.png';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
@@ -11,6 +11,15 @@ import NotFound from './NotFound';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
+
+  // Load theme from localStorage when app loads
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+  }, []);
 
   // Toggle drawer open/close state
   const toggleDrawer = () => {
@@ -29,11 +38,17 @@ function App() {
     }
   };
 
+  // Toggle theme mode
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem('theme', !isDarkMode ? 'dark' : 'light');
+  };
+
   return (
     <Router>
-      <Flowbite>
+      <Flowbite theme={{ dark: isDarkMode }}>
         {/* Navbar */}
-        <div className="dark:bg-[#1e1e1e] overflow-x-hidden">
+        <div className={`overflow-x-hidden ${isDarkMode ? 'dark:bg-[#1e1e1e]' : ''}`}>
           <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
@@ -63,7 +78,11 @@ function App() {
 
                 {/* Dark Mode Toggle */}
                 <div className="flex items-center space-x-3">
-                  <DarkThemeToggle className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none" />
+                  <DarkThemeToggle
+                    className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none"
+                    onClick={toggleTheme} // Add theme toggle functionality
+                    checked={isDarkMode} // Sync with the state
+                  />
                 </div>
               </div>
             </div>
