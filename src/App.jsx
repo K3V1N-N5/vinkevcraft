@@ -15,6 +15,7 @@ const NotFound = lazy(() => import('./NotFound'));
 function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
   const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
+  const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -29,6 +30,15 @@ function App() {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
   }, [isDarkMode]);
 
+  // Mengatur loading screen saat aplikasi pertama kali di-refresh
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false); // Setelah beberapa detik, set loading ke false
+    }, 1000); // Set waktu loading selama 1 detik (sesuaikan sesuai kebutuhan)
+    
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
+  }, []);
+
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
   };
@@ -42,6 +52,11 @@ function App() {
       closeDrawer(); // Menutup Drawer ketika klik pada salah satu link
     }
   };
+
+  if (loading) {
+    // Jika dalam state loading, tampilkan komponen loading
+    return <Loading />;
+  }
 
   return (
     <Router>
