@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import LandingPage from './LandingPage'; 
 import Profile from './list';
 import LinktreePage from "./LinkTree";
 import PostPage from './PostPage';
 import NotFound from './NotFound';
-import { useLocation } from 'react-router-dom';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,9 +18,11 @@ function App() {
     const handleStart = () => setLoading(true);
     const handleComplete = () => setLoading(false);
 
-    handleStart(); // Set loading true saat navigasi dimulai
+    // Simulasikan loading saat navigasi terjadi
+    handleStart();
+    setTimeout(handleComplete, 500); // Hapus timeout ini jika tidak perlu
 
-    return () => handleComplete(); // Set loading false saat navigasi selesai
+    return () => handleComplete();
   }, [location]);
 
   return (
@@ -32,7 +33,7 @@ function App() {
             <div className="px-4 py-3 lg:px-5 lg:pl-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div onClick={toggleDrawer} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer">
+                  <div onClick={() => setIsOpen(!isOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer">
                     {isOpen ? <HiX className="w-6 h-6" /> : <HiMenu className="w-6 h-6" />}
                   </div>
                   <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5">
@@ -44,7 +45,7 @@ function App() {
             </div>
           </nav>
 
-          <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
+          <Drawer open={isOpen} onClose={() => setIsOpen(false)} className="mt-14 w-72">
             <Drawer.Items>
               <Sidebar>
                 <div className="flex h-full flex-col justify-between py-2">
