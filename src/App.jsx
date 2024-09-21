@@ -7,6 +7,7 @@ import LandingPage from './LandingPage';
 import Profile from './list';
 import LinktreePage from "./LinkTree";
 import PostPage from './PostPage'; // Import PostPage
+import NotFound from './NotFound';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,7 +103,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
               <Route path="/link" element={<LinktreePage />} />
-              
+              <Route path="*" element={<NotFound />} />
               {/* Dynamic Route for Posts */}
               <Route path="/post/:postId" element={<PostPage />} /> {/* One route to handle all posts */}
             </Routes>
