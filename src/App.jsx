@@ -12,10 +12,10 @@ import NotFound from './NotFound';
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isLoading, setIsLoading] = useState(false); // Ubah default jadi false
-  const location = useLocation(); // Untuk mendeteksi perubahan rute
+  const [isLoading, setIsLoading] = useState(false); // Ubah isLoading ke false
+  const location = useLocation(); // Menggunakan useLocation untuk deteksi perubahan rute
 
-  // Check local storage for theme preference
+  // Cek preferensi tema dari localStorage
   useEffect(() => {
     const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
     if (savedTheme !== null) {
@@ -23,21 +23,19 @@ function App() {
     }
   }, []);
 
-  // Save theme preference to local storage
+  // Simpan preferensi tema ke localStorage
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Toggle loading spinner when route changes
+  // Spinner akan muncul sebentar setiap kali rute berubah
   useEffect(() => {
-    console.log("Route changed, showing spinner...");
-    setIsLoading(true); // Tampilkan spinner saat berpindah halaman
+    setIsLoading(true); // Mulai loading ketika rute berubah
     const timer = setTimeout(() => {
-      setIsLoading(false); // Sembunyikan spinner setelah halaman selesai dimuat
-      console.log("Spinner hidden, page loaded.");
-    }, 1000); // Durasi loading (1 detik)
-    return () => clearTimeout(timer); // Bersihkan timer
-  }, [location]); // Efek akan berjalan setiap kali rute berubah
+      setIsLoading(false); // Stop loading setelah 500ms
+    }, 500); // Setel durasi loading
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen di-unmount
+  }, [location]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -118,24 +116,22 @@ function App() {
             </Drawer.Items>
           </Drawer>
 
-          {/* Loading Spinner */}
+          {/* Spinner hanya saat loading */}
           {isLoading && (
             <div className="fixed inset-0 bg-gray-200 dark:bg-black bg-opacity-70 flex justify-center items-center z-30">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-white"></div>
             </div>
           )}
 
-          {/* Content Pages */}
+          {/* Halaman konten */}
           <div className="min-h-screen pt-[64px]">
-            {!isLoading && (
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/list" element={<Profile />} />
-                <Route path="/link" element={<LinktreePage />} />
-                <Route path="*" element={<NotFound />} />
-                <Route path="/post/:postId" element={<PostPage />} />
-              </Routes>
-            )}
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/list" element={<Profile />} />
+              <Route path="/link" element={<LinktreePage />} />
+              <Route path="*" element={<NotFound />} />
+              <Route path="/post/:postId" element={<PostPage />} />
+            </Routes>
           </div>
 
           <Footer container className="bg-slate-200">
