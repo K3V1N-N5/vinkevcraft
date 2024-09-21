@@ -14,28 +14,21 @@ const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Check local storage for theme preference
-  useEffect(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Mengambil preferensi dari localStorage saat pertama kali halaman di-load
     const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme);
-    }
-  }, []);
+    return savedTheme !== null ? savedTheme : true; // Default ke dark mode jika belum ada preferensi
+  });
 
-  // Save theme preference to local storage
-  useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
-
-  // Apply dark mode to <html> tag
+  // Terapkan preferensi mode dark/light ke elemen <html> pada awal load
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    // Simpan preferensi ke localStorage setiap kali berubah
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
   const toggleDrawer = () => {
@@ -134,7 +127,7 @@ function App() {
             <Footer container className="bg-slate-200">
               <div className="w-full text-center">
                 <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
-                  <Footer.Brand href="#landing" src={vinkev} alt="Vinkev Logo" name="VinKev Craft" />
+                  <Footer.Brand href="#landing" src={vinkev} alt="VinKev Logo" name="VinKev Craft" />
                   <Footer.LinkGroup>
                     <Footer.Link href="https://discord.com/invite/tMbjtxKfck">Discord</Footer.Link>
                     <Footer.Link href="https://whatsapp.com/channel/0029Vag7qpzHbFV0TyWAVp2z">WhatsApp</Footer.Link>
