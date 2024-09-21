@@ -14,30 +14,21 @@ const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to true for dark mode
-  const [isLoadingTheme, setIsLoadingTheme] = useState(true); // Untuk loading tema awal
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Langsung ambil preferensi dari localStorage saat inisialisasi state
+    return localStorage.getItem('isDarkMode') === 'true';
+  });
 
-  // Check local storage for theme preference saat page pertama kali di-load
+  // Terapkan class 'dark' secara dinamis setiap kali isDarkMode berubah
   useEffect(() => {
-    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode'));
-
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme);
-    } 
-    setIsLoadingTheme(false); // Setelah theme di-load, set isLoadingTheme ke false
-  }, []);
-
-  // Apply dark mode to <html> tag and save to localStorage
-  useEffect(() => {
-    if (!isLoadingTheme) {  // Pastikan kita tidak menjalankan efek ini saat loading theme
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, [isDarkMode, isLoadingTheme]);
+    // Simpan preferensi ke localStorage
+    localStorage.setItem('isDarkMode', isDarkMode);
+  }, [isDarkMode]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -52,11 +43,6 @@ function App() {
       closeDrawer();
     }
   };
-
-  // Jika tema masih loading, tampilkan loading spinner atau background gelap sementara
-  if (isLoadingTheme) {
-    return <div className="fixed inset-0 bg-black"></div>; // Default to black background while loading theme
-  }
 
   return (
     <Router>
