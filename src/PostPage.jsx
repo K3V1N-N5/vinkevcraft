@@ -22,7 +22,7 @@ function PostPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen flex flex-col justify-center">
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center">{post.title}</h1>
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1> {/* Tambahkan text-gray-800 untuk light mode */}
 
       {/* Video Section */}
       {post.videoUrl && (
@@ -64,7 +64,7 @@ function PostPage() {
               </div>
             ))}
           </Carousel>
-          <p className="text-base text-gray-700 dark:text-gray-300 mt-4 text-center">
+          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center"> {/* Tambahkan text-gray-800 */}
             Beberapa gambar terkait project ini.
           </p>
         </div>
@@ -73,16 +73,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
-          <p>{post.description}</p>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2> {/* Tambahkan text-gray-800 */}
+          <p className="text-gray-800 dark:text-gray-300">{post.description}</p> {/* Tambahkan text-gray-800 */}
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2> {/* Tambahkan text-gray-800 */}
+          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300"> {/* Tambahkan text-gray-800 */}
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -95,7 +95,9 @@ function PostPage() {
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
             <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">{link.text}</a>
+              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white"> {/* Tambahkan text-gray-800 */}
+                {link.text}
+              </a>
             </Button>
           ))}
         </div>
