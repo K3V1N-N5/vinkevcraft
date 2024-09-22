@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 
@@ -16,6 +16,8 @@ function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
   const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
+
+  const location = useLocation(); // Untuk memantau perubahan rute
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -38,6 +40,16 @@ function App() {
     
     return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
   }, []);
+
+  // Mengatur loading screen saat rute berubah
+  useEffect(() => {
+    setLoading(true); // Set loading menjadi true saat rute berubah
+    const timer = setTimeout(() => {
+      setLoading(false); // Setelah beberapa detik, set loading ke false
+    }, 500); // Set waktu loading selama 500ms (sesuaikan sesuai kebutuhan)
+
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
+  }, [location.pathname]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
