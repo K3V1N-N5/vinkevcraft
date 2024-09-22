@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
-import { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { useState, useEffect, Suspense, lazy, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 
@@ -16,6 +16,9 @@ function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
   const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
+
+  const location = useLocation(); // Untuk memantau path yang aktif
+  const navigate = useNavigate(); // Untuk navigasi halaman
 
   // Check local storage for theme preference
   useEffect(() => {
@@ -39,6 +42,15 @@ function App() {
     return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
   }, []);
 
+  // Fungsi untuk handle navigasi dengan loading
+  const handleNavigate = useCallback((path) => {
+    setLoading(true); // Set loading menjadi true saat mulai navigasi
+    navigate(path); // Pindah ke halaman baru
+    setTimeout(() => {
+      setLoading(false); // Set loading menjadi false setelah halaman selesai dimuat
+    }, 1000); // Set waktu loading yang diinginkan
+  }, [navigate]);
+
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
   };
@@ -47,10 +59,11 @@ function App() {
     setIsOpen(false); // Menutup Drawer ketika dibutuhkan
   };
 
-  const handleLinkClick = () => {
+  const handleLinkClick = (path) => {
     if (isOpen) {
       closeDrawer(); // Menutup Drawer ketika klik pada salah satu link
     }
+    handleNavigate(path); // Handle navigasi ke rute baru dengan loading
   };
 
   if (loading) {
@@ -91,10 +104,11 @@ function App() {
                       )}
                     </div>
 
-                    <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5" onClick={handleLinkClick}>
+                    {/* Ubah `Link` menjadi `onClick` untuk memunculkan loading */}
+                    <button onClick={() => handleLinkClick('/')} className="flex items-center space-x-2 ms-3 md:ms-5">
                       <img src={vinkev} className="h-8" alt="VinKev Logo" /> {/* Logo */}
                       <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
-                    </Link>
+                    </button>
                   </div>
 
                   {/* Bagian Kanan: Toggle untuk Dark Mode */}
@@ -117,12 +131,12 @@ function App() {
                       <Sidebar.Items>
                         <Sidebar.ItemGroup>
                           <Sidebar.Collapse icon={HiOutlineCollection} label="Minecraft">
-                            <Link to="/list" onClick={handleLinkClick}><Sidebar.Item>List</Sidebar.Item></Link>
-                            <Link to="/post/knz-ui" onClick={handleLinkClick}><Sidebar.Item>KNZ UI</Sidebar.Item></Link>
+                            <button onClick={() => handleLinkClick('/list')}><Sidebar.Item>List</Sidebar.Item></button>
+                            <button onClick={() => handleLinkClick('/post/knz-ui')}><Sidebar.Item>KNZ UI</Sidebar.Item></button>
                           </Sidebar.Collapse>
-                          <Link to="/link" onClick={handleLinkClick}>
+                          <button onClick={() => handleLinkClick('/link')}>
                             <Sidebar.Item icon={HiOutlineExternalLink}>LinkTree</Sidebar.Item>
-                          </Link>
+                          </button>
                         </Sidebar.ItemGroup>
                         <Sidebar.ItemGroup>
                           <Sidebar.Item href="https://wa.me/" icon={HiInformationCircle} onClick={handleLinkClick}>
