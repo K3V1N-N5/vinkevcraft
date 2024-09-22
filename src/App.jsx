@@ -47,6 +47,7 @@ function App() {
     setIsOpen(false); // Menutup Drawer ketika dibutuhkan
   };
 
+  // Function untuk perpindahan halaman
   const handleLinkClick = () => {
     if (isOpen) {
       closeDrawer(); // Menutup Drawer ketika klik pada salah satu link
@@ -64,7 +65,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`}> {/* Padding top untuk menghindari navbar */}
+          <div className={`dark:bg-[#1e1e1e] overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
