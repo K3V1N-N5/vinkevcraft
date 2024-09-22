@@ -32,13 +32,5 @@ export const posts = [
     downloadLinks: [
       { text: 'Download Post Lain', url: 'https://example.com' }
     ]
-  },
-  {
-    id: 'kevinns',
-    title: 'Post Lain - Contoh - Kevinns',
-    description: 'Ini adalah contoh post lain tanpa fitur dan video. test dari elpine',
-    downloadLinks: [
-      { text: 'Download Post Lain', url: 'https://example.com' }
-    ]
   }
 ];
