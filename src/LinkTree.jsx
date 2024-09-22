@@ -10,13 +10,14 @@ function LinktreePage() {
           className="absolute top-0 left-0 w-full h-36 bg-cover bg-center rounded-lg"
           style={{ backgroundImage: `url(${background})` }}
         ></div>
-        <div className="flex flex-col items-center mb-6 relative z-10 mt-20"> {/* Pastikan z-index lebih tinggi */}
+        <div className="flex flex-col items-center mb-6 relative z-10 mt-20">
           <img 
             src={vinkev}
             className="rounded-full w-24 h-24 mb-3" 
             alt="VinKev Craft Logo"
           />
-          <h1 className="text-2xl font-bold mt-4 dark:text-white">VinKev Craft</h1>
+          {/* Warna teks disesuaikan agar terlihat pada kedua mode */}
+          <h1 className="text-2xl font-bold mt-4 text-gray-800 dark:text-white">VinKev Craft</h1>
           <p className="text-gray-600 dark:text-white">@vinkevcraft</p>
         </div>
 
