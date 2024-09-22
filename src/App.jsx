@@ -17,17 +17,26 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
 
+  // Fungsi untuk mengupdate tema pada elemen <html>
+  const updateHtmlClass = (theme) => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme ? 'dark' : 'light');
+  };
+
   // Check local storage for theme preference
   useEffect(() => {
     const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); 
     if (savedTheme !== null) {
       setIsDarkMode(savedTheme); // Mengambil preferensi tema dari localStorage
+      updateHtmlClass(savedTheme);
     }
   }, []);
 
   // Save theme preference to local storage
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
+    updateHtmlClass(isDarkMode); // Update HTML class untuk menghindari glitch
   }, [isDarkMode]);
 
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
