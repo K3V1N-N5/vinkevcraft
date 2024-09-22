@@ -105,7 +105,9 @@ function App() {
 
                     <Link to="/" className="flex items-center space-x-2 ms-3 md:ms-5" onClick={handleLinkClick}>
                       <img src={vinkev} className="h-8" alt="VinKev Logo" /> {/* Logo */}
-                      <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">VinKev Craft</span>
+                      <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-800 dark:text-white">
+                        VinKev Craft
+                      </span>
                     </Link>
                   </div>
 
