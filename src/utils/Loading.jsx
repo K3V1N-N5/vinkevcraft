@@ -14,13 +14,13 @@ const Loading = () => {
   return (
     <div
       className={`fixed inset-0 ${
-        isDarkMode ? 'bg-black bg-opacity-70' : 'bg-gray-200 bg-opacity-70'
-      } flex justify-center items-center z-30`} // Sama seperti yang digunakan di ListProject
+        isDarkMode ? 'bg-[#1e1e1e] bg-opacity-70' : 'bg-white bg-opacity-70'
+      } flex justify-center items-center z-30`} // Background sesuai dengan ListProject
     >
       <div
         className={`animate-spin rounded-full h-32 w-32 border-b-2 ${
           isDarkMode ? 'border-white' : 'border-gray-900'
-        }`} // Desain dan warna spinner sama seperti di ListProject
+        }`}
       ></div>
     </div>
   );
