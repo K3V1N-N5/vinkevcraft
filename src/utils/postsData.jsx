@@ -35,7 +35,7 @@ export const posts = [
   },
   {
     id: 'post-lain2',
-    title: 'Post Lain - Contoh2 ah yamete kudasai IsNotReal',
+    title: 'Post Lain - Contoh2 ah yamete kudasai',
     description: 'Ini adalah conto2h post lain tanpa fitur dan video.',
     downloadLinks: [
       { text: 'Download Post L2ain', url: 'https2://example.com' }
