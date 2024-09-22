@@ -14,7 +14,7 @@ const Loading = () => {
   return (
     <div
       className={`fixed inset-0 ${
-        isDarkMode ? 'bg-[#1e1e1e] bg-opacity-70' : 'bg-white bg-opacity-70'
+        isDarkMode ? 'bg-black bg-opacity-70' : 'bg-white bg-opacity-70'
       } flex justify-center items-center z-30`} // Background sesuai dengan ListProject
     >
       <div
