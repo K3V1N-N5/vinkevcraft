@@ -13,9 +13,9 @@ const Loading = () => {
 
   return (
     <div
-      className={`fixed inset-0 transition-colors duration-300 ease-in-out ${
-        isDarkMode ? 'bg-black' : 'bg-white'
-      } flex justify-center items-center z-30`}
+      className={`fixed inset-0 ${
+        isDarkMode ? 'bg-black' : 'bg-white bg-opacity-70'
+      } flex justify-center items-center z-30`} // Background sesuai dengan ListProject
     >
       <div
         className={`animate-spin rounded-full h-32 w-32 border-b-2 ${
