@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from './firebase'; // Firebase Firestore dan Storage
-import { Button, TextInput, Textarea } from 'flowbite-react'; // Flowbite components
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db, storage } from './firebase';
+import { Button, TextInput, Textarea, Progress } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 
 function ManagePosts() {
@@ -12,12 +12,15 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: [], // Untuk menyimpan beberapa URL atau file gambar
+    carouselImages: [],
     videoUrl: '',
   });
-  const [imageFiles, setImageFiles] = useState([]); // State untuk menyimpan beberapa file gambar
+  const [imageFiles, setImageFiles] = useState([]);
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0); // State untuk progress upload
+  const [uploading, setUploading] = useState(false); // Indikator apakah sedang meng-upload
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,64 +43,107 @@ function ManagePosts() {
   };
 
   const handleImageFileChange = (e) => {
-    setImageFiles([...imageFiles, ...e.target.files]); // Menyimpan beberapa file gambar
+    setImageFiles([...imageFiles, ...e.target.files]); 
   };
 
   const uploadImages = async () => {
     const imageUrls = [];
+    setUploading(true); // Mulai indikator upload
+    setUploadProgress(0); // Reset progress setiap kali mulai upload
+
     for (let i = 0; i < imageFiles.length; i++) {
       const imageFile = imageFiles[i];
       const imageRef = ref(storage, `images/${imageFile.name}`);
-      const snapshot = await uploadBytes(imageRef, imageFile); // Upload gambar ke Firebase Storage
-      const downloadURL = await getDownloadURL(snapshot.ref); // Dapatkan URL gambar dari Storage
-      imageUrls.push(downloadURL); // Tambahkan URL ke array
+      
+      const uploadTask = uploadBytesResumable(imageRef, imageFile); // Gunakan uploadBytesResumable untuk track progress
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress); // Update progress state
+        },
+        (error) => {
+          setError(`Error uploading image: ${error.message}`);
+          setUploading(false); // Sembunyikan indikator jika error
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          imageUrls.push(downloadURL);
+          if (i === imageFiles.length - 1) {
+            setUploading(false); // Selesai upload
+            setUploadProgress(0); // Reset progress setelah selesai
+          }
+        }
+      );
     }
-    return imageUrls; // Mengembalikan array URL gambar yang diupload
+    return imageUrls; 
   };
 
-  // Fungsi untuk membuat post baru
   const handleCreate = async (e) => {
     e.preventDefault();
-    const imageUrls = await uploadImages(); // Upload gambar atau gunakan URL yang diinput
+    setError(null);
+    const imageUrls = await uploadImages(); 
+    if (imageUrls.length === 0 && imageFiles.length > 0) {
+      setError("Image upload failed, please try again.");
+      return;
+    }
     const newPost = {
       title: form.title,
       description: form.description,
-      features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => {
+      features: form.features ? form.features.split(',').map(feature => feature.trim()) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      }),
-      carouselImages: [...form.carouselImages, ...imageUrls], // Gabungkan URL manual dan yang diupload
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl || '',
     };
-    const docRef = await addDoc(collection(db, "posts"), newPost);
-    setPosts([...posts, { id: docRef.id, ...newPost }]);
-    resetForm();
+    try {
+      const docRef = await addDoc(collection(db, "posts"), newPost);
+      setPosts([...posts, { id: docRef.id, ...newPost }]);
+      resetForm();
+    } catch (error) {
+      setError(`Error creating post: ${error.message}`);
+    }
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    const imageUrls = await uploadImages(); // Upload gambar atau gunakan URL yang diinput
+    setError(null);
+    const imageUrls = await uploadImages(); 
+    if (imageUrls.length === 0 && imageFiles.length > 0) {
+      setError("Image upload failed, please try again.");
+      return;
+    }
     const postRef = doc(db, "posts", editingPostId);
     const updatedPost = {
       title: form.title,
       description: form.description,
-      features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => {
+      features: form.features ? form.features.split(',').map(feature => feature.trim()) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      }),
-      carouselImages: [...form.carouselImages, ...imageUrls], // Gabungkan URL manual dan yang diupload
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl || '',
     };
-    await updateDoc(postRef, updatedPost);
-    setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
-    resetForm();
+    try {
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
+    }
   };
 
   const handleDelete = async (postId) => {
-    await deleteDoc(doc(db, "posts", postId));
-    setPosts(posts.filter(post => post.id !== postId));
+    try {
+      await deleteDoc(doc(db, "posts", postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      setError(`Error deleting post: ${error.message}`);
+    }
   };
 
   const resetForm = () => {
@@ -109,7 +155,7 @@ function ManagePosts() {
       carouselImages: [],
       videoUrl: '',
     });
-    setImageFiles([]); // Reset file gambar
+    setImageFiles([]);
     setEditingPostId(null);
   };
 
@@ -137,6 +183,8 @@ function ManagePosts() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">{editingPostId ? 'Edit Post' : 'Create New Post'}</h1>
 
+      {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+
       <form onSubmit={editingPostId ? handleEdit : handleCreate} className="space-y-6 max-w-xl mx-auto">
         <TextInput
           type="text"
@@ -156,21 +204,21 @@ function ManagePosts() {
         />
         <TextInput
           type="text"
-          placeholder="Features (separate by commas)"
+          placeholder="Features (separate by commas, optional)"
           name="features"
           value={form.features}
           onChange={handleChange}
-          required
         />
         <TextInput
           type="text"
-          placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma)"
+          placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma, optional)"
           name="downloadLinks"
           value={form.downloadLinks}
           onChange={handleChange}
         />
         
         {/* Input untuk URL atau Upload Gambar */}
+        <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
         <TextInput
           type="text"
           placeholder="Image URLs (optional, separate by commas)"
@@ -185,6 +233,17 @@ function ManagePosts() {
           onChange={handleImageFileChange}
           className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
         />
+
+        {/* Progress Bar */}
+        {uploading && (
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${uploadProgress}%` }}
+            />
+            <p className="text-sm mt-1">{Math.round(uploadProgress)}% uploaded</p>
+          </div>
+        )}
 
         <TextInput
           type="text"
@@ -217,7 +276,7 @@ function ManagePosts() {
               <h3 className="text-xl font-bold">{post.title}</h3>
               <p>{post.description}</p>
             </div>
-            <div className="space-x-2">
+            <div className="flex space-x-2">
               <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
                 Edit
               </Button>
