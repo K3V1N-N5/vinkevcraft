@@ -10,6 +10,7 @@ const LandingPage = lazy(() => import('./LandingPage'));
 const Profile = lazy(() => import('./list'));
 const LinktreePage = lazy(() => import('./LinkTree'));
 const PostPage = lazy(() => import('./PostPage'));
+const EditPost = lazy(() => import('./EditPost')); // Import untuk halaman Edit Post
 const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
@@ -80,8 +81,9 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
               <Route path="/link" element={<LinktreePage />} />
-              <Route path="*" element={<NotFound />} />
               <Route path="/post/:postId" element={<PostPage />} />
+              <Route path="/edit/:postId" element={<EditPost />} /> {/* Rute untuk Edit Post */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
 
             {/* Navbar */}
