@@ -1,28 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Carousel } from "flowbite-react";
 import { useParams, useNavigate } from 'react-router-dom';
-import { posts } from './utils/postsData';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
+import { db } from './firebase'; // Import Firebase config
+import { doc, getDoc } from "firebase/firestore"; // Import Firestore methods
 
 function PostPage() {
   const { postId } = useParams();
-  const post = posts.find(p => p.id === postId);
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Jika post tidak ditemukan, arahkan ke halaman NotFound
+  // Mengambil data post dari Firestore
   useEffect(() => {
-    if (!post) {
-      navigate('*'); // Ganti '/notfound' dengan rute halaman NotFound kamu
-    }
-  }, [post, navigate]);
+    const fetchPost = async () => {
+      const postRef = doc(db, "posts", postId);
+      const postSnap = await getDoc(postRef);
+      
+      if (postSnap.exists()) {
+        setPost(postSnap.data());
+      } else {
+        navigate('*'); // Arahkan ke halaman NotFound jika post tidak ditemukan
+      }
+      setLoading(false);
+    };
+    
+    fetchPost();
+  }, [postId, navigate]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Loader sementara data diambil
+  }
 
   if (!post) {
-    return null; // Pastikan tidak merender apa pun ketika post tidak ditemukan
+    return null; // Tidak merender apa pun jika post tidak ada
   }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen flex flex-col justify-center">
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1> {/* Tambahkan text-gray-800 untuk light mode */}
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1>
 
       {/* Video Section */}
       {post.videoUrl && (
@@ -64,7 +80,7 @@ function PostPage() {
               </div>
             ))}
           </Carousel>
-          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center"> {/* Tambahkan text-gray-800 */}
+          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center">
             Beberapa gambar terkait project ini.
           </p>
         </div>
@@ -73,16 +89,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2> {/* Tambahkan text-gray-800 */}
-          <p className="text-gray-800 dark:text-gray-300">{post.description}</p> {/* Tambahkan text-gray-800 */}
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2> {/* Tambahkan text-gray-800 */}
-          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300"> {/* Tambahkan text-gray-800 */}
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -95,7 +111,7 @@ function PostPage() {
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
             <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white"> {/* Tambahkan text-gray-800 */}
+              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white">
                 {link.text}
               </a>
             </Button>
