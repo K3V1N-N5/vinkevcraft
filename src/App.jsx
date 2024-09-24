@@ -10,7 +10,7 @@ const LandingPage = lazy(() => import('./LandingPage'));
 const Profile = lazy(() => import('./list'));
 const LinktreePage = lazy(() => import('./LinkTree'));
 const PostPage = lazy(() => import('./PostPage'));
-const EditPost = lazy(() => import('./ManagePosts')); // Import untuk halaman Edit Post
+const ManagePosts = lazy(() => import('./ManagePosts')); // Import untuk halaman Edit Post
 const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
