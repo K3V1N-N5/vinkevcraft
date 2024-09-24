@@ -11,6 +11,8 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
+    carouselImages: '', // Input untuk URL gambar
+    videoUrl: '', // Input untuk URL video YouTube
   });
   const [editingPostId, setEditingPostId] = useState(null); // State untuk tracking post yang sedang diedit
   const [loading, setLoading] = useState(true); // Loading state untuk memuat post dari Firestore
@@ -47,7 +49,9 @@ function ManagePosts() {
       downloadLinks: form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      })
+      }),
+      carouselImages: form.carouselImages ? form.carouselImages.split(',').map(img => img.trim()) : [], // Optional
+      videoUrl: form.videoUrl || '', // Optional
     };
     const docRef = await addDoc(collection(db, "posts"), newPost); // Menambahkan dokumen baru
     setPosts([...posts, { id: docRef.id, ...newPost }]); // Update list post
@@ -65,7 +69,9 @@ function ManagePosts() {
       downloadLinks: form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      })
+      }),
+      carouselImages: form.carouselImages ? form.carouselImages.split(',').map(img => img.trim()) : [], // Optional
+      videoUrl: form.videoUrl || '', // Optional
     };
     await updateDoc(postRef, updatedPost); // Update dokumen
     setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post))); // Update list post
@@ -79,6 +85,8 @@ function ManagePosts() {
       description: '',
       features: '',
       downloadLinks: '',
+      carouselImages: '', // Reset input gambar
+      videoUrl: '', // Reset input video
     });
     setEditingPostId(null); // Keluarkan dari mode edit
   };
@@ -90,6 +98,8 @@ function ManagePosts() {
       description: post.description,
       features: post.features.join(', '),
       downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join(', '),
+      carouselImages: post.carouselImages ? post.carouselImages.join(', ') : '',
+      videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id); // Set ID post yang sedang diedit
   };
@@ -137,6 +147,20 @@ function ManagePosts() {
           placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma)"
           name="downloadLinks"
           value={form.downloadLinks}
+          onChange={handleChange}
+        />
+        <TextInput
+          type="text"
+          placeholder="Image URLs (separate by commas, optional)"
+          name="carouselImages"
+          value={form.carouselImages}
+          onChange={handleChange}
+        />
+        <TextInput
+          type="text"
+          placeholder="YouTube Video URL (optional)"
+          name="videoUrl"
+          value={form.videoUrl}
           onChange={handleChange}
         />
         <div className="flex justify-center space-x-4">
