@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, getDocs, doc } from "firebase/firestore"; // Firestore methods
 import { db } from './firebase'; // Firestore configuration
 import { Button, TextInput, Textarea } from 'flowbite-react'; // Flowbite components
+import { useNavigate } from 'react-router-dom'; // Untuk navigasi ke halaman PostPage
 
 function ManagePosts() {
   const [posts, setPosts] = useState([]); // State untuk daftar post
@@ -13,6 +14,7 @@ function ManagePosts() {
   });
   const [editingPostId, setEditingPostId] = useState(null); // State untuk tracking post yang sedang diedit
   const [loading, setLoading] = useState(true); // Loading state untuk memuat post dari Firestore
+  const navigate = useNavigate(); // Digunakan untuk navigasi ke halaman detail post
 
   // Mengambil data post dari Firestore
   useEffect(() => {
@@ -42,7 +44,10 @@ function ManagePosts() {
       title: form.title,
       description: form.description,
       features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => ({ text: link.trim(), url: '#' }))
+      downloadLinks: form.downloadLinks.split(',').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      })
     };
     const docRef = await addDoc(collection(db, "posts"), newPost); // Menambahkan dokumen baru
     setPosts([...posts, { id: docRef.id, ...newPost }]); // Update list post
@@ -57,7 +62,10 @@ function ManagePosts() {
       title: form.title,
       description: form.description,
       features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => ({ text: link.trim(), url: '#' }))
+      downloadLinks: form.downloadLinks.split(',').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      })
     };
     await updateDoc(postRef, updatedPost); // Update dokumen
     setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post))); // Update list post
@@ -81,9 +89,14 @@ function ManagePosts() {
       title: post.title,
       description: post.description,
       features: post.features.join(', '),
-      downloadLinks: post.downloadLinks.map(link => link.text).join(', '),
+      downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join(', '),
     });
     setEditingPostId(post.id); // Set ID post yang sedang diedit
+  };
+
+  // Fungsi untuk navigasi ke halaman post detail
+  const handlePostClick = (postId) => {
+    navigate(`/posts/${postId}`); // Navigasi ke halaman PostPage berdasarkan postId
   };
 
   if (loading) {
@@ -121,7 +134,7 @@ function ManagePosts() {
         />
         <TextInput
           type="text"
-          placeholder="Download Links (separate by commas)"
+          placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma)"
           name="downloadLinks"
           value={form.downloadLinks}
           onChange={handleChange}
@@ -141,12 +154,18 @@ function ManagePosts() {
       <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
       <ul className="list-disc space-y-4 max-w-xl mx-auto">
         {posts.map(post => (
-          <li key={post.id} className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+          <li 
+            key={post.id} 
+            className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
+            onClick={() => handlePostClick(post.id)} // Navigasi ke halaman PostPage ketika diklik
+          >
             <div>
               <h3 className="text-xl font-bold">{post.title}</h3>
               <p>{post.description}</p>
             </div>
-            <Button pill color="yellow" onClick={() => handleEditClick(post)}>Edit</Button>
+            <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
+              Edit
+            </Button>
           </li>
         ))}
       </ul>
