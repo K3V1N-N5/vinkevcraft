@@ -47,6 +47,11 @@ function ManagePosts() {
   };
 
   const uploadImages = async () => {
+    // Periksa apakah ada file gambar yang diupload
+    if (imageFiles.length === 0) {
+      return []; // Jika tidak ada gambar, langsung return array kosong
+    }
+
     const imageUrls = [];
     setUploading(true); // Mulai indikator upload
     setUploadProgress(0); // Reset progress setiap kali mulai upload
@@ -84,7 +89,7 @@ function ManagePosts() {
     e.preventDefault();
     setError(null);
     const imageUrls = await uploadImages(); 
-    if (imageUrls.length === 0 && imageFiles.length > 0) {
+    if (imageFiles.length > 0 && imageUrls.length === 0) {
       setError("Image upload failed, please try again.");
       return;
     }
@@ -112,7 +117,7 @@ function ManagePosts() {
     e.preventDefault();
     setError(null);
     const imageUrls = await uploadImages(); 
-    if (imageUrls.length === 0 && imageFiles.length > 0) {
+    if (imageFiles.length > 0 && imageUrls.length === 0) {
       setError("Image upload failed, please try again.");
       return;
     }
