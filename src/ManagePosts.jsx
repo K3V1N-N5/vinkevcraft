@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, getDocs, doc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Tambahkan untuk Firebase Storage
+import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from './firebase'; // Firebase Firestore dan Storage
 import { Button, TextInput, Textarea } from 'flowbite-react'; // Flowbite components
 import { useNavigate } from 'react-router-dom';
@@ -12,10 +12,10 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: '', // Untuk URL atau file gambar
+    carouselImages: [], // Untuk menyimpan beberapa URL atau file gambar
     videoUrl: '',
   });
-  const [imageFile, setImageFile] = useState(null); // State untuk menyimpan file gambar
+  const [imageFiles, setImageFiles] = useState([]); // State untuk menyimpan beberapa file gambar
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -40,23 +40,25 @@ function ManagePosts() {
   };
 
   const handleImageFileChange = (e) => {
-    setImageFile(e.target.files[0]); // Menyimpan file gambar yang dipilih
+    setImageFiles([...imageFiles, ...e.target.files]); // Menyimpan beberapa file gambar
   };
 
-  const uploadImage = async () => {
-    if (imageFile) {
+  const uploadImages = async () => {
+    const imageUrls = [];
+    for (let i = 0; i < imageFiles.length; i++) {
+      const imageFile = imageFiles[i];
       const imageRef = ref(storage, `images/${imageFile.name}`);
       const snapshot = await uploadBytes(imageRef, imageFile); // Upload gambar ke Firebase Storage
       const downloadURL = await getDownloadURL(snapshot.ref); // Dapatkan URL gambar dari Storage
-      return downloadURL; // Mengembalikan URL gambar yang diupload
+      imageUrls.push(downloadURL); // Tambahkan URL ke array
     }
-    return form.carouselImages ? form.carouselImages : ''; // Jika URL link gambar diisi, kembalikan URL
+    return imageUrls; // Mengembalikan array URL gambar yang diupload
   };
 
   // Fungsi untuk membuat post baru
   const handleCreate = async (e) => {
     e.preventDefault();
-    const imageUrl = await uploadImage(); // Upload gambar atau gunakan URL yang diinput
+    const imageUrls = await uploadImages(); // Upload gambar atau gunakan URL yang diinput
     const newPost = {
       title: form.title,
       description: form.description,
@@ -65,7 +67,7 @@ function ManagePosts() {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
       }),
-      carouselImages: imageUrl ? [imageUrl] : [], // Jika ada gambar yang diupload atau URL, gunakan itu
+      carouselImages: [...form.carouselImages, ...imageUrls], // Gabungkan URL manual dan yang diupload
       videoUrl: form.videoUrl || '',
     };
     const docRef = await addDoc(collection(db, "posts"), newPost);
@@ -75,7 +77,7 @@ function ManagePosts() {
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    const imageUrl = await uploadImage(); // Upload gambar atau gunakan URL yang diinput
+    const imageUrls = await uploadImages(); // Upload gambar atau gunakan URL yang diinput
     const postRef = doc(db, "posts", editingPostId);
     const updatedPost = {
       title: form.title,
@@ -85,12 +87,17 @@ function ManagePosts() {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
       }),
-      carouselImages: imageUrl ? [imageUrl] : [],
+      carouselImages: [...form.carouselImages, ...imageUrls], // Gabungkan URL manual dan yang diupload
       videoUrl: form.videoUrl || '',
     };
     await updateDoc(postRef, updatedPost);
     setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
     resetForm();
+  };
+
+  const handleDelete = async (postId) => {
+    await deleteDoc(doc(db, "posts", postId));
+    setPosts(posts.filter(post => post.id !== postId));
   };
 
   const resetForm = () => {
@@ -99,10 +106,10 @@ function ManagePosts() {
       description: '',
       features: '',
       downloadLinks: '',
-      carouselImages: '',
+      carouselImages: [],
       videoUrl: '',
     });
-    setImageFile(null); // Reset file gambar
+    setImageFiles([]); // Reset file gambar
     setEditingPostId(null);
   };
 
@@ -112,7 +119,7 @@ function ManagePosts() {
       description: post.description,
       features: post.features.join(', '),
       downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join(', '),
-      carouselImages: post.carouselImages ? post.carouselImages.join(', ') : '',
+      carouselImages: post.carouselImages ? post.carouselImages : [],
       videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id);
@@ -166,14 +173,15 @@ function ManagePosts() {
         {/* Input untuk URL atau Upload Gambar */}
         <TextInput
           type="text"
-          placeholder="Image URL (optional)"
+          placeholder="Image URLs (optional, separate by commas)"
           name="carouselImages"
-          value={form.carouselImages}
-          onChange={handleChange}
+          value={form.carouselImages.join(', ')}
+          onChange={(e) => setForm({ ...form, carouselImages: e.target.value.split(',').map(url => url.trim()) })}
         />
         <input
           type="file"
           accept="image/*"
+          multiple
           onChange={handleImageFileChange}
           className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
         />
@@ -209,9 +217,14 @@ function ManagePosts() {
               <h3 className="text-xl font-bold">{post.title}</h3>
               <p>{post.description}</p>
             </div>
-            <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
-              Edit
-            </Button>
+            <div className="space-x-2">
+              <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
+                Edit
+              </Button>
+              <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}>
+                Delete
+              </Button>
+            </div>
           </li>
         ))}
       </ul>
