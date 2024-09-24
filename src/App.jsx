@@ -81,7 +81,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
               <Route path="/link" element={<LinktreePage />} />
-              <Route path="/post/:postId" element={<PostPage />} />
+              <Route path="/posts/:postId" element={<PostPage />} />
               <Route path="/manage-posts" element={<ManagePosts />} /> {/* Rute untuk Edit Post */}
               <Route path="*" element={<NotFound />} />
             </Routes>
