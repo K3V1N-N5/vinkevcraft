@@ -15,6 +15,7 @@ function ManagePosts() {
     features: '',
     downloadLinks: '',
     carouselImages: [],
+    imageUrls: [],  // New field for image URLs
     videoUrl: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
@@ -64,14 +65,17 @@ function ManagePosts() {
   const handleImageFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
     setImageFiles([...imageFiles, ...newFiles]);
-    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages([...previewImages, ...newPreviews]);
   };
 
-  const handleRemoveImage = (index, isUploaded = false) => {
+  const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
     if (isUploaded) {
       const updatedImages = form.carouselImages.filter((_, i) => i !== index);
       setForm({ ...form, carouselImages: updatedImages });
+    } else if (isUrl) {
+      const updatedUrls = form.imageUrls.filter((_, i) => i !== index);
+      setForm({ ...form, imageUrls: updatedUrls });
     } else {
       const updatedFiles = imageFiles.filter((_, i) => i !== index);
       const updatedPreviews = previewImages.filter((_, i) => i !== index);
@@ -155,6 +159,7 @@ function ManagePosts() {
       features: post.features.join(', '),
       downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join(', '),
       carouselImages: post.carouselImages ? post.carouselImages : [],
+      imageUrls: post.imageUrls || [],
       videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id);
@@ -168,6 +173,7 @@ function ManagePosts() {
       features: '',
       downloadLinks: '',
       carouselImages: [],
+      imageUrls: [],
       videoUrl: '',
     });
     setImageFiles([]);
@@ -184,16 +190,18 @@ function ManagePosts() {
       setError('Image upload failed, please try again.');
       return;
     }
+
     const newPost = {
       title: form.title,
       description: form.description,
-      features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => {
+      features: form.features ? form.features.split(',').map(feature => feature.trim()) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      }),
+      }) : [],
       carouselImages: imageUrls,
-      videoUrl: form.videoUrl,
+      imageUrls: form.imageUrls,  // Add URLs to post data
+      videoUrl: form.videoUrl || '',
     };
 
     try {
@@ -213,17 +221,18 @@ function ManagePosts() {
       setError('Image upload failed, please try again.');
       return;
     }
+
     const updatedPost = {
       title: form.title,
       description: form.description,
-      features: form.features.split(',').map(feature => feature.trim()),
-      downloadLinks: form.downloadLinks.split(',').map(link => {
+      features: form.features ? form.features.split(',').map(feature => feature.trim()) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      }),
-      // Menggabungkan gambar lama dan baru
+      }) : [],
       carouselImages: [...form.carouselImages, ...imageUrls],
-      videoUrl: form.videoUrl,
+      imageUrls: form.imageUrls,
+      videoUrl: form.videoUrl || '',
     };
 
     try {
@@ -313,6 +322,16 @@ function ManagePosts() {
               className="block w-full text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
             />
 
+            <TextInput
+              type="text"
+              placeholder="Image URLs (separate by commas, optional)"
+              name="imageUrls"
+              value={form.imageUrls.join(', ')}
+              onChange={(e) => setForm({ ...form, imageUrls: e.target.value.split(',').map(url => url.trim()) })}
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+            />
+
+            {/* Previews for uploaded images */}
             <div className="flex flex-wrap gap-4 mt-4">
               {previewImages.map((src, index) => (
                 <div key={index} className="relative">
@@ -328,14 +347,15 @@ function ManagePosts() {
               ))}
             </div>
 
-            {form.carouselImages.length > 0 && (
+            {/* Previews for image URLs */}
+            {form.imageUrls.length > 0 && (
               <div className="flex flex-wrap gap-4 mt-4">
-                {form.carouselImages.map((src, index) => (
+                {form.imageUrls.map((src, index) => (
                   <div key={index} className="relative">
-                    <img src={src} alt={`Uploaded ${index}`} className="h-20 w-20 object-cover rounded-lg shadow-md" />
+                    <img src={src} alt={`Uploaded URL ${index}`} className="h-20 w-20 object-cover rounded-lg shadow-md" />
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(index, true)}
+                      onClick={() => handleRemoveImage(index, false, true)}
                       className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                     >
                       X
@@ -377,7 +397,7 @@ function ManagePosts() {
                 <li
                   key={post.id}
                   className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
-                  onClick={() => handlePostClick(post.id)}
+                  onClick={() => navigate(`/post/${post.id}`)} // Navigate to post details
                 >
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
