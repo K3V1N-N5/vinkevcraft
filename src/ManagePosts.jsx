@@ -20,13 +20,13 @@ function ManagePosts() {
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [editingPostId, setEditingPostId] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadProgresses, setUploadProgresses] = useState([]); // <-- New State for individual image progress
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
+  const [editingPostId, setEditingPostId] = useState(null);
   const [imageLink, setImageLink] = useState('');
   const navigate = useNavigate();
 
@@ -66,6 +66,7 @@ function ManagePosts() {
     setImageFiles([...imageFiles, ...newFiles]);
     const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages([...previewImages, ...newPreviews]);
+    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]); // <-- Initialize progress for each image
   };
 
   const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
@@ -78,8 +79,10 @@ function ManagePosts() {
     } else {
       const updatedFiles = imageFiles.filter((_, i) => i !== index);
       const updatedPreviews = previewImages.filter((_, i) => i !== index);
+      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index); // <-- Remove progress for that image
       setImageFiles(updatedFiles);
       setPreviewImages(updatedPreviews);
+      setUploadProgresses(updatedProgresses);
     }
   };
 
@@ -90,7 +93,6 @@ function ManagePosts() {
 
     const imageUrls = [];
     setUploading(true);
-    setUploadProgress(0);
 
     for (let i = 0; i < imageFiles.length; i++) {
       const imageFile = imageFiles[i];
@@ -104,7 +106,11 @@ function ManagePosts() {
             'state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgress(progress);
+              setUploadProgresses((prevProgresses) => {
+                const updatedProgresses = [...prevProgresses];
+                updatedProgresses[i] = progress; // <-- Update progress of each image
+                return updatedProgresses;
+              });
             },
             (error) => {
               setError(`Error uploading image: ${error.message}`);
@@ -116,7 +122,6 @@ function ManagePosts() {
               imageUrls.push(downloadURL);
               if (i === imageFiles.length - 1) {
                 setUploading(false);
-                setUploadProgress(0);
               }
               resolve();
             }
@@ -130,54 +135,6 @@ function ManagePosts() {
     }
 
     return imageUrls;
-  };
-
-  const handleAddPostClick = () => {
-    resetForm();
-    setIsAddingOrEditing(true);
-  };
-
-  const handleEditClick = (post) => {
-    setForm({
-      title: post.title,
-      description: post.description,
-      features: post.features ? post.features.join('\n') : '',
-      downloadLinks: post.downloadLinks ? post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') : '',
-      carouselImages: post.carouselImages ? post.carouselImages : [],
-      imageUrls: post.imageUrls || [],
-      videoUrl: post.videoUrl || '',
-    });
-    setPreviewImages([]);
-    setImageFiles([]);
-    setEditingPostId(post.id);
-    setIsAddingOrEditing(true);
-  };
-
-  const resetForm = () => {
-    setForm({
-      title: '',
-      description: '',
-      features: '',
-      downloadLinks: '',
-      carouselImages: [],
-      imageUrls: [],
-      videoUrl: '',
-    });
-    setImageFiles([]);
-    setPreviewImages([]);
-    setEditingPostId(null);
-    setIsAddingOrEditing(false);
-    setImageLink('');
-  };
-
-  const handleAddImageLink = () => {
-    if (imageLink) {
-      setForm({
-        ...form,
-        imageUrls: [...form.imageUrls, imageLink],
-      });
-      setImageLink('');
-    }
   };
 
   const handleCreatePost = async (e) => {
@@ -211,53 +168,31 @@ function ManagePosts() {
     }
   };
 
-  const handleEditPost = async (e) => {
-    e.preventDefault();
-    setError(null);
-    const imageUrls = await uploadImages();
-    if (imageFiles.length > 0 && imageUrls.length === 0) {
-      setError('Image upload failed, please try again.');
-      return;
-    }
-
-    const updatedPost = {
-      title: form.title,
-      description: form.description,
-      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
-      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
-        const [text, url] = link.split('|').map(item => item.trim());
-        return { text, url };
-      }) : [],
-      carouselImages: [...form.carouselImages, ...imageUrls],
-      imageUrls: form.imageUrls,
-      videoUrl: form.videoUrl || '',
-    };
-
-    try {
-      const postRef = doc(db, 'posts', editingPostId);
-      await updateDoc(postRef, updatedPost);
-      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
-      resetForm();
-    } catch (error) {
-      setError(`Error updating post: ${error.message}`);
-    }
+  const resetForm = () => {
+    setForm({
+      title: '',
+      description: '',
+      features: '',
+      downloadLinks: '',
+      carouselImages: [],
+      imageUrls: [],
+      videoUrl: '',
+    });
+    setImageFiles([]);
+    setPreviewImages([]);
+    setEditingPostId(null);
+    setIsAddingOrEditing(false);
+    setImageLink('');
+    setUploadProgresses([]);
   };
 
-  const handleDeletePost = async (postId) => {
-    try {
-      await deleteDoc(doc(db, 'posts', postId));
-      setPosts(posts.filter(post => post.id !== postId));
-    } catch (error) {
-      setError(`Error deleting post: ${error.message}`);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      setError(`Error logging out: ${error.message}`);
+  const handleAddImageLink = () => {
+    if (imageLink) {
+      setForm({
+        ...form,
+        imageUrls: [...form.imageUrls, imageLink],
+      });
+      setImageLink('');
     }
   };
 
@@ -273,18 +208,18 @@ function ManagePosts() {
     <div className="min-h-screen flex flex-col">
       <header className="p-4 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white shadow-md flex justify-between items-center">
         <h1 className="text-2xl font-bold">Manage Your Posts</h1>
-        <Button color="red" onClick={handleLogout}>Logout</Button>
+        <Button color="red" onClick={() => signOut(auth)}>Logout</Button>
       </header>
 
       <main className="flex-grow p-4">
         {!isAddingOrEditing && (
           <div className="text-center mb-6">
-            <Button color="green" onClick={handleAddPostClick}>Add Post</Button>
+            <Button color="green" onClick={() => setIsAddingOrEditing(true)}>Add Post</Button>
           </div>
         )}
 
         {isAddingOrEditing && (
-          <form onSubmit={editingPostId ? handleEditPost : handleCreatePost} className="space-y-6 max-w-xl mx-auto">
+          <form onSubmit={handleCreatePost} className="space-y-6 max-w-xl mx-auto">
             <TextInput
               type="text"
               placeholder="Post Title"
@@ -319,8 +254,6 @@ function ManagePosts() {
               rows={4}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-
-            {/* Video URL Input: Pindah ke atas sebelum Image Upload */}
             <TextInput
               type="text"
               placeholder="Video URL"
@@ -329,7 +262,6 @@ function ManagePosts() {
               onChange={handleChange}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-
             <FileInput
               name="carouselImages"
               multiple
@@ -337,7 +269,6 @@ function ManagePosts() {
               accept="image/*"
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-
             <TextInput
               name="imageLink"
               placeholder="Enter image URL"
@@ -345,11 +276,9 @@ function ManagePosts() {
               onChange={(e) => setImageLink(e.target.value)}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <Button color="blue" onClick={handleAddImageLink}>
-              Add Image URL
-            </Button>
+            <Button color="blue" onClick={handleAddImageLink}>Add Image URL</Button>
 
-            {/* Image Previews */}
+            {/* Image Previews with individual progress */}
             <div className="flex space-x-4">
               {previewImages.map((image, index) => (
                 <div key={index} className="relative">
@@ -363,33 +292,9 @@ function ManagePosts() {
                   </button>
                   {uploading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <p className="text-white text-lg font-bold">{Math.round(uploadProgress)}%</p>
+                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p> {/* <-- Show individual progress */}
                     </div>
                   )}
-                </div>
-              ))}
-              {form.imageUrls.map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`Uploaded Preview ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index, false, true)}
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-              {form.carouselImages.map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`Uploaded Image ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index, true)}
-                  >
-                    &times;
-                  </button>
                 </div>
               ))}
             </div>
@@ -409,22 +314,14 @@ function ManagePosts() {
             <h2 className="text-2xl font-bold mt-10 mb-4 text-center text-gray-900 dark:text-white">Your Posts</h2>
             <ul className="list-disc space-y-4 max-w-xl mx-auto text-gray-900 dark:text-white">
               {posts.map((post) => (
-                <li
-                  key={post.id}
-                  className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
-                  onClick={() => navigate(`/post/${post.id}`)} 
-                >
+                <li key={post.id} className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
                     <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
-                      Edit
-                    </Button>
-                    <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}>
-                      Delete
-                    </Button>
+                    <Button pill color="yellow" onClick={() => handleEditClick(post)}>Edit</Button>
+                    <Button pill color="red" onClick={() => handleDeletePost(post.id)}>Delete</Button>
                   </div>
                 </li>
               ))}
