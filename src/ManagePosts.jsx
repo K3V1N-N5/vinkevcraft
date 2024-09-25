@@ -221,6 +221,7 @@ function ManagePosts() {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
       }),
+      // Menggabungkan gambar lama dan baru
       carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl,
     };
