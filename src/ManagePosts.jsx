@@ -14,20 +14,20 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: [],
-    imageUrls: [],
+    carouselImages: [], // Gambar yang di-upload
+    imageUrls: [], // URL gambar (misal dari link)
     videoUrl: '',
   });
-  const [imageFiles, setImageFiles] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]); // Files gambar untuk di-upload
+  const [previewImages, setPreviewImages] = useState([]); // Preview sebelum upload
   const [uploading, setUploading] = useState(false);
-  const [uploadProgresses, setUploadProgresses] = useState([]); // Track progress per image
+  const [uploadProgresses, setUploadProgresses] = useState([]); // Track progress tiap image
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
-  const [editingPostId, setEditingPostId] = useState(null);
-  const [imageLink, setImageLink] = useState('');
+  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false); // Toggle mode add/edit
+  const [editingPostId, setEditingPostId] = useState(null); // ID post yang sedang di-edit
+  const [imageLink, setImageLink] = useState(''); // URL gambar eksternal
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -154,7 +154,7 @@ function ManagePosts() {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
       }) : [],
-      carouselImages: imageUrls,
+      carouselImages: [...form.carouselImages, ...imageUrls], // Gambar baru dan lama
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
     };
@@ -165,6 +165,38 @@ function ManagePosts() {
       resetForm();
     } catch (error) {
       setError(`Error creating post: ${error.message}`);
+    }
+  };
+
+  const handleEditPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    const imageUrls = await uploadImages();
+    if (imageFiles.length > 0 && imageUrls.length === 0) {
+      setError('Image upload failed, please try again.');
+      return;
+    }
+
+    const updatedPost = {
+      title: form.title,
+      description: form.description,
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
+      imageUrls: form.imageUrls,
+      videoUrl: form.videoUrl || '',
+    };
+
+    try {
+      const postRef = doc(db, 'posts', editingPostId);
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
     }
   };
 
@@ -248,7 +280,7 @@ function ManagePosts() {
         )}
 
         {isAddingOrEditing && (
-          <form onSubmit={handleCreatePost} className="space-y-6 max-w-xl mx-auto">
+          <form onSubmit={editingPostId ? handleEditPost : handleCreatePost} className="space-y-6 max-w-xl mx-auto">
             <TextInput
               type="text"
               placeholder="Post Title"
@@ -309,6 +341,7 @@ function ManagePosts() {
 
             {/* Image Previews with individual progress */}
             <div className="flex space-x-4">
+              {/* Previews for newly selected images */}
               {previewImages.map((image, index) => (
                 <div key={index} className="relative">
                   <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
@@ -324,6 +357,34 @@ function ManagePosts() {
                       <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p> {/* Individual progress */}
                     </div>
                   )}
+                </div>
+              ))}
+
+              {/* Display previously uploaded images in carouselImages */}
+              {form.carouselImages.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index, true)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              
+              {/* Display image URLs */}
+              {form.imageUrls.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index, false, true)}
+                  >
+                    &times;
+                  </button>
                 </div>
               ))}
             </div>
