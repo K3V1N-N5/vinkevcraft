@@ -38,6 +38,20 @@ function ManagePosts() {
     setUploadProgresses(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleRemoveUploadedImage = async index => {
+    const imageRef = ref(storage, form.carouselImages[index]);
+    try {
+      await deleteObject(imageRef);
+      setForm(prev => ({ ...prev, carouselImages: prev.carouselImages.filter((_, i) => i !== index) }));
+    } catch (err) {
+      setError(`Error deleting image: ${err.message}`);
+    }
+  };
+
+  const handleRemoveUrlImage = index => {
+    setForm(prev => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) }));
+  };
+
   const uploadFiles = async (files, folder) => {
     setUploading(true);
     const urls = await Promise.all(files.map(async (file, i) => {
@@ -94,50 +108,77 @@ function ManagePosts() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!user) return <Login />;
 
   return (
-    <div>
-      <header>
-        <h1>Manage Your Posts</h1>
-        <Button onClick={() => signOut(auth)}>Logout</Button>
+    <div className="min-h-screen flex flex-col">
+      <header className="p-4 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white shadow-md flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Manage Your Posts</h1>
+        <Button color="red" onClick={() => signOut(auth)}>Logout</Button>
       </header>
-      <main>
+      <main className="flex-grow p-4">
+        {!isAddingOrEditing && (
+          <div className="text-center mb-6">
+            <Button color="green" onClick={() => setIsAddingOrEditing(true)}>Add Post</Button>
+          </div>
+        )}
         {isAddingOrEditing ? (
-          <form onSubmit={handleSubmit}>
-            <TextInput name="title" value={form.title} onChange={handleChange} required />
-            <Textarea name="description" value={form.description} onChange={handleChange} required />
-            <Textarea name="features" value={form.features} onChange={handleChange} />
-            <Textarea name="downloadLinks" value={form.downloadLinks} onChange={handleChange} />
-            <TextInput name="videoUrl" value={form.videoUrl} onChange={handleChange} />
-            <Select name="category" value={form.category} onChange={handleChange}>
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+            <TextInput type="text" name="title" placeholder="Post Title" value={form.title} onChange={handleChange} required />
+            <Textarea name="description" placeholder="Post Description" value={form.description} onChange={handleChange} rows={4} required />
+            <Textarea name="features" placeholder="Features (bullet points)" value={form.features} onChange={handleChange} rows={4} />
+            <Textarea name="downloadLinks" placeholder="Download Links (Text|https://link.com)" value={form.downloadLinks} onChange={handleChange} rows={4} />
+            <TextInput type="text" name="videoUrl" placeholder="Video URL" value={form.videoUrl} onChange={handleChange} />
+            <Select id="category" name="category" value={form.category} onChange={handleChange}>
               <option value="All">All</option>
               <option value="Resource Pack">Resource Pack</option>
               <option value="Addon">Addon</option>
               <option value="Mod">Mod</option>
               <option value="Map">Map</option>
             </Select>
-            <FileInput onChange={e => handleFileChange(e, setImageFiles, setPreviewImages)} multiple />
-            <FileInput onChange={e => handleFileChange(e, setThumbnailFile, setPreviewImages)} />
-            {previewImages.map((img, i) => (
-              <div key={i}>
-                <img src={img} alt="preview" />
-                <button type="button" onClick={() => handleRemoveImage(i, setImageFiles, setPreviewImages)}>&times;</button>
-              </div>
-            ))}
-            <Button type="submit">{editingPostId ? 'Save' : 'Create'}</Button>
-            <Button onClick={resetForm}>Cancel</Button>
+            <FileInput name="thumbnail" label="Upload Thumbnail" onChange={e => setThumbnailFile(e.target.files[0])} accept="image/*" />
+            <FileInput name="carouselImages" multiple onChange={e => handleFileChange(e, setImageFiles, setPreviewImages)} accept="image/*" />
+            <div className="flex space-x-4">
+              {previewImages.map((image, index) => (
+                <div key={index} className="relative">
+                  <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
+                  <button type="button" className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full" onClick={() => handleRemoveImage(index, setImageFiles, setPreviewImages)}>&times;</button>
+                  {uploading && <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50"><p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p></div>}
+                </div>
+              ))}
+              {form.carouselImages.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
+                  <button type="button" className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full" onClick={() => handleRemoveUploadedImage(index)}>&times;</button>
+                </div>
+              ))}
+              {form.imageUrls.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
+                  <button type="button" className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full" onClick={() => handleRemoveUrlImage(index)}>&times;</button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center space-x-4">
+              <Button type="submit" pill color="green">{editingPostId ? 'Save Changes' : 'Create Post'}</Button>
+              <Button pill color="red" onClick={resetForm}>Cancel</Button>
+            </div>
           </form>
         ) : (
           <>
-            <Button onClick={() => setIsAddingOrEditing(true)}>Add Post</Button>
-            <ul>
+            <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
+            <ul className="list-disc space-y-4 max-w-xl mx-auto">
               {posts.map(post => (
-                <li key={post.id} onClick={() => navigate(`/post/${post.id}`)}>
-                  <h3>{post.title}</h3>
-                  <Button onClick={() => handleEditClick(post)}>Edit</Button>
-                  <Button onClick={() => handleDeletePost(post.id)}>Delete</Button>
+                <li key={post.id} className="flex justify-between items-center p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md cursor-pointer" onClick={() => navigate(`/post/${post.id}`)}>
+                  <div>
+                    <h3 className="text-xl font-bold">{post.title}</h3>
+                    <p>{post.description}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button pill color="yellow" onClick={e => { e.stopPropagation(); handleEditClick(post); }}>Edit</Button>
+                    <Button pill color="red" onClick={e => { e.stopPropagation(); handleDeletePost(post.id); }}>Delete</Button>
+                  </div>
                 </li>
               ))}
             </ul>
