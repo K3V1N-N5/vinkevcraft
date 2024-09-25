@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from './firebase';
-import { Button, TextInput, Textarea } from 'flowbite-react';
+import { Button, TextInput, Textarea, Progress } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 
 function ManagePosts() {
@@ -18,8 +18,9 @@ function ManagePosts() {
   const [imageFiles, setImageFiles] = useState([]);
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,16 +43,13 @@ function ManagePosts() {
   };
 
   const handleImageFileChange = (e) => {
-    setImageFiles([...imageFiles, ...e.target.files]);
+    setImageFiles([...imageFiles, ...e.target.files]); 
   };
 
   const uploadImages = async () => {
     const imageUrls = [];
-
-    if (imageFiles.length === 0) return []; 
-
-    setUploading(true);
-    setUploadProgress(0);
+    setUploading(true); 
+    setUploadProgress(0); 
 
     for (let i = 0; i < imageFiles.length; i++) {
       const imageFile = imageFiles[i];
@@ -59,38 +57,37 @@ function ManagePosts() {
       
       const uploadTask = uploadBytesResumable(imageRef, imageFile);
 
-      await new Promise((resolve, reject) => {
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress); 
-          },
-          (error) => {
-            console.error("Error uploading image: ", error);
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          setError(`Error uploading image: ${error.message}`);
+          setUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          imageUrls.push(downloadURL);
+          if (i === imageFiles.length - 1) {
             setUploading(false);
-            reject(error);
-          },
-          async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            imageUrls.push(downloadURL);
-            if (i === imageFiles.length - 1) {
-              setUploading(false);
-              setUploadProgress(0);
-            }
-            resolve();
+            setUploadProgress(0);
           }
-        );
-      });
+        }
+      );
     }
-    return imageUrls;
+    return imageUrls; 
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-
-    const imageUrls = await uploadImages();
-
+    setError(null);
+    const imageUrls = await uploadImages(); 
+    if (imageUrls.length === 0 && imageFiles.length > 0) {
+      setError("Image upload failed, please try again.");
+      return;
+    }
     const newPost = {
       title: form.title,
       description: form.description,
@@ -102,17 +99,23 @@ function ManagePosts() {
       carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl || '',
     };
-
-    const docRef = await addDoc(collection(db, "posts"), newPost);
-    setPosts([...posts, { id: docRef.id, ...newPost }]);
-    resetForm();
+    try {
+      const docRef = await addDoc(collection(db, "posts"), newPost);
+      setPosts([...posts, { id: docRef.id, ...newPost }]);
+      resetForm();
+    } catch (error) {
+      setError(`Error creating post: ${error.message}`);
+    }
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
-
-    const imageUrls = await uploadImages();
-
+    setError(null);
+    const imageUrls = await uploadImages(); 
+    if (imageUrls.length === 0 && imageFiles.length > 0) {
+      setError("Image upload failed, please try again.");
+      return;
+    }
     const postRef = doc(db, "posts", editingPostId);
     const updatedPost = {
       title: form.title,
@@ -125,20 +128,22 @@ function ManagePosts() {
       carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl || '',
     };
-
-    await updateDoc(postRef, updatedPost);
-    setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
-    resetForm();
+    try {
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
+    }
   };
 
   const handleDelete = async (postId) => {
-    await deleteDoc(doc(db, "posts", postId));
-    setPosts(posts.filter(post => post.id !== postId));
-  };
-
-  const removeImage = (imageIndex) => {
-    const updatedImages = form.carouselImages.filter((_, index) => index !== imageIndex);
-    setForm({ ...form, carouselImages: updatedImages });
+    try {
+      await deleteDoc(doc(db, "posts", postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      setError(`Error deleting post: ${error.message}`);
+    }
   };
 
   const resetForm = () => {
@@ -178,6 +183,8 @@ function ManagePosts() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">{editingPostId ? 'Edit Post' : 'Create New Post'}</h1>
 
+      {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+
       <form onSubmit={editingPostId ? handleEdit : handleCreate} className="space-y-6 max-w-xl mx-auto">
         <TextInput
           type="text"
@@ -197,28 +204,28 @@ function ManagePosts() {
         />
         <TextInput
           type="text"
-          placeholder="Features (optional, separated by commas)"
+          placeholder="Features (separate by commas, optional)"
           name="features"
           value={form.features}
           onChange={handleChange}
         />
         <TextInput
           type="text"
-          placeholder="Download Links (optional, format: Text|https://link.com)"
+          placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma, optional)"
           name="downloadLinks"
           value={form.downloadLinks}
           onChange={handleChange}
         />
         
+        {/* Input untuk URL atau Upload Gambar */}
+        <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
         <TextInput
           type="text"
-          placeholder="Image URLs (optional, separated by commas)"
+          placeholder="Image URLs (optional, separate by commas)"
           name="carouselImages"
           value={form.carouselImages.join(', ')}
           onChange={(e) => setForm({ ...form, carouselImages: e.target.value.split(',').map(url => url.trim()) })}
         />
-
-        {/* Input gambar */}
         <input
           type="file"
           accept="image/*"
@@ -227,7 +234,7 @@ function ManagePosts() {
           className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
         />
 
-        {/* Progress bar untuk upload gambar */}
+        {/* Progress Bar */}
         {uploading && (
           <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
             <div
@@ -235,20 +242,6 @@ function ManagePosts() {
               style={{ width: `${uploadProgress}%` }}
             />
             <p className="text-sm mt-1">{Math.round(uploadProgress)}% uploaded</p>
-          </div>
-        )}
-
-        {form.carouselImages.length > 0 && (
-          <div>
-            <h3 className="font-bold">Uploaded Images:</h3>
-            <ul>
-              {form.carouselImages.map((image, index) => (
-                <li key={index} className="flex items-center space-x-2">
-                  <img src={image} alt={`carousel-img-${index}`} className="h-12 w-12 object-cover" />
-                  <Button pill color="red" size="sm" onClick={() => removeImage(index)}>Remove</Button>
-                </li>
-              ))}
-            </ul>
           </div>
         )}
 
