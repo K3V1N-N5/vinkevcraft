@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from './firebase';
-import { Button, TextInput, Textarea, Progress } from 'flowbite-react';
+import { Button, TextInput, Textarea } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 
 function ManagePosts() {
@@ -47,7 +47,6 @@ function ManagePosts() {
   };
 
   const uploadImages = async () => {
-    // Periksa apakah ada file gambar yang diupload
     if (imageFiles.length === 0) {
       return []; // Jika tidak ada gambar, langsung return array kosong
     }
@@ -60,28 +59,39 @@ function ManagePosts() {
       const imageFile = imageFiles[i];
       const imageRef = ref(storage, `images/${imageFile.name}`);
       
-      const uploadTask = uploadBytesResumable(imageRef, imageFile); // Gunakan uploadBytesResumable untuk track progress
+      try {
+        const uploadTask = uploadBytesResumable(imageRef, imageFile); // Gunakan uploadBytesResumable untuk track progress
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress); // Update progress state
-        },
-        (error) => {
-          setError(`Error uploading image: ${error.message}`);
-          setUploading(false); // Sembunyikan indikator jika error
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          imageUrls.push(downloadURL);
-          if (i === imageFiles.length - 1) {
-            setUploading(false); // Selesai upload
-            setUploadProgress(0); // Reset progress setelah selesai
-          }
-        }
-      );
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress); // Update progress state
+            },
+            (error) => {
+              setError(`Error uploading image: ${error.message}`);
+              setUploading(false); // Sembunyikan indikator jika error
+              reject(error); // Batalkan proses jika ada error
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              imageUrls.push(downloadURL);
+              if (i === imageFiles.length - 1) {
+                setUploading(false); // Selesai upload
+                setUploadProgress(0); // Reset progress setelah selesai
+              }
+              resolve();
+            }
+          );
+        });
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        setError("Image upload failed. Please try again.");
+        return []; // Batalkan semua proses jika ada satu gambar gagal di-upload
+      }
     }
+    
     return imageUrls; 
   };
 
