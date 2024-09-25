@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button, TextInput, Textarea } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
@@ -95,7 +94,7 @@ function ManagePosts() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
   }
 
   if (!user) {
@@ -103,14 +102,16 @@ function ManagePosts() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
-      <header className="p-4 bg-gray-800 text-white text-center">
-        <h1>Manage Your Posts</h1>
+    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+      {/* Header dengan tombol Logout */}
+      <header className="p-4 bg-gray-800 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Manage Your Posts</h1>
         <Button color="red" onClick={handleLogout}>
           Logout
         </Button>
       </header>
 
+      {/* Konten Utama */}
       <main className="flex-grow p-4">
         {/* Tombol untuk menambahkan post baru */}
         {!isAddingOrEditing && (
@@ -180,7 +181,7 @@ function ManagePosts() {
         {/* Daftar post */}
         {!isAddingOrEditing && (
           <>
-            <h2 className="text-2xl font-bold mt-10 mb-4 text-center dark:text-white text-gray-900">Your Posts</h2>
+            <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
             <ul className="list-disc space-y-4 max-w-xl mx-auto">
               {posts.map((post) => (
                 <li
@@ -189,8 +190,8 @@ function ManagePosts() {
                   onClick={() => handlePostClick(post.id)}
                 >
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{post.title}</h3>
-                    <p className="text-gray-700 dark:text-gray-300">{post.description}</p>
+                    <h3 className="text-xl font-bold">{post.title}</h3>
+                    <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
                     <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
@@ -206,8 +207,6 @@ function ManagePosts() {
           </>
         )}
       </main>
-
-      
     </div>
   );
 }
