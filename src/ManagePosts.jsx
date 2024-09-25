@@ -328,6 +328,11 @@ function ManagePosts() {
                   >
                     &times;
                   </button>
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                      <p className="text-white text-lg font-bold">{Math.round(uploadProgress)}%</p>
+                    </div>
+                  )}
                 </div>
               ))}
               {form.imageUrls.map((imageUrl, index) => (
@@ -353,14 +358,6 @@ function ManagePosts() {
               onChange={handleChange}
               className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
-
-            {/* Upload Progress Indicator */}
-            {uploading && (
-              <div className="text-center my-4">
-                <Spinner size="lg" color="green" />
-                <p>Uploading... {Math.round(uploadProgress)}%</p>
-              </div>
-            )}
 
             {/* Submit & Cancel Buttons */}
             <div className="flex justify-center space-x-4">
