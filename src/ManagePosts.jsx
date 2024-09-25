@@ -178,7 +178,7 @@ function ManagePosts() {
     const newPost = {
       title: form.title,
       description: form.description,
-      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      features: form.features ? form.features.split('\n').map(feature => ` ${feature.trim()}`) : [],
       downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
@@ -291,7 +291,7 @@ function ManagePosts() {
             />
             <Textarea
               name="features"
-              placeholder="Features (tulis ke bawah, gunakan '-' untuk bullet points)"
+              placeholder="Features (tulis ke bawah untuk • )"
               value={form.features}
               onChange={handleChange}
               rows={4}
