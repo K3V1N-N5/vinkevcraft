@@ -25,11 +25,16 @@ function ManagePosts() {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      const postCollection = collection(db, "posts");
-      const postSnapshot = await getDocs(postCollection);
-      const postList = postSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPosts(postList);
-      setLoading(false);
+      try {
+        const postCollection = collection(db, "posts");
+        const postSnapshot = await getDocs(postCollection);
+        const postList = postSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPosts(postList);
+      } catch (err) {
+        setError('Failed to load posts');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPosts();
@@ -48,46 +53,52 @@ function ManagePosts() {
 
   const uploadImages = async () => {
     const imageUrls = [];
-    setUploading(true); 
-    setUploadProgress(0); 
+    setUploading(true);
+    setUploadProgress(0);
 
-    for (let i = 0; i < imageFiles.length; i++) {
-      const imageFile = imageFiles[i];
-      const imageRef = ref(storage, `images/${imageFile.name}`);
-      
-      const uploadTask = uploadBytesResumable(imageRef, imageFile);
+    try {
+      for (let i = 0; i < imageFiles.length; i++) {
+        const imageFile = imageFiles[i];
+        const imageRef = ref(storage, `images/${imageFile.name}`);
+        const uploadTask = uploadBytesResumable(imageRef, imageFile);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          setError(`Error uploading image: ${error.message}`);
-          setUploading(false);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          imageUrls.push(downloadURL);
-          if (i === imageFiles.length - 1) {
-            setUploading(false);
-            setUploadProgress(0);
-          }
-        }
-      );
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress);
+            },
+            (error) => reject(error),
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              imageUrls.push(downloadURL);
+              resolve();
+            }
+          );
+        });
+      }
+    } catch (error) {
+      setError(`Error uploading image: ${error.message}`);
+      setUploading(false);
+      return [];
     }
+
+    setUploading(false);
+    setUploadProgress(0);
     return imageUrls; 
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setError(null);
+
     const imageUrls = await uploadImages(); 
     if (imageUrls.length === 0 && imageFiles.length > 0) {
       setError("Image upload failed, please try again.");
       return;
     }
+
     const newPost = {
       title: form.title,
       description: form.description,
@@ -99,6 +110,7 @@ function ManagePosts() {
       carouselImages: [...form.carouselImages, ...imageUrls],
       videoUrl: form.videoUrl || '',
     };
+
     try {
       const docRef = await addDoc(collection(db, "posts"), newPost);
       setPosts([...posts, { id: docRef.id, ...newPost }]);
@@ -111,23 +123,24 @@ function ManagePosts() {
   const handleEdit = async (e) => {
     e.preventDefault();
     setError(null);
+
     const imageUrls = await uploadImages(); 
     if (imageUrls.length === 0 && imageFiles.length > 0) {
       setError("Image upload failed, please try again.");
       return;
     }
+
     const postRef = doc(db, "posts", editingPostId);
     const updatedPost = {
-      title: form.title,
-      description: form.description,
-      features: form.features ? form.features.split(',').map(feature => feature.trim()) : [],
-      downloadLinks: form.downloadLinks ? form.downloadLinks.split(',').map(link => {
+      ...form,
+      features: form.features.split(',').map(f => f.trim()),
+      downloadLinks: form.downloadLinks.split(',').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
-      }) : [],
+      }),
       carouselImages: [...form.carouselImages, ...imageUrls],
-      videoUrl: form.videoUrl || '',
     };
+
     try {
       await updateDoc(postRef, updatedPost);
       setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
@@ -161,12 +174,9 @@ function ManagePosts() {
 
   const handleEditClick = (post) => {
     setForm({
-      title: post.title,
-      description: post.description,
+      ...post,
       features: post.features.join(', '),
       downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join(', '),
-      carouselImages: post.carouselImages ? post.carouselImages : [],
-      videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id);
   };
@@ -217,7 +227,6 @@ function ManagePosts() {
           onChange={handleChange}
         />
         
-        {/* Input untuk URL atau Upload Gambar */}
         <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
         <TextInput
           type="text"
@@ -234,7 +243,6 @@ function ManagePosts() {
           className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
         />
 
-        {/* Progress Bar */}
         {uploading && (
           <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
             <div
