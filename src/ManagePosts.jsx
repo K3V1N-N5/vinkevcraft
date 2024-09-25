@@ -20,7 +20,14 @@ function ManagePosts() {
   useEffect(() => onAuthStateChanged(auth, user => { setUser(user); setLoading(false); }), []);
 
   useEffect(() => {
-    user && getDocs(collection(db, 'posts')).then(snapshot => setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+    if (user) {
+      const fetchPosts = async () => {
+        const postSnapshot = await getDocs(collection(db, 'posts'));
+        const postList = postSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPosts(postList);
+      };
+      fetchPosts();
+    }
   }, [user]);
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
@@ -53,6 +60,7 @@ function ManagePosts() {
   };
 
   const uploadFiles = async (files, folder) => {
+    if (!files.length) return []; // Tambahkan pengecekan jika tidak ada file
     setUploading(true);
     const urls = await Promise.all(files.map(async (file, i) => {
       const uploadTask = uploadBytesResumable(ref(storage, `${folder}/${file.name}`), file);
@@ -70,16 +78,34 @@ function ManagePosts() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const imageUrls = await uploadFiles(imageFiles, 'images');
-    const thumbnailUrl = (await uploadFiles([thumbnailFile], 'thumbnails'))[0] || form.thumbnail;
-    const newPost = { ...form, carouselImages: [...form.carouselImages, ...imageUrls], thumbnail: thumbnailUrl };
+    setError(null);  // Pastikan error selalu di-reset setiap kali submit
+
     try {
-      const postRef = editingPostId ? doc(db, 'posts', editingPostId) : collection(db, 'posts');
-      editingPostId ? await updateDoc(postRef, newPost) : await addDoc(postRef, newPost);
-      setPosts(editingPostId ? posts.map(post => post.id === editingPostId ? { id: post.id, ...newPost } : post) : [...posts, newPost]);
-      resetForm();
+      // Upload gambar carousel dan thumbnail
+      const imageUrls = await uploadFiles(imageFiles, 'images');
+      const thumbnailUrl = (await uploadFiles([thumbnailFile], 'thumbnails'))[0] || form.thumbnail;
+
+      // Buat data post baru
+      const newPost = { 
+        ...form, 
+        carouselImages: [...form.carouselImages, ...imageUrls], 
+        thumbnail: thumbnailUrl 
+      };
+
+      if (editingPostId) {
+        // Jika sedang mengedit post, perbarui data post
+        const postRef = doc(db, 'posts', editingPostId);
+        await updateDoc(postRef, newPost);
+        setPosts(posts.map(post => post.id === editingPostId ? { id: post.id, ...newPost } : post));
+      } else {
+        // Jika membuat post baru, tambahkan data post
+        const postRef = await addDoc(collection(db, 'posts'), newPost);
+        setPosts([...posts, { id: postRef.id, ...newPost }]);
+      }
+
+      resetForm();  // Reset form setelah berhasil
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      setError(`Error submitting post: ${err.message}`);
     }
   };
 
