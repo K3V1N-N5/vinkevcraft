@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'; // Tambahkan deleteObject
-import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react'; 
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
 
@@ -18,7 +18,7 @@ function ManagePosts() {
     imageUrls: [],
     videoUrl: '',
     category: 'All',
-    thumbnail: '', 
+    thumbnail: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
@@ -30,7 +30,7 @@ function ManagePosts() {
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState(null);
   const [imageLink, setImageLink] = useState('');
-  const [thumbnailFile, setThumbnailFile] = useState(null); 
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,10 +72,20 @@ function ManagePosts() {
   };
 
   const handleThumbnailFileChange = (e) => {
-    setThumbnailFile(e.target.files[0]); 
+    setThumbnailFile(e.target.files[0]);
   };
 
-  // Fungsi untuk menghapus gambar yang sudah di-upload di Firestore
+  // Fungsi untuk menghapus gambar yang belum di-upload dari list image
+  const handleRemoveImage = (index) => {
+    const updatedFiles = imageFiles.filter((_, i) => i !== index);
+    const updatedPreviews = previewImages.filter((_, i) => i !== index);
+    const updatedProgresses = uploadProgresses.filter((_, i) => i !== index);
+    setImageFiles(updatedFiles);
+    setPreviewImages(updatedPreviews);
+    setUploadProgresses(updatedProgresses);
+  };
+
+  // Fungsi untuk menghapus gambar yang sudah di-upload di Firebase Storage
   const handleRemoveUploadedImage = async (index) => {
     const imageUrl = form.carouselImages[index];
     const imageRef = ref(storage, imageUrl);
@@ -174,7 +184,7 @@ function ManagePosts() {
     setError(null);
 
     const imageUrls = await uploadImages();
-    const thumbnailUrl = await uploadThumbnail(); 
+    const thumbnailUrl = await uploadThumbnail();
     if (imageFiles.length > 0 && imageUrls.length === 0) {
       setError('Image upload failed, please try again.');
       return;
@@ -191,8 +201,8 @@ function ManagePosts() {
       carouselImages: [...form.carouselImages, ...imageUrls],
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
-      category: form.category, 
-      thumbnail: thumbnailUrl, 
+      category: form.category,
+      thumbnail: thumbnailUrl,
     };
 
     try {
@@ -244,7 +254,7 @@ function ManagePosts() {
       carouselImages: [],
       imageUrls: [],
       videoUrl: '',
-      category: 'All', 
+      category: 'All',
       thumbnail: '',
     });
     setImageFiles([]);
@@ -253,7 +263,7 @@ function ManagePosts() {
     setIsAddingOrEditing(false);
     setImageLink('');
     setUploadProgresses([]);
-    setThumbnailFile(null); 
+    setThumbnailFile(null);
   };
 
   const handleEditClick = (post) => {
@@ -284,7 +294,7 @@ function ManagePosts() {
   };
 
   const handleNavigateToPost = (postId) => {
-    navigate(`/post/${postId}`); 
+    navigate(`/post/${postId}`);
   };
 
   if (loading) {
