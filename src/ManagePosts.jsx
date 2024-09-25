@@ -221,6 +221,10 @@ function ManagePosts() {
     }
   };
 
+  const handleNavigateToPost = (postId) => {
+    navigate(`/post/${postId}`); // Navigasi ke halaman post
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -339,14 +343,22 @@ function ManagePosts() {
             <h2 className="text-2xl font-bold mt-10 mb-4 text-center text-gray-900 dark:text-white">Your Posts</h2>
             <ul className="list-disc space-y-4 max-w-xl mx-auto text-gray-900 dark:text-white">
               {posts.map((post) => (
-                <li key={post.id} className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <li
+                  key={post.id}
+                  className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
+                  onClick={() => handleNavigateToPost(post.id)} // Navigate to post
+                >
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
                     <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button pill color="yellow" onClick={() => handleEditClick(post)}>Edit</Button>
-                    <Button pill color="red" onClick={() => handleDeletePost(post.id)}>Delete</Button>
+                    <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
+                      Edit
+                    </Button>
+                    <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}>
+                      Delete
+                    </Button>
                   </div>
                 </li>
               ))}
