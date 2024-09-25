@@ -94,7 +94,7 @@ function ManagePosts() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">Loading...</div>;
   }
 
   if (!user) {
@@ -102,9 +102,9 @@ function ManagePosts() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Header dengan tombol Logout */}
-      <header className="p-4 bg-gray-800 flex justify-between items-center">
+      <header className="p-4 bg-gray-200 dark:bg-gray-800 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Manage Your Posts</h1>
         <Button color="red" onClick={handleLogout}>
           Logout
@@ -132,7 +132,7 @@ function ManagePosts() {
               value={form.title}
               onChange={handleChange}
               required
-              className="dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <Textarea
               name="description"
@@ -141,7 +141,7 @@ function ManagePosts() {
               onChange={handleChange}
               rows={4}
               required
-              className="dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <TextInput
               type="text"
@@ -149,7 +149,7 @@ function ManagePosts() {
               name="features"
               value={form.features}
               onChange={handleChange}
-              className="dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <TextInput
               type="text"
@@ -157,7 +157,7 @@ function ManagePosts() {
               name="downloadLinks"
               value={form.downloadLinks}
               onChange={handleChange}
-              className="dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <TextInput
               type="text"
@@ -165,7 +165,7 @@ function ManagePosts() {
               name="videoUrl"
               value={form.videoUrl}
               onChange={handleChange}
-              className="dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
