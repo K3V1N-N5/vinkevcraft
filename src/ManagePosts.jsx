@@ -14,8 +14,8 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: [],
-    imageUrls: [],  // New field for image URLs
+    carouselImages: [], // Untuk gambar yang diunggah
+    imageUrls: [],  // Untuk gambar dari URL
     videoUrl: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
@@ -70,13 +70,18 @@ function ManagePosts() {
   };
 
   const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
+    // Penghapusan gambar yang sudah di-upload (carouselImages)
     if (isUploaded) {
       const updatedImages = form.carouselImages.filter((_, i) => i !== index);
       setForm({ ...form, carouselImages: updatedImages });
-    } else if (isUrl) {
+    } 
+    // Penghapusan gambar yang berasal dari URL (imageUrls)
+    else if (isUrl) {
       const updatedUrls = form.imageUrls.filter((_, i) => i !== index);
       setForm({ ...form, imageUrls: updatedUrls });
-    } else {
+    } 
+    // Penghapusan gambar yang di-upload langsung (preview dari imageFiles)
+    else {
       const updatedFiles = imageFiles.filter((_, i) => i !== index);
       const updatedPreviews = previewImages.filter((_, i) => i !== index);
       setImageFiles(updatedFiles);
@@ -200,7 +205,7 @@ function ManagePosts() {
         return { text, url };
       }) : [],
       carouselImages: imageUrls,
-      imageUrls: form.imageUrls,  // Add URLs to post data
+      imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
     };
 
@@ -356,6 +361,24 @@ function ManagePosts() {
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index, false, true)}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Previews for previously uploaded images */}
+            {form.carouselImages.length > 0 && (
+              <div className="flex flex-wrap gap-4 mt-4">
+                {form.carouselImages.map((src, index) => (
+                  <div key={index} className="relative">
+                    <img src={src} alt={`Uploaded ${index}`} className="h-20 w-20 object-cover rounded-lg shadow-md" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index, true)}
                       className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                     >
                       X
