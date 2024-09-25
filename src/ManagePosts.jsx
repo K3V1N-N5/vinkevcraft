@@ -12,11 +12,11 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: [],
+    carouselImages: [], // Untuk menyimpan gambar yang sudah diupload sebelumnya
     videoUrl: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]); // State untuk menyimpan pratinjau gambar
+  const [previewImages, setPreviewImages] = useState([]); // Pratinjau gambar baru
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,17 +45,24 @@ function ManagePosts() {
   };
 
   const handleImageFileChange = (e) => {
-    const newFiles = Array.from(e.target.files); // Mendapatkan file baru dari input
-    setImageFiles([...imageFiles, ...newFiles]); // Menambah file baru ke state
-    const newPreviews = newFiles.map(file => URL.createObjectURL(file)); // Buat URL untuk pratinjau gambar
-    setPreviewImages([...previewImages, ...newPreviews]); // Simpan URL pratinjau
+    const newFiles = Array.from(e.target.files); 
+    setImageFiles([...imageFiles, ...newFiles]); 
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file)); 
+    setPreviewImages([...previewImages, ...newPreviews]); 
   };
 
+  // Hapus gambar baru dari preview
   const handleRemoveImage = (index) => {
-    const updatedFiles = imageFiles.filter((_, i) => i !== index); // Hapus file dari state
-    const updatedPreviews = previewImages.filter((_, i) => i !== index); // Hapus pratinjau dari state
+    const updatedFiles = imageFiles.filter((_, i) => i !== index);
+    const updatedPreviews = previewImages.filter((_, i) => i !== index);
     setImageFiles(updatedFiles);
     setPreviewImages(updatedPreviews);
+  };
+
+  // Hapus gambar yang sudah ada saat mengedit
+  const handleRemoveExistingImage = (index) => {
+    const updatedCarouselImages = form.carouselImages.filter((_, i) => i !== index);
+    setForm({ ...form, carouselImages: updatedCarouselImages });
   };
 
   const uploadImages = async () => {
@@ -185,7 +192,7 @@ function ManagePosts() {
       videoUrl: '',
     });
     setImageFiles([]);
-    setPreviewImages([]); // Reset pratinjau gambar
+    setPreviewImages([]);
     setEditingPostId(null);
     setIsAddingOrEditing(false);
   };
@@ -217,7 +224,7 @@ function ManagePosts() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-gray-900 min-h-screen">
       
       {!isAddingOrEditing && (
         <div className="text-center mb-6">
@@ -229,7 +236,7 @@ function ManagePosts() {
 
       {isAddingOrEditing && (
         <>
-          <h1 className="text-3xl font-bold mb-6 text-center">
+          <h1 className="text-3xl font-bold mb-6 text-center dark:text-white text-gray-900">
             {editingPostId ? 'Edit Post' : 'Create New Post'}
           </h1>
 
@@ -243,6 +250,7 @@ function ManagePosts() {
               value={form.title}
               onChange={handleChange}
               required
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <Textarea
               name="description"
@@ -251,6 +259,7 @@ function ManagePosts() {
               onChange={handleChange}
               rows={4}
               required
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <TextInput
               type="text"
@@ -258,6 +267,7 @@ function ManagePosts() {
               name="features"
               value={form.features}
               onChange={handleChange}
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <TextInput
               type="text"
@@ -265,18 +275,19 @@ function ManagePosts() {
               name="downloadLinks"
               value={form.downloadLinks}
               onChange={handleChange}
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
             />
             
-            <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white">Upload Images (optional)</label>
             <input
               type="file"
               accept="image/*"
               multiple
               onChange={handleImageFileChange}
-              className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
+              className="block w-full text-sm text-gray-900 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
             />
 
-            {/* Tampilkan pratinjau gambar */}
+            {/* Pratinjau gambar baru */}
             <div className="flex flex-wrap gap-4 mt-4">
               {previewImages.map((src, index) => (
                 <div key={index} className="relative">
@@ -290,6 +301,26 @@ function ManagePosts() {
                 </div>
               ))}
             </div>
+
+            {/* Pratinjau dan hapus gambar yang sudah ada (saat mengedit) */}
+            {editingPostId && form.carouselImages.length > 0 && (
+              <>
+                <h3 className="text-lg font-medium mt-6 text-gray-700 dark:text-white">Existing Images:</h3>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  {form.carouselImages.map((src, index) => (
+                    <div key={index} className="relative">
+                      <img src={src} alt={`Existing ${index}`} className="h-20 w-20 object-cover rounded-lg shadow-md" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingImage(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                        X
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             {uploading && (
               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
@@ -307,6 +338,7 @@ function ManagePosts() {
               name="videoUrl"
               value={form.videoUrl}
               onChange={handleChange}
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
             />
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
@@ -322,7 +354,7 @@ function ManagePosts() {
 
       {!isAddingOrEditing && (
         <>
-          <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
+          <h2 className="text-2xl font-bold mt-10 mb-4 text-center dark:text-white text-gray-900">Your Posts</h2>
           <ul className="list-disc space-y-4 max-w-xl mx-auto">
             {posts.map(post => (
               <li 
@@ -331,8 +363,8 @@ function ManagePosts() {
                 onClick={() => handlePostClick(post.id)} 
               >
                 <div>
-                  <h3 className="text-xl font-bold">{post.title}</h3>
-                  <p>{post.description}</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{post.title}</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{post.description}</p>
                 </div>
                 <div className="flex space-x-2">
                   <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
