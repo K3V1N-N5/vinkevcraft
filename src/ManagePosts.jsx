@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
@@ -13,7 +13,6 @@ const initialFormState = {
   features: '',
   downloadLinks: '',
   carouselImages: [],
-  imageUrls: [],
   videoUrl: '',
   category: 'All',
   thumbnail: '',
@@ -24,7 +23,6 @@ function ManagePosts() {
   const [form, setForm] = useState(initialFormState);
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [uploading, setUploading] = useState(false);
   const [uploadProgresses, setUploadProgresses] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,9 +67,9 @@ function ManagePosts() {
 
   const uploadFiles = async (files, path) => {
     const urls = [];
-    for (let i = 0; i < files.length; i++) {
-      const fileRef = ref(storage, `${path}/${files[i].name}`);
-      const uploadTask = uploadBytesResumable(fileRef, files[i]);
+    for (const file of files) {
+      const fileRef = ref(storage, `${path}/${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
       await new Promise((resolve, reject) => {
         uploadTask.on(
           'state_changed',
@@ -79,7 +77,7 @@ function ManagePosts() {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             setUploadProgresses((prev) => {
               const updated = [...prev];
-              updated[i] = progress;
+              updated[files.indexOf(file)] = progress;
               return updated;
             });
           },
@@ -147,7 +145,7 @@ function ManagePosts() {
 
       <main className="flex-grow p-4">
         <div className="text-center mb-6">
-          <Button color="green" onClick={() => resetForm()}>Add Post</Button>
+          <Button color="green" onClick={resetForm}>Add Post</Button>
         </div>
 
         <form onSubmit={(e) => handleCreateOrUpdatePost(e, Boolean(editingPostId))} className="space-y-6 max-w-xl mx-auto">
@@ -168,13 +166,10 @@ function ManagePosts() {
 
           <div className="flex space-x-4">
             {previewImages.map((image, index) => (
-              <ImagePreview key={index} src={image} onRemove={handleRemove(setPreviewImages)(index)} uploadProgress={uploading ? uploadProgresses[index] : undefined} />
+              <ImagePreview key={index} src={image} onRemove={handleRemove(setPreviewImages)(index)} uploadProgress={uploadProgresses[index]} />
             ))}
             {form.carouselImages.map((url, index) => (
-              <ImagePreview key={index} src={url} onRemove={handleRemove(setForm)((prev) => ({ ...prev, carouselImages: prev.carouselImages.filter((_, i) => i !== index) })))} />
-            ))}
-            {form.imageUrls.map((url, index) => (
-              <ImagePreview key={index} src={url} onRemove={handleRemove(setForm)((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== index) })))} />
+              <ImagePreview key={index} src={url} onRemove={handleRemove((prev) => ({ ...prev, carouselImages: prev.carouselImages.filter((_, i) => i !== index) })))} />
             ))}
           </div>
 
