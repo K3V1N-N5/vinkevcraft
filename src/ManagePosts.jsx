@@ -21,7 +21,7 @@ function ManagePosts() {
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgresses, setUploadProgresses] = useState([]); // <-- New State for individual image progress
+  const [uploadProgresses, setUploadProgresses] = useState([]); // Track progress per image
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,7 +66,7 @@ function ManagePosts() {
     setImageFiles([...imageFiles, ...newFiles]);
     const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages([...previewImages, ...newPreviews]);
-    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]); // <-- Initialize progress for each image
+    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]); // Initialize progress for new files
   };
 
   const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
@@ -79,7 +79,7 @@ function ManagePosts() {
     } else {
       const updatedFiles = imageFiles.filter((_, i) => i !== index);
       const updatedPreviews = previewImages.filter((_, i) => i !== index);
-      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index); // <-- Remove progress for that image
+      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index); // Remove progress for that image
       setImageFiles(updatedFiles);
       setPreviewImages(updatedPreviews);
       setUploadProgresses(updatedProgresses);
@@ -108,7 +108,7 @@ function ManagePosts() {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
               setUploadProgresses((prevProgresses) => {
                 const updatedProgresses = [...prevProgresses];
-                updatedProgresses[i] = progress; // <-- Update progress of each image
+                updatedProgresses[i] = progress; // Update progress for each image
                 return updatedProgresses;
               });
             },
@@ -168,6 +168,22 @@ function ManagePosts() {
     }
   };
 
+  const handleEditClick = (post) => {
+    setForm({
+      title: post.title,
+      description: post.description,
+      features: post.features ? post.features.join('\n') : '',
+      downloadLinks: post.downloadLinks ? post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') : '',
+      carouselImages: post.carouselImages ? post.carouselImages : [],
+      imageUrls: post.imageUrls || [],
+      videoUrl: post.videoUrl || '',
+    });
+    setPreviewImages([]);
+    setImageFiles([]);
+    setEditingPostId(post.id);
+    setIsAddingOrEditing(true);
+  };
+
   const resetForm = () => {
     setForm({
       title: '',
@@ -193,6 +209,15 @@ function ManagePosts() {
         imageUrls: [...form.imageUrls, imageLink],
       });
       setImageLink('');
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      setError(`Error deleting post: ${error.message}`);
     }
   };
 
@@ -292,7 +317,7 @@ function ManagePosts() {
                   </button>
                   {uploading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p> {/* <-- Show individual progress */}
+                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p> {/* Individual progress */}
                     </div>
                   )}
                 </div>
