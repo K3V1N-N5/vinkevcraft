@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Button, TextInput, Textarea, FileInput } from 'flowbite-react';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { Button, TextInput, Textarea, FileInput, Spinner } from 'flowbite-react';
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
 
@@ -146,6 +146,8 @@ function ManagePosts() {
       imageUrls: post.imageUrls || [],
       videoUrl: post.videoUrl || '',
     });
+    setPreviewImages([]); // Clear any new image previews from the previous post
+    setImageFiles([]);
     setEditingPostId(post.id);
     setIsAddingOrEditing(true);
   };
@@ -178,7 +180,7 @@ function ManagePosts() {
     const newPost = {
       title: form.title,
       description: form.description,
-      features: form.features ? form.features.split('\n').map(feature => ` ${feature.trim()}`) : [],
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
       downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
@@ -189,8 +191,8 @@ function ManagePosts() {
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'posts'), newPost);
-      setPosts([...posts, { id: docRef.id, ...newPost }]);
+      await addDoc(collection(db, 'posts'), newPost);
+      setPosts([...posts, newPost]);
       resetForm();
     } catch (error) {
       setError(`Error creating post: ${error.message}`);
@@ -248,16 +250,16 @@ function ManagePosts() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   if (!user) {
-    return <Login onLogin={() => setUser(auth.currentUser)} />;
+    return <Login />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-      <header className="p-4 bg-gray-200 dark:bg-gray-800 flex justify-between items-center">
+    <div className="min-h-screen flex flex-col">
+      <header className="p-4 bg-gray-200 dark:bg-gray-900 dark:text-white shadow-md flex justify-between items-center">
         <h1 className="text-2xl font-bold">Manage Your Posts</h1>
         <Button color="red" onClick={handleLogout}>Logout</Button>
       </header>
@@ -291,7 +293,7 @@ function ManagePosts() {
             />
             <Textarea
               name="features"
-              placeholder="Features (tulis ke bawah untuk • )"
+              placeholder="Features (tulis ke bawah, gunakan '-' untuk bullet points)"
               value={form.features}
               onChange={handleChange}
               rows={4}
@@ -314,6 +316,7 @@ function ManagePosts() {
               className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
 
+            {/* Image Previews */}
             <div className="flex space-x-4">
               {previewImages.map((image, index) => (
                 <div key={index} className="relative">
@@ -322,6 +325,18 @@ function ManagePosts() {
                     type="button"
                     className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
                     onClick={() => handleRemoveImage(index)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              {form.imageUrls.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`Uploaded Preview ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index, false, true)}
                   >
                     &times;
                   </button>
@@ -338,6 +353,14 @@ function ManagePosts() {
               onChange={handleChange}
               className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
             />
+
+            {/* Upload Progress Indicator */}
+            {uploading && (
+              <div className="text-center my-4">
+                <Spinner size="lg" color="green" />
+                <p>Uploading... {Math.round(uploadProgress)}%</p>
+              </div>
+            )}
 
             {/* Submit & Cancel Buttons */}
             <div className="flex justify-center space-x-4">
