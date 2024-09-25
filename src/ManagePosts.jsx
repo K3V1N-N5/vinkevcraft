@@ -15,7 +15,7 @@ function ManagePosts() {
     features: '',
     downloadLinks: '',
     carouselImages: [],
-    imageUrls: [],
+    imageUrls: '',
     videoUrl: '',
     category: 'All',
     thumbnail: '',
@@ -30,9 +30,9 @@ function ManagePosts() {
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState('');
   const navigate = useNavigate();
 
-  // Listener untuk status autentikasi user
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -41,92 +41,208 @@ function ManagePosts() {
     return unsubscribe;
   }, []);
 
-  // Fetch posts setelah user login
   useEffect(() => {
     if (user) {
       const fetchPosts = async () => {
-        try {
-          const postSnapshot = await getDocs(collection(db, 'posts'));
-          const postList = postSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setPosts(postList);
-        } catch (err) {
-          setError(`Error fetching posts: ${err.message}`);
-        }
+        const postCollection = collection(db, 'posts');
+        const postSnapshot = await getDocs(postCollection);
+        const postList = postSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPosts(postList);
       };
       fetchPosts();
     }
   }, [user]);
 
-  // Mengubah nilai dalam form
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  // Mengelola file gambar yang diunggah
-  const handleFileChange = (e, setFiles, setPreviews) => {
-    const files = Array.from(e.target.files);
-    setFiles((prev) => [...prev, ...files]);
-    setPreviews((prev) => [...prev, ...files.map((file) => URL.createObjectURL(file))]);
-    setUploadProgresses((prev) => [...prev, ...files.map(() => 0)]);
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // Upload file ke Firebase Storage
-  const uploadFiles = async (files, folder) => {
-    if (!files.length) return [];
-    setUploading(true);
-
-    const urls = await Promise.all(
-      files.map((file, i) => {
-        return new Promise((resolve, reject) => {
-          const fileRef = ref(storage, `${folder}/${file.name}`);
-          const uploadTask = uploadBytesResumable(fileRef, file);
-
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgresses((prev) => {
-                const updated = [...prev];
-                updated[i] = progress;
-                return updated;
-              });
-            },
-            (err) => {
-              setError(`Upload failed: ${err.message}`);
-              setUploading(false);
-              reject(err);
-            },
-            async () => {
-              const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadUrl);
-            }
-          );
-        });
-      })
-    );
-
-    setUploading(false);
-    return urls;
+  const handleImageFileChange = (e) => {
+    const newFiles = Array.from(e.target.files);
+    setImageFiles([...imageFiles, ...newFiles]);
+    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+    setPreviewImages([...previewImages, ...newPreviews]);
+    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]);
   };
 
-  // Fungsi untuk menghapus gambar dari storage
+  const handleThumbnailFileChange = (e) => {
+    const file = e.target.files[0];
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = (index) => {
+    const updatedFiles = imageFiles.filter((_, i) => i !== index);
+    const updatedPreviews = previewImages.filter((_, i) => i !== index);
+    const updatedProgresses = uploadProgresses.filter((_, i) => i !== index);
+    setImageFiles(updatedFiles);
+    setPreviewImages(updatedPreviews);
+    setUploadProgresses(updatedProgresses);
+  };
+
   const handleRemoveUploadedImage = async (index) => {
     const imageUrl = form.carouselImages[index];
     const imageRef = ref(storage, imageUrl);
 
     try {
-      await deleteObject(imageRef); // Menghapus dari Firebase Storage
-      setForm((prev) => ({
-        ...prev,
-        carouselImages: prev.carouselImages.filter((_, i) => i !== index),
-      }));
+      await deleteObject(imageRef);
+      const updatedImages = form.carouselImages.filter((_, i) => i !== index);
+      setForm({ ...form, carouselImages: updatedImages });
     } catch (error) {
       setError(`Error deleting image: ${error.message}`);
     }
   };
 
-  // Reset form setelah create/edit
+  const handleRemoveUrlImage = (index) => {
+    const updatedUrls = form.imageUrls.split('\n').filter((_, i) => i !== index).join('\n');
+    setForm({ ...form, imageUrls: updatedUrls });
+  };
+
+  const uploadImages = async () => {
+    if (imageFiles.length === 0) {
+      return [];
+    }
+
+    const imageUrls = [];
+    setUploading(true);
+
+    for (let i = 0; i < imageFiles.length; i++) {
+      const imageFile = imageFiles[i];
+      const imageRef = ref(storage, `images/${imageFile.name}`);
+
+      try {
+        const uploadTask = uploadBytesResumable(imageRef, imageFile);
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgresses((prevProgresses) => {
+                const updatedProgresses = [...prevProgresses];
+                updatedProgresses[i] = progress;
+                return updatedProgresses;
+              });
+            },
+            (error) => {
+              setError(`Error uploading image: ${error.message}`);
+              setUploading(false);
+              reject(error);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              imageUrls.push(downloadURL);
+              if (i === imageFiles.length - 1) {
+                setUploading(false);
+              }
+              resolve();
+            }
+          );
+        });
+      } catch (error) {
+        setError('Image upload failed. Please try again.');
+        return [];
+      }
+    }
+    return imageUrls;
+  };
+
+  const uploadThumbnail = async () => {
+    if (!thumbnailFile) return '';
+
+    const thumbnailRef = ref(storage, `thumbnails/${thumbnailFile.name}`);
+    const uploadTask = uploadBytesResumable(thumbnailRef, thumbnailFile);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Thumbnail upload progress:', progress);
+        },
+        (error) => {
+          setError(`Error uploading thumbnail: ${error.message}`);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    });
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    const imageUrls = await uploadImages();
+    const thumbnailUrl = await uploadThumbnail();
+    if (imageFiles.length > 0 && imageUrls.length === 0) {
+      setError('Image upload failed, please try again.');
+      return;
+    }
+
+    const newPost = {
+      title: form.title,
+      description: form.description,
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
+      imageUrls: form.imageUrls.split('\n'),
+      videoUrl: form.videoUrl || '',
+      category: form.category,
+      thumbnail: thumbnailUrl,
+    };
+
+    try {
+      await addDoc(collection(db, 'posts'), newPost);
+      setPosts([...posts, newPost]);
+      resetForm();
+    } catch (error) {
+      setError(`Error creating post: ${error.message}`);
+    }
+  };
+
+  const handleEditPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    const imageUrls = await uploadImages();
+    const thumbnailUrl = await uploadThumbnail();
+
+    const updatedPost = {
+      title: form.title,
+      description: form.description,
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
+      imageUrls: form.imageUrls.split('\n'),
+      videoUrl: form.videoUrl || '',
+      category: form.category,
+      thumbnail: thumbnailUrl || form.thumbnail,
+    };
+
+    try {
+      const postRef = doc(db, 'posts', editingPostId);
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
+    }
+  };
+
   const resetForm = () => {
     setForm({
       title: '',
@@ -134,7 +250,7 @@ function ManagePosts() {
       features: '',
       downloadLinks: '',
       carouselImages: [],
-      imageUrls: [],
+      imageUrls: '',
       videoUrl: '',
       category: 'All',
       thumbnail: '',
@@ -145,38 +261,7 @@ function ManagePosts() {
     setIsAddingOrEditing(false);
     setUploadProgresses([]);
     setThumbnailFile(null);
-  };
-
-  // Fungsi create post atau update post
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null); // Reset error sebelum submit
-
-    try {
-      const imageUrls = await uploadFiles(imageFiles, 'images');
-      const thumbnailUrl = (await uploadFiles([thumbnailFile], 'thumbnails'))[0] || form.thumbnail;
-
-      const newPost = {
-        ...form,
-        carouselImages: [...form.carouselImages, ...imageUrls],
-        thumbnail: thumbnailUrl,
-      };
-
-      if (editingPostId) {
-        const postRef = doc(db, 'posts', editingPostId);
-        await updateDoc(postRef, newPost);
-        setPosts((prev) =>
-          prev.map((post) => (post.id === editingPostId ? { id: post.id, ...newPost } : post))
-        );
-      } else {
-        const postRef = await addDoc(collection(db, 'posts'), newPost);
-        setPosts((prev) => [...prev, { id: postRef.id, ...newPost }]);
-      }
-
-      resetForm();
-    } catch (err) {
-      setError(`Error creating/updating post: ${err.message}`);
-    }
+    setThumbnailPreview('');
   };
 
   const handleEditClick = (post) => {
@@ -184,11 +269,9 @@ function ManagePosts() {
       title: post.title,
       description: post.description,
       features: post.features ? post.features.join('\n') : '',
-      downloadLinks: post.downloadLinks
-        ? post.downloadLinks.map((link) => `${link.text}|${link.url}`).join('\n')
-        : '',
+      downloadLinks: post.downloadLinks ? post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') : '',
       carouselImages: post.carouselImages || [],
-      imageUrls: post.imageUrls || [],
+      imageUrls: post.imageUrls.join('\n'),
       videoUrl: post.videoUrl || '',
       category: post.category || 'All',
       thumbnail: post.thumbnail || '',
@@ -197,39 +280,46 @@ function ManagePosts() {
     setImageFiles([]);
     setEditingPostId(post.id);
     setIsAddingOrEditing(true);
+    setThumbnailPreview(post.thumbnail || '');
   };
 
   const handleDeletePost = async (postId) => {
     try {
       await deleteDoc(doc(db, 'posts', postId));
-      setPosts((prev) => prev.filter((post) => post.id !== postId));
+      setPosts(posts.filter(post => post.id !== postId));
     } catch (error) {
       setError(`Error deleting post: ${error.message}`);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Login />;
+  const handleNavigateToPost = (postId) => {
+    navigate(`/post/${postId}`);
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="p-4 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white shadow-md flex justify-between items-center">
         <h1 className="text-2xl font-bold">Manage Your Posts</h1>
-        <Button color="red" onClick={() => signOut(auth)}>
-          Logout
-        </Button>
+        <Button color="red" onClick={() => signOut(auth)}>Logout</Button>
       </header>
+
       <main className="flex-grow p-4">
         {!isAddingOrEditing && (
           <div className="text-center mb-6">
-            <Button color="green" onClick={() => setIsAddingOrEditing(true)}>
-              Add Post
-            </Button>
+            <Button color="green" onClick={() => setIsAddingOrEditing(true)}>Add Post</Button>
           </div>
         )}
 
         {isAddingOrEditing && (
-          <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+          <form onSubmit={editingPostId ? handleEditPost : handleCreatePost} className="space-y-6 max-w-xl mx-auto">
             <TextInput
               type="text"
               placeholder="Post Title"
@@ -250,7 +340,7 @@ function ManagePosts() {
             />
             <Textarea
               name="features"
-              placeholder="Features (bullet points)"
+              placeholder="Features (tulis ke bawah, gunakan '-' untuk bullet points)"
               value={form.features}
               onChange={handleChange}
               rows={4}
@@ -258,7 +348,7 @@ function ManagePosts() {
             />
             <Textarea
               name="downloadLinks"
-              placeholder="Download Links (Text|https://link.com)"
+              placeholder="Download Links (format: Text|https://link.com, tulis ke bawah)"
               value={form.downloadLinks}
               onChange={handleChange}
               rows={4}
@@ -272,6 +362,7 @@ function ManagePosts() {
               onChange={handleChange}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+
             <Select
               id="category"
               name="category"
@@ -286,28 +377,43 @@ function ManagePosts() {
               <option value="Mod">Mod</option>
               <option value="Map">Map</option>
             </Select>
+
             <FileInput
               name="thumbnail"
               label="Upload Thumbnail"
-              onChange={(e) => setThumbnailFile(e.target.files[0])}
+              onChange={handleThumbnailFileChange}
               accept="image/*"
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+            {thumbnailPreview && (
+              <div className="relative w-32 h-32">
+                <img src={thumbnailPreview} alt="Thumbnail Preview" className="object-cover w-full h-full" />
+                <button
+                  type="button"
+                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                  onClick={() => { setThumbnailFile(null); setThumbnailPreview(''); }}
+                >
+                  &times;
+                </button>
+              </div>
+            )}
+
             <FileInput
               name="carouselImages"
               multiple
-              onChange={(e) => handleFileChange(e, setImageFiles, setPreviewImages)}
+              onChange={handleImageFileChange}
               accept="image/*"
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <div className="flex space-x-4">
+
+            <div className="flex flex-wrap space-x-4">
               {previewImages.map((image, index) => (
                 <div key={index} className="relative">
                   <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
                   <button
                     type="button"
                     className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index, setImageFiles, setPreviewImages)}
+                    onClick={() => handleRemoveImage(index)}
                   >
                     &times;
                   </button>
@@ -316,8 +422,10 @@ function ManagePosts() {
                       <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p>
                     </div>
                   )}
+                  <p className="text-center text-xs mt-1">Preview Image</p>
                 </div>
               ))}
+
               {form.carouselImages.map((imageUrl, index) => (
                 <div key={index} className="relative">
                   <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
@@ -328,16 +436,39 @@ function ManagePosts() {
                   >
                     &times;
                   </button>
+                  <p className="text-center text-xs mt-1">Uploaded Image</p>
+                </div>
+              ))}
+
+              {form.imageUrls.split('\n').map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveUrlImage(index)}
+                  >
+                    &times;
+                  </button>
+                  <p className="text-center text-xs mt-1">External URL</p>
                 </div>
               ))}
             </div>
+
+            <Textarea
+              name="imageUrls"
+              placeholder="Edit Image URLs (tulis kebawah untuk multiple links)"
+              value={form.imageUrls}
+              onChange={handleChange}
+              rows={4}
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
                 {editingPostId ? 'Save Changes' : 'Create Post'}
               </Button>
-              <Button pill color="red" onClick={resetForm}>
-                Cancel
-              </Button>
+              <Button pill color="red" onClick={resetForm}>Cancel</Button>
             </div>
           </form>
         )}
@@ -350,31 +481,17 @@ function ManagePosts() {
                 <li
                   key={post.id}
                   className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
-                  onClick={() => navigate(`/post/${post.id}`)}
+                  onClick={() => handleNavigateToPost(post.id)}
                 >
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
                     <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button
-                      pill
-                      color="yellow"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(post);
-                      }}
-                    >
+                    <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
                       Edit
                     </Button>
-                    <Button
-                      pill
-                      color="red"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePost(post.id);
-                      }}
-                    >
+                    <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}>
                       Delete
                     </Button>
                   </div>
