@@ -104,6 +104,12 @@ function ManagePosts() {
     setForm({ ...form, imageUrls: updatedUrls });
   };
 
+  const handleRemoveThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailPreview('');
+    setForm({ ...form, thumbnail: '' });
+  };
+
   const uploadImages = async () => {
     if (imageFiles.length === 0) {
       return [];
@@ -385,18 +391,6 @@ function ManagePosts() {
               accept="image/*"
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            {thumbnailPreview && (
-              <div className="relative w-32 h-32">
-                <img src={thumbnailPreview} alt="Thumbnail Preview" className="object-cover w-full h-full" />
-                <button
-                  type="button"
-                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  onClick={() => { setThumbnailFile(null); setThumbnailPreview(''); }}
-                >
-                  &times;
-                </button>
-              </div>
-            )}
 
             <FileInput
               name="carouselImages"
@@ -406,55 +400,6 @@ function ManagePosts() {
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
-            <div className="flex flex-wrap space-x-4">
-              {previewImages.map((image, index) => (
-                <div key={index} className="relative">
-                  <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index)}
-                  >
-                    &times;
-                  </button>
-                  {uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p>
-                    </div>
-                  )}
-                  <p className="text-center text-xs mt-1">Preview Image</p>
-                </div>
-              ))}
-
-              {form.carouselImages.map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveUploadedImage(index)}
-                  >
-                    &times;
-                  </button>
-                  <p className="text-center text-xs mt-1">Uploaded Image</p>
-                </div>
-              ))}
-
-              {form.imageUrls.split('\n').map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveUrlImage(index)}
-                  >
-                    &times;
-                  </button>
-                  <p className="text-center text-xs mt-1">External URL</p>
-                </div>
-              ))}
-            </div>
-
             <Textarea
               name="imageUrls"
               placeholder="Edit Image URLs (tulis kebawah untuk multiple links)"
@@ -463,6 +408,87 @@ function ManagePosts() {
               rows={4}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+
+            {/* Integrated Image and Thumbnail View */}
+            <div className="flex flex-wrap gap-4">
+              {/* Thumbnail Preview or Uploaded */}
+              {thumbnailPreview && (
+                <div className="relative w-32 h-32">
+                  <img src={thumbnailPreview} alt="Thumbnail Preview" className="w-full h-full object-cover rounded" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={handleRemoveThumbnail}
+                  >
+                    &times;
+                  </button>
+                  <span className="absolute bottom-0 left-0 bg-black text-white text-xs px-1 py-0.5 rounded">Thumbnail</span>
+                </div>
+              )}
+              {form.thumbnail && !thumbnailPreview && (
+                <div className="relative w-32 h-32">
+                  <img src={form.thumbnail} alt="Uploaded Thumbnail" className="w-full h-full object-cover rounded" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={handleRemoveThumbnail}
+                  >
+                    &times;
+                  </button>
+                  <span className="absolute bottom-0 left-0 bg-black text-white text-xs px-1 py-0.5 rounded">Thumbnail</span>
+                </div>
+              )}
+
+              {/* Preview Images */}
+              {previewImages.map((image, index) => (
+                <div key={index} className="relative w-32 h-32">
+                  <img src={image} alt={`Preview ${index}`} className="w-full h-full object-cover rounded" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    &times;
+                  </button>
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded">
+                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p>
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 left-0 bg-black text-white text-xs px-1 py-0.5 rounded">Preview Image</span>
+                </div>
+              ))}
+
+              {/* Uploaded Carousel Images */}
+              {form.carouselImages.map((imageUrl, index) => (
+                <div key={index} className="relative w-32 h-32">
+                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-full h-full object-cover rounded" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveUploadedImage(index)}
+                  >
+                    &times;
+                  </button>
+                  <span className="absolute bottom-0 left-0 bg-black text-white text-xs px-1 py-0.5 rounded">Uploaded Image</span>
+                </div>
+              ))}
+
+              {/* External URL Images */}
+              {form.imageUrls.split('\n').map((imageUrl, index) => (
+                <div key={index} className="relative w-32 h-32">
+                  <img src={imageUrl} alt={`URL ${index}`} className="w-full h-full object-cover rounded" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveUrlImage(index)}
+                  >
+                    &times;
+                  </button>
+                  <span className="absolute bottom-0 left-0 bg-black text-white text-xs px-1 py-0.5 rounded">External URL</span>
+                </div>
+              ))}
+            </div>
 
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
