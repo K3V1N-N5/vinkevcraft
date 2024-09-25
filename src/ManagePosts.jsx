@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react'; // Tambahkan Select dari Flowbite
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'; // Tambahkan deleteObject
+import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react'; 
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
 
@@ -17,8 +17,8 @@ function ManagePosts() {
     carouselImages: [],
     imageUrls: [],
     videoUrl: '',
-    category: 'All', // Tambahkan kategori di form
-    thumbnail: '', // Thumbnail untuk post
+    category: 'All',
+    thumbnail: '', 
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
@@ -30,7 +30,7 @@ function ManagePosts() {
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState(null);
   const [imageLink, setImageLink] = useState('');
-  const [thumbnailFile, setThumbnailFile] = useState(null); // Tambahkan state untuk thumbnail
+  const [thumbnailFile, setThumbnailFile] = useState(null); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,24 +72,27 @@ function ManagePosts() {
   };
 
   const handleThumbnailFileChange = (e) => {
-    setThumbnailFile(e.target.files[0]); // Set file thumbnail
+    setThumbnailFile(e.target.files[0]); 
   };
 
-  const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
-    if (isUploaded) {
+  // Fungsi untuk menghapus gambar yang sudah di-upload di Firestore
+  const handleRemoveUploadedImage = async (index) => {
+    const imageUrl = form.carouselImages[index];
+    const imageRef = ref(storage, imageUrl);
+
+    try {
+      await deleteObject(imageRef); // Menghapus dari Firebase Storage
       const updatedImages = form.carouselImages.filter((_, i) => i !== index);
       setForm({ ...form, carouselImages: updatedImages });
-    } else if (isUrl) {
-      const updatedUrls = form.imageUrls.filter((_, i) => i !== index);
-      setForm({ ...form, imageUrls: updatedUrls });
-    } else {
-      const updatedFiles = imageFiles.filter((_, i) => i !== index);
-      const updatedPreviews = previewImages.filter((_, i) => i !== index);
-      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index);
-      setImageFiles(updatedFiles);
-      setPreviewImages(updatedPreviews);
-      setUploadProgresses(updatedProgresses);
+    } catch (error) {
+      setError(`Error deleting image: ${error.message}`);
     }
+  };
+
+  // Fungsi untuk menghapus gambar dari URL eksternal
+  const handleRemoveUrlImage = (index) => {
+    const updatedUrls = form.imageUrls.filter((_, i) => i !== index);
+    setForm({ ...form, imageUrls: updatedUrls });
   };
 
   const uploadImages = async () => {
@@ -171,7 +174,7 @@ function ManagePosts() {
     setError(null);
 
     const imageUrls = await uploadImages();
-    const thumbnailUrl = await uploadThumbnail(); // Upload thumbnail
+    const thumbnailUrl = await uploadThumbnail(); 
     if (imageFiles.length > 0 && imageUrls.length === 0) {
       setError('Image upload failed, please try again.');
       return;
@@ -188,8 +191,8 @@ function ManagePosts() {
       carouselImages: [...form.carouselImages, ...imageUrls],
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
-      category: form.category, // Simpan kategori
-      thumbnail: thumbnailUrl, // Simpan URL thumbnail
+      category: form.category, 
+      thumbnail: thumbnailUrl, 
     };
 
     try {
@@ -198,6 +201,37 @@ function ManagePosts() {
       resetForm();
     } catch (error) {
       setError(`Error creating post: ${error.message}`);
+    }
+  };
+
+  const handleEditPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    const imageUrls = await uploadImages();
+    const thumbnailUrl = await uploadThumbnail();
+
+    const updatedPost = {
+      title: form.title,
+      description: form.description,
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
+      imageUrls: form.imageUrls,
+      videoUrl: form.videoUrl || '',
+      category: form.category,
+      thumbnail: thumbnailUrl || form.thumbnail,
+    };
+
+    try {
+      const postRef = doc(db, 'posts', editingPostId);
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
     }
   };
 
@@ -210,7 +244,7 @@ function ManagePosts() {
       carouselImages: [],
       imageUrls: [],
       videoUrl: '',
-      category: 'All', // Reset kategori ke default
+      category: 'All', 
       thumbnail: '',
     });
     setImageFiles([]);
@@ -219,7 +253,38 @@ function ManagePosts() {
     setIsAddingOrEditing(false);
     setImageLink('');
     setUploadProgresses([]);
-    setThumbnailFile(null); // Reset thumbnail file
+    setThumbnailFile(null); 
+  };
+
+  const handleEditClick = (post) => {
+    setForm({
+      title: post.title,
+      description: post.description,
+      features: post.features ? post.features.join('\n') : '',
+      downloadLinks: post.downloadLinks ? post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') : '',
+      carouselImages: post.carouselImages ? post.carouselImages : [],
+      imageUrls: post.imageUrls || [],
+      videoUrl: post.videoUrl || '',
+      category: post.category || 'All',
+      thumbnail: post.thumbnail || '',
+    });
+    setPreviewImages([]);
+    setImageFiles([]);
+    setEditingPostId(post.id);
+    setIsAddingOrEditing(true);
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      setError(`Error deleting post: ${error.message}`);
+    }
+  };
+
+  const handleNavigateToPost = (postId) => {
+    navigate(`/post/${postId}`); 
   };
 
   if (loading) {
@@ -323,6 +388,53 @@ function ManagePosts() {
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
+            {/* Preview Gambar dan Hapus */}
+            <div className="flex space-x-4">
+              {previewImages.map((image, index) => (
+                <div key={index} className="relative">
+                  <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    &times;
+                  </button>
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {form.carouselImages.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveUploadedImage(index)} 
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+
+              {form.imageUrls.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveUrlImage(index)} 
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+            </div>
+
             {/* Submit & Cancel Buttons */}
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
@@ -342,14 +454,19 @@ function ManagePosts() {
                 <li
                   key={post.id}
                   className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
+                  onClick={() => handleNavigateToPost(post.id)}
                 >
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
                     <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button pill color="yellow">Edit</Button>
-                    <Button pill color="red">Delete</Button>
+                    <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
+                      Edit
+                    </Button>
+                    <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}>
+                      Delete
+                    </Button>
                   </div>
                 </li>
               ))}
