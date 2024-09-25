@@ -320,6 +320,16 @@ function ManagePosts() {
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
+            {/* Video URL Input: Pindah ke atas sebelum Image Upload */}
+            <TextInput
+              type="text"
+              placeholder="Video URL"
+              name="videoUrl"
+              value={form.videoUrl}
+              onChange={handleChange}
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+
             <FileInput
               name="carouselImages"
               multiple
@@ -370,7 +380,6 @@ function ManagePosts() {
                   </button>
                 </div>
               ))}
-              {/* Tombol Hapus untuk Gambar yang Sudah Terunggah */}
               {form.carouselImages.map((imageUrl, index) => (
                 <div key={index} className="relative">
                   <img src={imageUrl} alt={`Uploaded Image ${index}`} className="w-32 h-32 object-cover" />
@@ -385,16 +394,6 @@ function ManagePosts() {
               ))}
             </div>
 
-            {/* Video URL Input */}
-            <TextInput
-              type="text"
-              placeholder="Video URL"
-              name="videoUrl"
-              value={form.videoUrl}
-              onChange={handleChange}
-              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-
             {/* Submit & Cancel Buttons */}
             <div className="flex justify-center space-x-4">
               <Button type="submit" pill color="green">
@@ -407,8 +406,8 @@ function ManagePosts() {
 
         {!isAddingOrEditing && (
           <>
-            <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
-            <ul className="list-disc space-y-4 max-w-xl mx-auto">
+            <h2 className="text-2xl font-bold mt-10 mb-4 text-center text-gray-900 dark:text-white">Your Posts</h2>
+            <ul className="list-disc space-y-4 max-w-xl mx-auto text-gray-900 dark:text-white">
               {posts.map((post) => (
                 <li
                   key={post.id}
