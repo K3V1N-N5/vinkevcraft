@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { data } from './utils/listdata';
+import { collection, getDocs } from 'firebase/firestore'; // Firebase Firestore
+import { db } from './firebase'; // Firebase config
 
 function ListProject() {
   const navigate = useNavigate();
@@ -10,11 +11,14 @@ function ListProject() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filterVisible, setFilterVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [posts, setPosts] = useState([]); // State untuk menyimpan data dari Firestore
 
+  // Fungsi untuk menangani pencarian
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Fungsi untuk menangani perubahan kategori
   const handleFilterChange = (category) => {
     setSelectedCategory(category);
     setFilterVisible(false);
@@ -40,28 +44,34 @@ function ListProject() {
     };
   }, [dropdownRef, filterButtonRef]);
 
-  const filteredData = data.filter((item) => {
+  // Ambil data dari Firestore
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      const postCollection = collection(db, 'posts'); // Ambil data dari collection 'posts' di Firestore
+      const postSnapshot = await getDocs(postCollection);
+      const postList = postSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPosts(postList);
+      setIsLoading(false);
+    };
+    fetchPosts();
+  }, []);
+
+  // Filter data berdasarkan pencarian dan kategori
+  const filteredData = posts.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory; // Filter berdasarkan kategori dan pencarian
   });
-
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => setIsLoading(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    setIsLoading(true);
-  }, [searchTerm, selectedCategory]);
 
   return (
     <div id="landing" className="bg-white dark:bg-[#1e1e1e] text-black dark:text-white min-h-screen flex flex-col">
       <div className="pb-10 px-4 font-sans mx-auto relative z-10 w-full h-full max-w-3xl">
         {/* Navigasi dan Search */}
-        <div className="flex mt-4 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2"> {/* Ganti mt-10 ke mt-4 untuk jarak */}
+        <div className="flex mt-4 max-w-4xl justify-between items-center mb-5 border-b border-gray-700 pb-2">
           <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded" onClick={() => navigate('/')}>Back</button>
           
           <input
@@ -113,6 +123,26 @@ function ListProject() {
               />
               Addon
             </label>
+            <label className="mb-1">
+              <input
+                type="radio"
+                name="category"
+                checked={selectedCategory === 'Mod'}
+                onChange={() => handleFilterChange('Mod')}
+                className="mr-2"
+              />
+              Mod
+            </label>
+            <label className="mb-1">
+              <input
+                type="radio"
+                name="category"
+                checked={selectedCategory === 'Map'}
+                onChange={() => handleFilterChange('Map')}
+                className="mr-2"
+              />
+              Map
+            </label>
           </div>
         )}
 
@@ -126,18 +156,16 @@ function ListProject() {
             {filteredData.map((item, index) => (
               <Link
                 key={index}
-                to={item.link}
+                to={`/post/${item.id}`} // Link ke halaman post detail
                 className="block bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden shadow-md border border-gray-700 relative z-10"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 <div className="relative">
-                  <img src={item.img} alt={item.title} className="w-full h-auto object-cover border-b border-gray-700" />
+                  <img src={item.thumbnail || item.carouselImages[0]} alt={item.title} className="w-full h-auto object-cover border-b border-gray-700" />
                   <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">{item.category}</div>
                 </div>
                 <div className="p-4 border-t border-gray-700">
                   <h3 className="text-xl font-bold">{item.title}</h3>
-                  <p className="text-gray-500">{item.description}</p>
+                  <p className="text-gray-500">{item.description.substring(0, 100)}...</p> {/* Potong deskripsi */}
                 </div>
               </Link>
             ))}
