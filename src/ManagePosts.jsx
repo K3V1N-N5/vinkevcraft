@@ -27,7 +27,7 @@ function ManagePosts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
-  const [imageLink, setImageLink] = useState(''); // New state for image URL input
+  const [imageLink, setImageLink] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -147,7 +147,7 @@ function ManagePosts() {
       imageUrls: post.imageUrls || [],
       videoUrl: post.videoUrl || '',
     });
-    setPreviewImages([]); // Clear any new image previews from the previous post
+    setPreviewImages([]);
     setImageFiles([]);
     setEditingPostId(post.id);
     setIsAddingOrEditing(true);
@@ -167,7 +167,7 @@ function ManagePosts() {
     setPreviewImages([]);
     setEditingPostId(null);
     setIsAddingOrEditing(false);
-    setImageLink(''); // Clear the image link input
+    setImageLink('');
   };
 
   const handleAddImageLink = () => {
@@ -292,7 +292,7 @@ function ManagePosts() {
               value={form.title}
               onChange={handleChange}
               required
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <Textarea
               name="description"
@@ -301,7 +301,7 @@ function ManagePosts() {
               onChange={handleChange}
               rows={4}
               required
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <Textarea
               name="features"
@@ -309,7 +309,7 @@ function ManagePosts() {
               value={form.features}
               onChange={handleChange}
               rows={4}
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <Textarea
               name="downloadLinks"
@@ -317,7 +317,7 @@ function ManagePosts() {
               value={form.downloadLinks}
               onChange={handleChange}
               rows={4}
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
             <FileInput
@@ -325,7 +325,7 @@ function ManagePosts() {
               multiple
               onChange={handleImageFileChange}
               accept="image/*"
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
             <TextInput
@@ -333,7 +333,7 @@ function ManagePosts() {
               placeholder="Enter image URL"
               value={imageLink}
               onChange={(e) => setImageLink(e.target.value)}
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <Button color="blue" onClick={handleAddImageLink}>
               Add Image URL
@@ -370,6 +370,19 @@ function ManagePosts() {
                   </button>
                 </div>
               ))}
+              {/* Tombol Hapus untuk Gambar yang Sudah Terunggah */}
+              {form.carouselImages.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img src={imageUrl} alt={`Uploaded Image ${index}`} className="w-32 h-32 object-cover" />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+                    onClick={() => handleRemoveImage(index, true)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
             </div>
 
             {/* Video URL Input */}
@@ -379,7 +392,7 @@ function ManagePosts() {
               name="videoUrl"
               value={form.videoUrl}
               onChange={handleChange}
-              className="bg-white dark:bg-gray-700 dark:text-white text-gray-900"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
 
             {/* Submit & Cancel Buttons */}
