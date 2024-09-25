@@ -211,6 +211,64 @@ function ManagePosts() {
     }
   };
 
+  const handleEditPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    const imageUrls = await uploadImages();
+    if (imageFiles.length > 0 && imageUrls.length === 0) {
+      setError('Image upload failed, please try again.');
+      return;
+    }
+
+    const updatedPost = {
+      title: form.title,
+      description: form.description,
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
+      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
+        const [text, url] = link.split('|').map(item => item.trim());
+        return { text, url };
+      }) : [],
+      carouselImages: [...form.carouselImages, ...imageUrls],
+      imageUrls: form.imageUrls,
+      videoUrl: form.videoUrl || '',
+    };
+
+    try {
+      const postRef = doc(db, 'posts', editingPostId);
+      await updateDoc(postRef, updatedPost);
+      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
+      resetForm();
+    } catch (error) {
+      setError(`Error updating post: ${error.message}`);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      setError(`Error deleting post: ${error.message}`);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      setError(`Error logging out: ${error.message}`);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="p-4 bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-white shadow-md flex justify-between items-center">
