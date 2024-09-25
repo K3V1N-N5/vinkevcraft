@@ -16,12 +16,13 @@ function ManagePosts() {
     videoUrl: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]); // State untuk menyimpan pratinjau gambar
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false); // Kontrol visibilitas
+  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +45,17 @@ function ManagePosts() {
   };
 
   const handleImageFileChange = (e) => {
-    setImageFiles([...imageFiles, ...e.target.files]); 
+    const newFiles = Array.from(e.target.files); // Mendapatkan file baru dari input
+    setImageFiles([...imageFiles, ...newFiles]); // Menambah file baru ke state
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file)); // Buat URL untuk pratinjau gambar
+    setPreviewImages([...previewImages, ...newPreviews]); // Simpan URL pratinjau
+  };
+
+  const handleRemoveImage = (index) => {
+    const updatedFiles = imageFiles.filter((_, i) => i !== index); // Hapus file dari state
+    const updatedPreviews = previewImages.filter((_, i) => i !== index); // Hapus pratinjau dari state
+    setImageFiles(updatedFiles);
+    setPreviewImages(updatedPreviews);
   };
 
   const uploadImages = async () => {
@@ -119,7 +130,7 @@ function ManagePosts() {
       const docRef = await addDoc(collection(db, "posts"), newPost);
       setPosts([...posts, { id: docRef.id, ...newPost }]);
       resetForm();
-      setIsAddingOrEditing(false); // Kembali ke daftar post
+      setIsAddingOrEditing(false);
     } catch (error) {
       setError(`Error creating post: ${error.message}`);
     }
@@ -149,7 +160,7 @@ function ManagePosts() {
       await updateDoc(postRef, updatedPost);
       setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
       resetForm();
-      setIsAddingOrEditing(false); // Kembali ke daftar post
+      setIsAddingOrEditing(false);
     } catch (error) {
       setError(`Error updating post: ${error.message}`);
     }
@@ -174,8 +185,9 @@ function ManagePosts() {
       videoUrl: '',
     });
     setImageFiles([]);
+    setPreviewImages([]); // Reset pratinjau gambar
     setEditingPostId(null);
-    setIsAddingOrEditing(false); // Kembali ke daftar post
+    setIsAddingOrEditing(false);
   };
 
   const handleEditClick = (post) => {
@@ -188,12 +200,12 @@ function ManagePosts() {
       videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id);
-    setIsAddingOrEditing(true); // Masuk ke mode edit
+    setIsAddingOrEditing(true);
   };
 
   const handleAddPostClick = () => {
-    resetForm(); // Reset form jika ingin menambahkan post baru
-    setIsAddingOrEditing(true); // Masuk ke mode penambahan post baru
+    resetForm(); 
+    setIsAddingOrEditing(true); 
   };
 
   const handlePostClick = (postId) => {
@@ -207,7 +219,6 @@ function ManagePosts() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen">
       
-      {/* Tombol untuk menambahkan post baru */}
       {!isAddingOrEditing && (
         <div className="text-center mb-6">
           <Button color="green" onClick={handleAddPostClick}>
@@ -216,7 +227,6 @@ function ManagePosts() {
         </div>
       )}
 
-      {/* Form untuk membuat atau mengedit post */}
       {isAddingOrEditing && (
         <>
           <h1 className="text-3xl font-bold mb-6 text-center">
@@ -257,15 +267,7 @@ function ManagePosts() {
               onChange={handleChange}
             />
             
-            {/* Input untuk URL atau Upload Gambar */}
             <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
-            <TextInput
-              type="text"
-              placeholder="Image URLs (optional, separate by commas)"
-              name="carouselImages"
-              value={form.carouselImages.join(', ')}
-              onChange={(e) => setForm({ ...form, carouselImages: e.target.value.split(',').map(url => url.trim()) })}
-            />
             <input
               type="file"
               accept="image/*"
@@ -274,7 +276,21 @@ function ManagePosts() {
               className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
             />
 
-            {/* Progress Bar */}
+            {/* Tampilkan pratinjau gambar */}
+            <div className="flex flex-wrap gap-4 mt-4">
+              {previewImages.map((src, index) => (
+                <div key={index} className="relative">
+                  <img src={src} alt={`Preview ${index}`} className="h-20 w-20 object-cover rounded-lg shadow-md" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                    X
+                  </button>
+                </div>
+              ))}
+            </div>
+
             {uploading && (
               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                 <div
@@ -304,7 +320,6 @@ function ManagePosts() {
         </>
       )}
 
-      {/* Daftar post (hanya ditampilkan jika tidak dalam mode menambah/mengedit post) */}
       {!isAddingOrEditing && (
         <>
           <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
