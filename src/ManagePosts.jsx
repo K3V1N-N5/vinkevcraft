@@ -3,7 +3,7 @@ import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'firebase
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db, storage } from './firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Button, TextInput, Textarea, FileInput } from 'flowbite-react';
+import { Button, TextInput, Textarea, FileInput, Select } from 'flowbite-react'; // Tambahkan Select dari Flowbite
 import { useNavigate } from 'react-router-dom';
 import Login from './Login';
 
@@ -14,20 +14,23 @@ function ManagePosts() {
     description: '',
     features: '',
     downloadLinks: '',
-    carouselImages: [], // Gambar yang di-upload
-    imageUrls: [], // URL gambar (misal dari link)
+    carouselImages: [],
+    imageUrls: [],
     videoUrl: '',
+    category: 'All', // Tambahkan kategori di form
+    thumbnail: '', // Thumbnail untuk post
   });
-  const [imageFiles, setImageFiles] = useState([]); // Files gambar untuk di-upload
-  const [previewImages, setPreviewImages] = useState([]); // Preview sebelum upload
+  const [imageFiles, setImageFiles] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgresses, setUploadProgresses] = useState([]); // Track progress tiap image
+  const [uploadProgresses, setUploadProgresses] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false); // Toggle mode add/edit
-  const [editingPostId, setEditingPostId] = useState(null); // ID post yang sedang di-edit
-  const [imageLink, setImageLink] = useState(''); // URL gambar eksternal
+  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [imageLink, setImageLink] = useState('');
+  const [thumbnailFile, setThumbnailFile] = useState(null); // Tambahkan state untuk thumbnail
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,7 +52,6 @@ function ManagePosts() {
         }));
         setPosts(postList);
       };
-
       fetchPosts();
     }
   }, [user]);
@@ -66,7 +68,11 @@ function ManagePosts() {
     setImageFiles([...imageFiles, ...newFiles]);
     const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages([...previewImages, ...newPreviews]);
-    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]); // Initialize progress for new files
+    setUploadProgresses([...uploadProgresses, ...newFiles.map(() => 0)]);
+  };
+
+  const handleThumbnailFileChange = (e) => {
+    setThumbnailFile(e.target.files[0]); // Set file thumbnail
   };
 
   const handleRemoveImage = (index, isUploaded = false, isUrl = false) => {
@@ -79,7 +85,7 @@ function ManagePosts() {
     } else {
       const updatedFiles = imageFiles.filter((_, i) => i !== index);
       const updatedPreviews = previewImages.filter((_, i) => i !== index);
-      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index); // Remove progress for that image
+      const updatedProgresses = uploadProgresses.filter((_, i) => i !== index);
       setImageFiles(updatedFiles);
       setPreviewImages(updatedPreviews);
       setUploadProgresses(updatedProgresses);
@@ -100,7 +106,6 @@ function ManagePosts() {
 
       try {
         const uploadTask = uploadBytesResumable(imageRef, imageFile);
-
         await new Promise((resolve, reject) => {
           uploadTask.on(
             'state_changed',
@@ -108,7 +113,7 @@ function ManagePosts() {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
               setUploadProgresses((prevProgresses) => {
                 const updatedProgresses = [...prevProgresses];
-                updatedProgresses[i] = progress; // Update progress for each image
+                updatedProgresses[i] = progress;
                 return updatedProgresses;
               });
             },
@@ -133,14 +138,40 @@ function ManagePosts() {
         return [];
       }
     }
-
     return imageUrls;
+  };
+
+  const uploadThumbnail = async () => {
+    if (!thumbnailFile) return '';
+
+    const thumbnailRef = ref(storage, `thumbnails/${thumbnailFile.name}`);
+    const uploadTask = uploadBytesResumable(thumbnailRef, thumbnailFile);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Thumbnail upload progress:', progress);
+        },
+        (error) => {
+          setError(`Error uploading thumbnail: ${error.message}`);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    });
   };
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
     setError(null);
+
     const imageUrls = await uploadImages();
+    const thumbnailUrl = await uploadThumbnail(); // Upload thumbnail
     if (imageFiles.length > 0 && imageUrls.length === 0) {
       setError('Image upload failed, please try again.');
       return;
@@ -149,14 +180,16 @@ function ManagePosts() {
     const newPost = {
       title: form.title,
       description: form.description,
-      features: form.features ? form.features.split('\n').map(feature => ` ${feature.trim()}`) : [],
+      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
       downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
         const [text, url] = link.split('|').map(item => item.trim());
         return { text, url };
       }) : [],
-      carouselImages: [...form.carouselImages, ...imageUrls], // Gambar baru dan lama
+      carouselImages: [...form.carouselImages, ...imageUrls],
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
+      category: form.category, // Simpan kategori
+      thumbnail: thumbnailUrl, // Simpan URL thumbnail
     };
 
     try {
@@ -168,54 +201,6 @@ function ManagePosts() {
     }
   };
 
-  const handleEditPost = async (e) => {
-    e.preventDefault();
-    setError(null);
-    const imageUrls = await uploadImages();
-    if (imageFiles.length > 0 && imageUrls.length === 0) {
-      setError('Image upload failed, please try again.');
-      return;
-    }
-
-    const updatedPost = {
-      title: form.title,
-      description: form.description,
-      features: form.features ? form.features.split('\n').map(feature => `- ${feature.trim()}`) : [],
-      downloadLinks: form.downloadLinks ? form.downloadLinks.split('\n').map(link => {
-        const [text, url] = link.split('|').map(item => item.trim());
-        return { text, url };
-      }) : [],
-      carouselImages: [...form.carouselImages, ...imageUrls],
-      imageUrls: form.imageUrls,
-      videoUrl: form.videoUrl || '',
-    };
-
-    try {
-      const postRef = doc(db, 'posts', editingPostId);
-      await updateDoc(postRef, updatedPost);
-      setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
-      resetForm();
-    } catch (error) {
-      setError(`Error updating post: ${error.message}`);
-    }
-  };
-
-  const handleEditClick = (post) => {
-    setForm({
-      title: post.title,
-      description: post.description,
-      features: post.features ? post.features.join('\n') : '',
-      downloadLinks: post.downloadLinks ? post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') : '',
-      carouselImages: post.carouselImages ? post.carouselImages : [],
-      imageUrls: post.imageUrls || [],
-      videoUrl: post.videoUrl || '',
-    });
-    setPreviewImages([]);
-    setImageFiles([]);
-    setEditingPostId(post.id);
-    setIsAddingOrEditing(true);
-  };
-
   const resetForm = () => {
     setForm({
       title: '',
@@ -225,6 +210,8 @@ function ManagePosts() {
       carouselImages: [],
       imageUrls: [],
       videoUrl: '',
+      category: 'All', // Reset kategori ke default
+      thumbnail: '',
     });
     setImageFiles([]);
     setPreviewImages([]);
@@ -232,29 +219,7 @@ function ManagePosts() {
     setIsAddingOrEditing(false);
     setImageLink('');
     setUploadProgresses([]);
-  };
-
-  const handleAddImageLink = () => {
-    if (imageLink) {
-      setForm({
-        ...form,
-        imageUrls: [...form.imageUrls, imageLink],
-      });
-      setImageLink('');
-    }
-  };
-
-  const handleDeletePost = async (postId) => {
-    try {
-      await deleteDoc(doc(db, 'posts', postId));
-      setPosts(posts.filter(post => post.id !== postId));
-    } catch (error) {
-      setError(`Error deleting post: ${error.message}`);
-    }
-  };
-
-  const handleNavigateToPost = (postId) => {
-    navigate(`/post/${postId}`); // Navigasi ke halaman post
+    setThumbnailFile(null); // Reset thumbnail file
   };
 
   if (loading) {
@@ -323,6 +288,33 @@ function ManagePosts() {
               onChange={handleChange}
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+
+            {/* Dropdown Kategori */}
+            <Select
+              id="category"
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              required
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="All">All</option>
+              <option value="Resource Pack">Resource Pack</option>
+              <option value="Addon">Addon</option>
+              <option value="Mod">Mod</option>
+              <option value="Map">Map</option>
+            </Select>
+
+            {/* Thumbnail Input */}
+            <FileInput
+              name="thumbnail"
+              label="Upload Thumbnail"
+              onChange={handleThumbnailFileChange}
+              accept="image/*"
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+
+            {/* Carousel Images */}
             <FileInput
               name="carouselImages"
               multiple
@@ -330,64 +322,6 @@ function ManagePosts() {
               accept="image/*"
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <TextInput
-              name="imageLink"
-              placeholder="Enter image URL"
-              value={imageLink}
-              onChange={(e) => setImageLink(e.target.value)}
-              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-            <Button color="blue" onClick={handleAddImageLink}>Add Image URL</Button>
-
-            {/* Image Previews with individual progress */}
-            <div className="flex space-x-4">
-              {/* Previews for newly selected images */}
-              {previewImages.map((image, index) => (
-                <div key={index} className="relative">
-                  <img src={image} alt={`Preview ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index)}
-                  >
-                    &times;
-                  </button>
-                  {uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <p className="text-white text-lg font-bold">{Math.round(uploadProgresses[index])}%</p> {/* Individual progress */}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Display previously uploaded images in carouselImages */}
-              {form.carouselImages.map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`Uploaded ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index, true)}
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-              
-              {/* Display image URLs */}
-              {form.imageUrls.map((imageUrl, index) => (
-                <div key={index} className="relative">
-                  <img src={imageUrl} alt={`URL ${index}`} className="w-32 h-32 object-cover" />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    onClick={() => handleRemoveImage(index, false, true)}
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-            </div>
 
             {/* Submit & Cancel Buttons */}
             <div className="flex justify-center space-x-4">
@@ -399,6 +333,7 @@ function ManagePosts() {
           </form>
         )}
 
+        {/* Tampilkan post yang ada */}
         {!isAddingOrEditing && (
           <>
             <h2 className="text-2xl font-bold mt-10 mb-4 text-center text-gray-900 dark:text-white">Your Posts</h2>
@@ -407,19 +342,14 @@ function ManagePosts() {
                 <li
                   key={post.id}
                   className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
-                  onClick={() => handleNavigateToPost(post.id)} // Navigate to post
                 >
                   <div>
                     <h3 className="text-xl font-bold">{post.title}</h3>
                     <p>{post.description}</p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
-                      Edit
-                    </Button>
-                    <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}>
-                      Delete
-                    </Button>
+                    <Button pill color="yellow">Edit</Button>
+                    <Button pill color="red">Delete</Button>
                   </div>
                 </li>
               ))}
