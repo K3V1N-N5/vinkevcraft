@@ -17,7 +17,7 @@ function ManagePosts() {
   const [editingPostId, setEditingPostId] = useState(null), [thumbnailFile, setThumbnailFile] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => onAuthStateChanged(auth, (user) => { setUser(user); setLoading(false); }), []);
+  useEffect(() => onAuthStateChanged(auth, user => { setUser(user); setLoading(false); }), []);
 
   useEffect(() => {
     user && getDocs(collection(db, 'posts')).then(snapshot => setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
@@ -26,10 +26,10 @@ function ManagePosts() {
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleFileChange = (e, setFiles, setPreviews) => {
-    const newFiles = Array.from(e.target.files);
-    setFiles(prev => [...prev, ...newFiles]);
-    setPreviews(prev => [...prev, ...newFiles.map(file => URL.createObjectURL(file))]);
-    setUploadProgresses(prev => [...prev, ...newFiles.map(() => 0)]);
+    const files = Array.from(e.target.files);
+    setFiles(prev => [...prev, ...files]);
+    setPreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
+    setUploadProgresses(prev => [...prev, ...files.map(() => 0)]);
   };
 
   const handleRemoveImage = (index, setFiles, setPreviews) => {
@@ -39,33 +39,29 @@ function ManagePosts() {
   };
 
   const uploadFiles = async (files, folder) => {
-    const urls = [];
     setUploading(true);
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i], refPath = ref(storage, `${folder}/${file.name}`);
-      const uploadTask = uploadBytesResumable(refPath, file);
-      await new Promise((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
+    const urls = await Promise.all(files.map(async (file, i) => {
+      const uploadTask = uploadBytesResumable(ref(storage, `${folder}/${file.name}`), file);
+      return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
           snapshot => setUploadProgresses(prev => { const updated = [...prev]; updated[i] = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; return updated; }),
           reject,
-          async () => {
-            urls.push(await getDownloadURL(uploadTask.snapshot.ref));
-            resolve();
-          }
+          async () => resolve(await getDownloadURL(uploadTask.snapshot.ref))
         );
       });
-    }
+    }));
     setUploading(false);
     return urls;
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const imageUrls = await uploadFiles(imageFiles, 'images'), thumbnailUrl = await uploadFiles([thumbnailFile], 'thumbnails');
-    const newPost = { ...form, carouselImages: [...form.carouselImages, ...imageUrls], thumbnail: thumbnailUrl[0] || form.thumbnail };
+    const imageUrls = await uploadFiles(imageFiles, 'images');
+    const thumbnailUrl = (await uploadFiles([thumbnailFile], 'thumbnails'))[0] || form.thumbnail;
+    const newPost = { ...form, carouselImages: [...form.carouselImages, ...imageUrls], thumbnail: thumbnailUrl };
     try {
-      editingPostId ? await updateDoc(doc(db, 'posts', editingPostId), newPost) : await addDoc(collection(db, 'posts'), newPost);
+      const postRef = editingPostId ? doc(db, 'posts', editingPostId) : collection(db, 'posts');
+      editingPostId ? await updateDoc(postRef, newPost) : await addDoc(postRef, newPost);
       setPosts(editingPostId ? posts.map(post => post.id === editingPostId ? { id: post.id, ...newPost } : post) : [...posts, newPost]);
       resetForm();
     } catch (err) {
@@ -77,6 +73,25 @@ function ManagePosts() {
     setForm({ title: '', description: '', features: '', downloadLinks: '', carouselImages: [], imageUrls: [], videoUrl: '', category: 'All', thumbnail: '' });
     setImageFiles([]); setPreviewImages([]); setUploadProgresses([]); setThumbnailFile(null);
     setEditingPostId(null); setIsAddingOrEditing(false);
+  };
+
+  const handleEditClick = post => {
+    setForm({
+      title: post.title, description: post.description, features: post.features.join('\n') || '',
+      downloadLinks: post.downloadLinks.map(link => `${link.text}|${link.url}`).join('\n') || '',
+      carouselImages: post.carouselImages, imageUrls: post.imageUrls || [], videoUrl: post.videoUrl || '',
+      category: post.category || 'All', thumbnail: post.thumbnail || ''
+    });
+    setEditingPostId(post.id); setIsAddingOrEditing(true);
+  };
+
+  const handleDeletePost = async postId => {
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (err) {
+      setError(`Error deleting post: ${err.message}`);
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -121,8 +136,8 @@ function ManagePosts() {
               {posts.map(post => (
                 <li key={post.id} onClick={() => navigate(`/post/${post.id}`)}>
                   <h3>{post.title}</h3>
-                  <Button onClick={() => { setForm(post); setIsAddingOrEditing(true); }}>Edit</Button>
-                  <Button onClick={() => deleteDoc(doc(db, 'posts', post.id))}>Delete</Button>
+                  <Button onClick={() => handleEditClick(post)}>Edit</Button>
+                  <Button onClick={() => handleDeletePost(post.id)}>Delete</Button>
                 </li>
               ))}
             </ul>
