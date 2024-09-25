@@ -19,8 +19,9 @@ function ManagePosts() {
   const [editingPostId, setEditingPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0); // State untuk progress upload
-  const [uploading, setUploading] = useState(false); // Indikator apakah sedang meng-upload
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [isAddingOrEditing, setIsAddingOrEditing] = useState(false); // Kontrol visibilitas
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,38 +49,38 @@ function ManagePosts() {
 
   const uploadImages = async () => {
     if (imageFiles.length === 0) {
-      return []; // Jika tidak ada gambar, langsung return array kosong
+      return [];
     }
 
     const imageUrls = [];
-    setUploading(true); // Mulai indikator upload
-    setUploadProgress(0); // Reset progress setiap kali mulai upload
+    setUploading(true);
+    setUploadProgress(0);
 
     for (let i = 0; i < imageFiles.length; i++) {
       const imageFile = imageFiles[i];
       const imageRef = ref(storage, `images/${imageFile.name}`);
       
       try {
-        const uploadTask = uploadBytesResumable(imageRef, imageFile); // Gunakan uploadBytesResumable untuk track progress
+        const uploadTask = uploadBytesResumable(imageRef, imageFile);
 
         await new Promise((resolve, reject) => {
           uploadTask.on(
             "state_changed",
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgress(progress); // Update progress state
+              setUploadProgress(progress);
             },
             (error) => {
               setError(`Error uploading image: ${error.message}`);
-              setUploading(false); // Sembunyikan indikator jika error
-              reject(error); // Batalkan proses jika ada error
+              setUploading(false);
+              reject(error);
             },
             async () => {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               imageUrls.push(downloadURL);
               if (i === imageFiles.length - 1) {
-                setUploading(false); // Selesai upload
-                setUploadProgress(0); // Reset progress setelah selesai
+                setUploading(false);
+                setUploadProgress(0);
               }
               resolve();
             }
@@ -88,7 +89,7 @@ function ManagePosts() {
       } catch (error) {
         console.error("Image upload failed:", error);
         setError("Image upload failed. Please try again.");
-        return []; // Batalkan semua proses jika ada satu gambar gagal di-upload
+        return [];
       }
     }
     
@@ -118,6 +119,7 @@ function ManagePosts() {
       const docRef = await addDoc(collection(db, "posts"), newPost);
       setPosts([...posts, { id: docRef.id, ...newPost }]);
       resetForm();
+      setIsAddingOrEditing(false); // Kembali ke daftar post
     } catch (error) {
       setError(`Error creating post: ${error.message}`);
     }
@@ -147,6 +149,7 @@ function ManagePosts() {
       await updateDoc(postRef, updatedPost);
       setPosts(posts.map(post => (post.id === editingPostId ? { id: post.id, ...updatedPost } : post)));
       resetForm();
+      setIsAddingOrEditing(false); // Kembali ke daftar post
     } catch (error) {
       setError(`Error updating post: ${error.message}`);
     }
@@ -172,6 +175,7 @@ function ManagePosts() {
     });
     setImageFiles([]);
     setEditingPostId(null);
+    setIsAddingOrEditing(false); // Kembali ke daftar post
   };
 
   const handleEditClick = (post) => {
@@ -184,6 +188,12 @@ function ManagePosts() {
       videoUrl: post.videoUrl || '',
     });
     setEditingPostId(post.id);
+    setIsAddingOrEditing(true); // Masuk ke mode edit
+  };
+
+  const handleAddPostClick = () => {
+    resetForm(); // Reset form jika ingin menambahkan post baru
+    setIsAddingOrEditing(true); // Masuk ke mode penambahan post baru
   };
 
   const handlePostClick = (postId) => {
@@ -196,112 +206,132 @@ function ManagePosts() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-center">{editingPostId ? 'Edit Post' : 'Create New Post'}</h1>
-
-      {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
-
-      <form onSubmit={editingPostId ? handleEdit : handleCreate} className="space-y-6 max-w-xl mx-auto">
-        <TextInput
-          type="text"
-          placeholder="Post Title"
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          required
-        />
-        <Textarea
-          name="description"
-          placeholder="Post Description"
-          value={form.description}
-          onChange={handleChange}
-          rows={4}
-          required
-        />
-        <TextInput
-          type="text"
-          placeholder="Features (separate by commas, optional)"
-          name="features"
-          value={form.features}
-          onChange={handleChange}
-        />
-        <TextInput
-          type="text"
-          placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma, optional)"
-          name="downloadLinks"
-          value={form.downloadLinks}
-          onChange={handleChange}
-        />
-        
-        {/* Input untuk URL atau Upload Gambar */}
-        <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
-        <TextInput
-          type="text"
-          placeholder="Image URLs (optional, separate by commas)"
-          name="carouselImages"
-          value={form.carouselImages.join(', ')}
-          onChange={(e) => setForm({ ...form, carouselImages: e.target.value.split(',').map(url => url.trim()) })}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleImageFileChange}
-          className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
-        />
-
-        {/* Progress Bar */}
-        {uploading && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-            <div
-              className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${uploadProgress}%` }}
-            />
-            <p className="text-sm mt-1">{Math.round(uploadProgress)}% uploaded</p>
-          </div>
-        )}
-
-        <TextInput
-          type="text"
-          placeholder="YouTube Video URL (optional)"
-          name="videoUrl"
-          value={form.videoUrl}
-          onChange={handleChange}
-        />
-        <div className="flex justify-center space-x-4">
-          <Button type="submit" pill color="green">
-            {editingPostId ? 'Save Changes' : 'Create Post'}
+      
+      {/* Tombol untuk menambahkan post baru */}
+      {!isAddingOrEditing && (
+        <div className="text-center mb-6">
+          <Button color="green" onClick={handleAddPostClick}>
+            Add Post
           </Button>
-          {editingPostId && (
-            <Button pill color="red" onClick={resetForm}>
-              Cancel Edit
-            </Button>
-          )}
         </div>
-      </form>
+      )}
 
-      <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
-      <ul className="list-disc space-y-4 max-w-xl mx-auto">
-        {posts.map(post => (
-          <li 
-            key={post.id} 
-            className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
-            onClick={() => handlePostClick(post.id)} 
-          >
-            <div>
-              <h3 className="text-xl font-bold">{post.title}</h3>
-              <p>{post.description}</p>
-            </div>
-            <div className="flex space-x-2">
-              <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
-                Edit
+      {/* Form untuk membuat atau mengedit post */}
+      {isAddingOrEditing && (
+        <>
+          <h1 className="text-3xl font-bold mb-6 text-center">
+            {editingPostId ? 'Edit Post' : 'Create New Post'}
+          </h1>
+
+          {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
+
+          <form onSubmit={editingPostId ? handleEdit : handleCreate} className="space-y-6 max-w-xl mx-auto">
+            <TextInput
+              type="text"
+              placeholder="Post Title"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              required
+            />
+            <Textarea
+              name="description"
+              placeholder="Post Description"
+              value={form.description}
+              onChange={handleChange}
+              rows={4}
+              required
+            />
+            <TextInput
+              type="text"
+              placeholder="Features (separate by commas, optional)"
+              name="features"
+              value={form.features}
+              onChange={handleChange}
+            />
+            <TextInput
+              type="text"
+              placeholder="Download Links (format: Text|https://link.com, pisahkan dengan koma, optional)"
+              name="downloadLinks"
+              value={form.downloadLinks}
+              onChange={handleChange}
+            />
+            
+            {/* Input untuk URL atau Upload Gambar */}
+            <label className="block text-sm font-medium text-gray-700">Upload Images (optional)</label>
+            <TextInput
+              type="text"
+              placeholder="Image URLs (optional, separate by commas)"
+              name="carouselImages"
+              value={form.carouselImages.join(', ')}
+              onChange={(e) => setForm({ ...form, carouselImages: e.target.value.split(',').map(url => url.trim()) })}
+            />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageFileChange}
+              className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
+            />
+
+            {/* Progress Bar */}
+            {uploading && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+                <p className="text-sm mt-1">{Math.round(uploadProgress)}% uploaded</p>
+              </div>
+            )}
+
+            <TextInput
+              type="text"
+              placeholder="YouTube Video URL (optional)"
+              name="videoUrl"
+              value={form.videoUrl}
+              onChange={handleChange}
+            />
+            <div className="flex justify-center space-x-4">
+              <Button type="submit" pill color="green">
+                {editingPostId ? 'Save Changes' : 'Create Post'}
               </Button>
-              <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}>
-                Delete
+              <Button pill color="red" onClick={resetForm}>
+                Cancel
               </Button>
             </div>
-          </li>
-        ))}
-      </ul>
+          </form>
+        </>
+      )}
+
+      {/* Daftar post (hanya ditampilkan jika tidak dalam mode menambah/mengedit post) */}
+      {!isAddingOrEditing && (
+        <>
+          <h2 className="text-2xl font-bold mt-10 mb-4 text-center">Your Posts</h2>
+          <ul className="list-disc space-y-4 max-w-xl mx-auto">
+            {posts.map(post => (
+              <li 
+                key={post.id} 
+                className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer"
+                onClick={() => handlePostClick(post.id)} 
+              >
+                <div>
+                  <h3 className="text-xl font-bold">{post.title}</h3>
+                  <p>{post.description}</p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button pill color="yellow" onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}>
+                    Edit
+                  </Button>
+                  <Button pill color="red" onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}>
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
