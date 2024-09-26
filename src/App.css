@@ -1,20 +1,27 @@
+/* Reset margin, padding, dan box-sizing untuk semua elemen */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
-  background-color: #1b1b1b;
+/* Style untuk memastikan dark mode diaktifkan sejak awal */
+html, body {
+  background-color: #1b1b1b; /* Default ke background dark */
   margin: 0;
-  min-height: 100vh; /* Pastikan body selalu memenuhi tinggi layar */
-  overflow: hidden; /* Cegah scroll */
+  padding: 0;
+  min-height: 100vh;
+  transition: background-color 0.3s ease; /* Transisi halus saat mode berubah */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Cegah scroll horizontal */
 }
 
+/* Menonaktifkan transisi jika diperlukan */
 .no-transition {
   transition: none !important;
 }
 
+/* Layout dasar untuk React App */
 .App {
   width: 100vw;
   height: 100vh;
@@ -23,10 +30,11 @@ body {
   align-items: center;
 }
 
+/* Style untuk konten utama dengan tampilan flex */
 .min-h-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Pastikan konten dimulai dari atas */
+  justify-content: flex-start; /* Konten dimulai dari atas */
   min-height: 100vh;
 }
