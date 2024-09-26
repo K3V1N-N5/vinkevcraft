@@ -13,11 +13,25 @@ const PostPage = lazy(() => import('./PostPage'));
 const ManagePosts = lazy(() => import('./ManagePosts')); // Import untuk halaman Edit Post
 const NotFound = lazy(() => import('./NotFound'));
 
+// Helper function untuk mendapatkan tema awal dari localStorage
+function getInitialTheme() {
+  if (typeof window !== "undefined" && window.localStorage) {
+    const storedPrefs = window.localStorage.getItem("isDarkMode");
+    if (typeof storedPrefs === "string") {
+      return JSON.parse(storedPrefs);
+    }
+  }
+  // Jika tidak ada preferensi, default ke dark mode
+  return true;
+}
+
+// Menambahkan kelas tema ke elemen html sebelum App di-render
+const initialTheme = getInitialTheme();
+document.documentElement.classList.add(initialTheme ? 'dark' : 'light');
+
 function App() {
-  // Cek preferensi awal dari localStorage atau default ke true (dark mode)
-  const initialTheme = JSON.parse(localStorage.getItem('isDarkMode')) ?? true;
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
-  const [isDarkMode, setIsDarkMode] = useState(initialTheme); // Untuk Dark Mode
+  const [isDarkMode, setIsDarkMode] = useState(initialTheme); // Menggunakan tema awal
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
 
   // Fungsi untuk mengupdate tema pada elemen <html>
@@ -27,13 +41,13 @@ function App() {
     root.classList.add(theme ? 'dark' : 'light');
   };
 
-  // Gunakan useEffect untuk memastikan kelas tema diatur pada elemen html saat pertama kali aplikasi di-mount
   useEffect(() => {
-    updateHtmlClass(isDarkMode); // Set kelas tema sesuai dengan nilai isDarkMode
+    // Pastikan kelas tema diatur saat pertama kali komponen di-mount
+    updateHtmlClass(isDarkMode);
   }, []);
 
-  // Save theme preference to local storage dan update kelas html
   useEffect(() => {
+    // Simpan preferensi tema ke localStorage dan update kelas html
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
     updateHtmlClass(isDarkMode); // Update HTML class untuk menghindari glitch
   }, [isDarkMode]);
