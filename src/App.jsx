@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
+import { useTheme } from './ThemeContext'; // Import context tema
 
 // Lazy loading untuk halaman-halaman
 const LandingPage = lazy(() => import('./LandingPage'));
@@ -13,44 +14,10 @@ const PostPage = lazy(() => import('./PostPage'));
 const ManagePosts = lazy(() => import('./ManagePosts')); // Import untuk halaman Edit Post
 const NotFound = lazy(() => import('./NotFound'));
 
-// Helper function untuk mendapatkan tema awal dari localStorage
-function getInitialTheme() {
-  if (typeof window !== "undefined" && window.localStorage) {
-    const storedPrefs = window.localStorage.getItem("isDarkMode");
-    if (typeof storedPrefs === "string") {
-      return JSON.parse(storedPrefs);
-    }
-  }
-  // Jika tidak ada preferensi, default ke dark mode
-  return true;
-}
-
-// Menambahkan kelas tema ke elemen html sebelum App di-render
-const initialTheme = getInitialTheme();
-document.documentElement.classList.add(initialTheme ? 'dark' : 'light');
-
 function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
-  const [isDarkMode, setIsDarkMode] = useState(initialTheme); // Menggunakan tema awal
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
-
-  // Fungsi untuk mengupdate tema pada elemen <html>
-  const updateHtmlClass = (theme) => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme ? 'dark' : 'light');
-  };
-
-  useEffect(() => {
-    // Pastikan kelas tema diatur saat pertama kali komponen di-mount
-    updateHtmlClass(isDarkMode);
-  }, []);
-
-  useEffect(() => {
-    // Simpan preferensi tema ke localStorage dan update kelas html
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
-    updateHtmlClass(isDarkMode); // Update HTML class untuk menghindari glitch
-  }, [isDarkMode]);
+  const { isDarkMode, setIsDarkMode } = useTheme(); // Menggunakan tema dari context
 
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
