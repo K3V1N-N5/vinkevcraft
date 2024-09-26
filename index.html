@@ -17,12 +17,23 @@
         }
       })();
     </script>
+
+    <!-- Tambahkan CSS untuk menghindari flash putih -->
+    <style>
+      body {
+        background-color: #1e1e1e; /* Warna dark mode default */
+        color: white;
+        margin: 0;
+        padding: 0;
+        transition: background-color 0.2s;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Flowbite JS -->
+    <script src="/node_modules/flowbite/dist/flowbite.min.js"></script>
   </body>
-
-  <!-- Jangan lupa tambahkan Flowbite JS -->
-  <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
 </html>
