@@ -29,7 +29,12 @@ function PostPage() {
   }, [postId, navigate]);
 
   if (loading) {
-    return <div>Loading...</div>; // Loader sementara data diambil
+    // Pastikan background dark saat loading
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
+        <div className="loader">Loading...</div> {/* Loader visual */}
+      </div>
+    );
   }
 
   if (!post) {
@@ -37,7 +42,7 @@ function PostPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] min-h-screen flex flex-col justify-center">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] bg-white min-h-screen flex flex-col justify-center">
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1>
 
       {/* Video Section */}
