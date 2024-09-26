@@ -203,7 +203,7 @@ function ManagePosts() {
         return { text, url };
       }) : [],
       carouselImages: [...form.carouselImages, ...imageUrls],
-      imageUrls: form.imageUrls.split('\n'),
+      imageUrls: form.imageUrls.split('\n').filter(url => url.trim() !== ''), // Filter out empty URLs
       videoUrl: form.videoUrl || '',
       category: form.category,
       thumbnail: thumbnailUrl,
@@ -233,7 +233,7 @@ function ManagePosts() {
         return { text, url };
       }) : [],
       carouselImages: [...form.carouselImages, ...imageUrls],
-      imageUrls: form.imageUrls.split('\n'),
+      imageUrls: form.imageUrls.split('\n').filter(url => url.trim() !== ''), // Filter out empty URLs
       videoUrl: form.videoUrl || '',
       category: form.category,
       thumbnail: thumbnailUrl || form.thumbnail,
@@ -475,7 +475,7 @@ function ManagePosts() {
               ))}
 
               {/* External URL Images */}
-              {form.imageUrls.split('\n').map((imageUrl, index) => (
+              {form.imageUrls.split('\n').filter(url => url.trim() !== '').map((imageUrl, index) => (
                 <div key={index} className="relative w-32 h-32">
                   <img src={imageUrl} alt={`URL ${index}`} className="w-full h-full object-cover rounded" />
                   <button
