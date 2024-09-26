@@ -14,8 +14,10 @@ const ManagePosts = lazy(() => import('./ManagePosts')); // Import untuk halaman
 const NotFound = lazy(() => import('./NotFound'));
 
 function App() {
+  // Cek preferensi awal dari localStorage atau default ke true (dark mode)
+  const initialTheme = JSON.parse(localStorage.getItem('isDarkMode')) ?? true;
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
-  const [isDarkMode, setIsDarkMode] = useState(true); // Untuk Dark Mode
+  const [isDarkMode, setIsDarkMode] = useState(initialTheme); // Untuk Dark Mode
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
 
   // Fungsi untuk mengupdate tema pada elemen <html>
@@ -25,16 +27,12 @@ function App() {
     root.classList.add(theme ? 'dark' : 'light');
   };
 
-  // Check local storage for theme preference
+  // Gunakan useEffect untuk memastikan kelas tema diatur pada elemen html saat pertama kali aplikasi di-mount
   useEffect(() => {
-    const savedTheme = JSON.parse(localStorage.getItem('isDarkMode')); 
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme); // Mengambil preferensi tema dari localStorage
-      updateHtmlClass(savedTheme);
-    }
+    updateHtmlClass(isDarkMode); // Set kelas tema sesuai dengan nilai isDarkMode
   }, []);
 
-  // Save theme preference to local storage
+  // Save theme preference to local storage dan update kelas html
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode)); 
     updateHtmlClass(isDarkMode); // Update HTML class untuk menghindari glitch
