@@ -55,4 +55,6 @@ const App = () => {
   );
 };
 
-export default App as Login;
+
+const Login = App;
+export default Login;
