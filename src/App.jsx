@@ -19,6 +19,18 @@ function App() {
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
   const { isDarkMode, setIsDarkMode } = useTheme(); // Menggunakan tema dari context
 
+  // Menyimpan dan membaca state tema dari localStorage
+  useEffect(() => {
+    // Cek localStorage untuk tema
+    const savedTheme = localStorage.getItem('isDarkMode');
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === 'true'); // Terapkan tema yang disimpan
+    }
+
+    // Atur class 'dark' pada html saat isDarkMode berubah
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode, setIsDarkMode]);
+
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,7 +66,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
+          <div className={`bg-white dark:bg-[#1e1e1e] overflow-x-hidden pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -95,7 +107,10 @@ function App() {
                   {/* Bagian Kanan: Toggle untuk Dark Mode */}
                   <div className="flex items-center space-x-3">
                     <DarkThemeToggle
-                      onClick={() => setIsDarkMode(prev => !prev)} // Mengubah tema
+                      onClick={() => {
+                        setIsDarkMode(prev => !prev); // Mengubah tema
+                        localStorage.setItem('isDarkMode', !isDarkMode); // Simpan preferensi tema ke localStorage
+                      }}
                       className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none"
                     />
                   </div>
