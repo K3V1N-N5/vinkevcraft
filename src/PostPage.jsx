@@ -211,7 +211,7 @@ function PostPage() {
 
   return (
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center dark:text-white">{post.title}</h1>
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
       {/* Bagian Video */}
       {post.videoUrl && (
@@ -262,16 +262,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 dark:text-white">Deskripsi</h2>
-          <p className="dark:text-gray-300">{post.description}</p>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-900 dark:text-gray-300">{post.description}</p>
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 dark:text-white">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2 dark:text-gray-300">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-900 dark:text-gray-300">
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -294,7 +294,7 @@ function PostPage() {
 
       {/* Komentar Section */}
       <section className="mb-8 mt-4">
-        <h2 className="text-2xl font-semibold mb-4 dark:text-white">Komentar</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
         {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
@@ -312,7 +312,7 @@ function PostPage() {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tulis komentar Anda..."
-              className="dark:bg-gray-800 dark:text-white"
+              className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
             <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
@@ -321,9 +321,9 @@ function PostPage() {
 
         {/* Daftar Komentar */}
         {comments.map((comment) => (
-          <div key={comment.id} className="mb-4 border-b pb-4 dark:border-gray-700">
-            <p className="font-semibold dark:text-white">{comment.user}</p>
-            <p className="dark:text-gray-300">{comment.text}</p>
+          <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
+            <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+            <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
               <button
@@ -371,7 +371,7 @@ function PostPage() {
                   value={reply[comment.id] || ""}
                   onChange={(e) => setReply((prevReply) => ({ ...prevReply, [comment.id]: e.target.value }))}
                   placeholder="Tulis balasan Anda..."
-                  className="dark:bg-gray-800 dark:text-white"
+                  className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
                 <Button onClick={() => handleReplySubmit(comment.id)} className="mt-2">Kirim Balasan</Button>
               </div>
@@ -381,7 +381,7 @@ function PostPage() {
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
-                  <div key={index} className="mb-2 dark:text-gray-400">
+                  <div key={index} className="mb-2 text-gray-700 dark:text-gray-400">
                     <p className="font-semibold">{reply.user}</p>
                     <p>{reply.text}</p>
                   </div>
