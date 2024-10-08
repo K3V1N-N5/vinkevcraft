@@ -361,47 +361,71 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Modal login/register */}
-      <Modal show={isModalOpen} onClose={toggleModal}>
-        <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
-        <Modal.Body>
-          <form onSubmit={isLogin ? handleLogin : handleRegister}>
-            <div className="mb-4">
-              <TextInput
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <TextInput
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {!isLogin && (
-              <div className="mb-4">
-                <TextInput
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-            {authError && <p className="text-red-500">{authError}</p>}
-            <Button type="submit" disabled={authLoading}>
-              {isLogin ? "Login" : "Register"}
-            </Button>
-          </form>
-        </Modal.Body>
-      </Modal>
+                  {/* Modal untuk Login */}
+            <Modal
+              show={isModalOpen}
+              onClose={toggleModal}
+              size="lg" // Ukuran modal diubah menjadi 'lg'
+              className="rounded-lg"
+            >
+              <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+                {isLogin ? "Login" : "Register"}
+              </Modal.Header>
+              <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+                {/* Form Login/Registrasi */}
+                <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+                  {authError && <p className="text-red-500 text-center">{authError}</p>}
+                  <TextInput
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
+                  />
+                  <TextInput
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
+                  />
+                  {!isLogin && (
+                    <TextInput
+                      type="password"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="dark:bg-gray-700 dark:text-white text-gray-900"
+                    />
+                  )}
+                  <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+                    {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+                  </Button>
+                </form>
+                <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+                  {isLogin ? (
+                    <p>
+                      Don't have an account?{" "}
+                      <button onClick={() => setIsLogin(false)} className="text-blue-500">
+                        Register
+                      </button>
+                    </p>
+                  ) : (
+                    <p>
+                      Already have an account?{" "}
+                      <button onClick={() => setIsLogin(true)} className="text-blue-500">
+                        Login
+                      </button>
+                    </p>
+                  )}
+                </div>
+              </Modal.Body>
+            </Modal>
+      
+
     </div>
   );
 }
