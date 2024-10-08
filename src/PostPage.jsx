@@ -24,12 +24,13 @@ function PostPage() {
   const [editCommentId, setEditCommentId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false); // Inisialisasi default false
 
-  // Ambil preferensi tema dari localStorage
+  // Ambil preferensi tema dari localStorage dan terapkan tema
   useEffect(() => {
-    const savedMode = localStorage.getItem("theme") || "light";
-    setDarkMode(savedMode === "dark");
+    const savedMode = localStorage.getItem("theme") || "light"; // Ambil tema yang tersimpan atau default "light"
+    setDarkMode(savedMode === "dark"); // Setel state darkMode
+    document.documentElement.classList.toggle("dark", savedMode === "dark"); // Terapkan class "dark" di root HTML
   }, []);
 
   useEffect(() => {
