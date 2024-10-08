@@ -30,10 +30,7 @@ function App() {
       setIsDarkMode(true);
       localStorage.setItem('isDarkMode', 'true'); // Simpan tema default ke localStorage
     }
-
-    // Atur class 'dark' pada html saat isDarkMode berubah
-    document.documentElement.classList.toggle('dark', isDarkMode);
-  }, [isDarkMode, setIsDarkMode]);
+  }, [setIsDarkMode]);
 
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
@@ -70,7 +67,12 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`bg-white dark:bg-[#1e1e1e] overflow-x-hidden pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
+          <div
+            className={`overflow-x-hidden pt-16 ${
+              isDarkMode ? 'dark bg-[#1e1e1e]' : 'bg-white'
+            }`}  // Terapkan class dark dan warna background di div utama
+            style={{ visibility: loading ? 'hidden' : 'visible' }}
+          >
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
