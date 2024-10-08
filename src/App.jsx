@@ -21,12 +21,21 @@ function App() {
 
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
+    // Mengecek localStorage untuk tema pengguna
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark'); // Set berdasarkan localStorage
+    } else {
+      setIsDarkMode(true); // Set default ke dark mode jika belum ada penyimpanan
+      localStorage.setItem('theme', 'dark'); // Simpan default theme sebagai dark
+    }
+
     const timer = setTimeout(() => {
       setLoading(false); // Setelah beberapa detik, set loading ke false
     }, 1000); // Set waktu loading selama 1 detik (sesuaikan sesuai kebutuhan)
     
     return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
-  }, []);
+  }, [setIsDarkMode]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
@@ -54,7 +63,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
+          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden ${isDarkMode ? 'dark' : ''} pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -95,7 +104,11 @@ function App() {
                   {/* Bagian Kanan: Toggle untuk Dark Mode */}
                   <div className="flex items-center space-x-3">
                     <DarkThemeToggle
-                      onClick={() => setIsDarkMode(prev => !prev)} // Mengubah tema
+                      onClick={() => {
+                        const newTheme = !isDarkMode ? 'dark' : 'light';
+                        setIsDarkMode(!isDarkMode);
+                        localStorage.setItem('theme', newTheme); // Simpan preferensi tema ke localStorage
+                      }}
                       className="text-sm rounded-full focus:ring-4 dark:text-white transition-none motion-reduce:transition-none"
                     />
                   </div>
