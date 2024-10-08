@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 
 function PostPage() {
   const { postId } = useParams();
@@ -20,9 +20,9 @@ function PostPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [editCommentId, setEditCommentId] = useState(null); 
-  const [displayName, setDisplayName] = useState(''); 
-  const [filterError, setFilterError] = useState(''); 
+  const [editCommentId, setEditCommentId] = useState(null);
+  const [displayName, setDisplayName] = useState('');
+  const [filterError, setFilterError] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -78,8 +78,8 @@ function PostPage() {
           text: comment,
           user: displayName || auth.currentUser.email,
           createdAt: new Date(),
-          likes: 0,
-          dislikes: 0,
+          likes: [],
+          dislikes: [],
         });
       }
       setComment('');
@@ -97,13 +97,31 @@ function PostPage() {
   };
 
   const handleLike = async (commentId, likes) => {
-    if (isNaN(likes)) likes = 0;
-    await updateDoc(doc(db, "posts", postId, "comments", commentId), { likes: likes + 1 });
+    const userEmail = auth.currentUser?.email;
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentSnap = await getDoc(commentRef);
+    const commentData = commentSnap.data();
+
+    if (commentData && !commentData.likes.includes(userEmail)) {
+      await updateDoc(commentRef, {
+        likes: [...commentData.likes, userEmail],
+        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
+      });
+    }
   };
 
   const handleDislike = async (commentId, dislikes) => {
-    if (isNaN(dislikes)) dislikes = 0;
-    await updateDoc(doc(db, "posts", postId, "comments", commentId), { dislikes: dislikes + 1 });
+    const userEmail = auth.currentUser?.email;
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentSnap = await getDoc(commentRef);
+    const commentData = commentSnap.data();
+
+    if (commentData && !commentData.dislikes.includes(userEmail)) {
+      await updateDoc(commentRef, {
+        dislikes: [...commentData.dislikes, userEmail],
+        likes: commentData.likes.filter((email) => email !== userEmail),
+      });
+    }
   };
 
   const handleLogin = async (e) => {
@@ -137,15 +155,6 @@ function PostPage() {
   };
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
-
-  const handleReply = async (commentId, replyText) => {
-    if (!auth.currentUser) return;
-    await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
-      text: replyText,
-      user: displayName || auth.currentUser.email,
-      createdAt: new Date(),
-    });
-  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -310,10 +319,10 @@ function PostPage() {
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
                   <button onClick={() => handleLike(comment.id, comment.likes)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes || 0}
+                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
                   </button>
                   <button onClick={() => handleDislike(comment.id, comment.dislikes)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes || 0}
+                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
                     <div className="relative group">
@@ -329,24 +338,12 @@ function PostPage() {
                   )}
                 </div>
 
-                {/* Reply Section */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-8">
-                    {comment.replies.map((reply) => (
-                      <div key={reply.id} className="py-2">
-                        <p className="font-semibold">{reply.user}</p>
-                        <p>{reply.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* Form Reply */}
                 <div className="ml-8 mt-2">
                   <TextInput
                     type="text"
                     placeholder="Balas komentar"
-                    onChange={(e) => handleReply(comment.id, e.target.value)}
+                    onChange={(e) => handleCommentSubmit(comment.id, e.target.value)}
                   />
                 </div>
               </div>
