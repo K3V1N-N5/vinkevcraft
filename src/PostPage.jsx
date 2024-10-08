@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Carousel } from "flowbite-react";
+import { Button, Carousel, TextInput } from "flowbite-react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
-import { db } from './firebase'; // Import Firebase config
-import { doc, getDoc } from "firebase/firestore"; // Import Firestore methods
+import { db, auth } from './firebase'; // Import Firebase config
+import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore"; // Import Firestore methods
+import { useAuthState } from "react-firebase-hooks/auth";
+import AuthPage from './AuthPage'; // Import AuthPage yang menggabungkan login dan register
 
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
+  const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
+  const [user] = useAuthState(auth); // Dapatkan user dari firebase auth
   const navigate = useNavigate();
 
   // Mengambil data post dari Firestore
@@ -16,7 +21,7 @@ function PostPage() {
     const fetchPost = async () => {
       const postRef = doc(db, "posts", postId);
       const postSnap = await getDoc(postRef);
-      
+
       if (postSnap.exists()) {
         setPost(postSnap.data());
       } else {
@@ -24,21 +29,39 @@ function PostPage() {
       }
       setLoading(false);
     };
-    
+
+    const fetchComments = async () => {
+      const commentsRef = collection(db, "posts", postId, "comments");
+      const commentsSnap = await getDocs(commentsRef);
+      setComments(commentsSnap.docs.map(doc => doc.data()));
+    };
+
     fetchPost();
+    fetchComments();
   }, [postId, navigate]);
 
+  const handleCommentSubmit = async () => {
+    if (comment.trim() !== '') {
+      await addDoc(collection(db, "posts", postId, "comments"), {
+        text: comment,
+        user: user.email,
+        createdAt: new Date()
+      });
+      setComment(''); // Reset komentar setelah submit
+    }
+  };
+
   if (loading) {
-    // Pastikan background dark saat loading
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
-        <div className="loader">Loading...</div> {/* Loader visual */}
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <p>Loading...</p>
       </div>
     );
   }
 
-  if (!post) {
-    return null; // Tidak merender apa pun jika post tidak ada
+  // Jika user belum login, tampilkan AuthPage untuk login/register
+  if (!user) {
+    return <AuthPage />;
   }
 
   return (
@@ -111,18 +134,36 @@ function PostPage() {
         </section>
       )}
 
-      {/* Download Links */}
-      {post.downloadLinks && post.downloadLinks.length > 0 && (
-        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
-          {post.downloadLinks.map((link, index) => (
-            <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white">
-                {link.text}
-              </a>
-            </Button>
-          ))}
+      {/* Komentar */}
+      <section className="mb-8 mt-4">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Komentar</h2>
+        {/* Formulir Komentar */}
+        <div>
+          <TextInput
+            type="text"
+            placeholder="Tambahkan komentar"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="mb-4 dark:bg-gray-700 dark:text-white text-gray-900"
+          />
+          <Button onClick={handleCommentSubmit} disabled={!comment.trim()} color="blue" className="w-full">
+            Kirim Komentar
+          </Button>
         </div>
-      )}
+        {/* Daftar Komentar */}
+        <div className="mt-6">
+          {comments.length > 0 ? (
+            comments.map((comment, index) => (
+              <div key={index} className="border-b border-gray-300 dark:border-gray-700 py-4">
+                <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+                <p className="text-gray-800 dark:text-gray-300">{comment.text}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-800 dark:text-gray-300">Belum ada komentar.</p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
