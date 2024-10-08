@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
@@ -11,6 +11,7 @@ function PostPage() {
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
+  const [reply, setReply] = useState({}); // Balasan per komentar
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,9 +21,9 @@ function PostPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [editCommentId, setEditCommentId] = useState(null); 
-  const [displayName, setDisplayName] = useState(''); 
-  const [filterError, setFilterError] = useState(''); 
+  const [editCommentId, setEditCommentId] = useState(null);
+  const [displayName, setDisplayName] = useState('');
+  const [filterError, setFilterError] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -86,6 +87,18 @@ function PostPage() {
     }
   };
 
+  const handleReplySubmit = async (commentId) => {
+    const replyText = reply[commentId];
+    if (replyText && replyText.trim() !== '') {
+      await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
+        text: replyText,
+        user: displayName || auth.currentUser.email,
+        createdAt: new Date(),
+      });
+      setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
+    }
+  };
+
   const handleEdit = (commentId, text) => {
     setComment(text);
     setEditCommentId(commentId);
@@ -96,34 +109,30 @@ function PostPage() {
     setComments(comments.filter(comment => comment.id !== commentId));
   };
 
-  const handleLike = async (commentId, likes, dislikes) => {
-    const currentUser = auth.currentUser?.email;
+  const handleLike = async (commentId) => {
+    const userEmail = auth.currentUser?.email;
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentSnap = await getDoc(commentRef);
+    const commentData = commentSnap.data();
 
-    if (likes.includes(currentUser)) {
-      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
-        likes: likes.filter((user) => user !== currentUser)
-      });
-    } else {
-      const updatedDislikes = dislikes.filter((user) => user !== currentUser);
-      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
-        likes: [...likes, currentUser],
-        dislikes: updatedDislikes
+    if (commentData && !commentData.likes.includes(userEmail)) {
+      await updateDoc(commentRef, {
+        likes: [...commentData.likes, userEmail],
+        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
     }
   };
 
-  const handleDislike = async (commentId, dislikes, likes) => {
-    const currentUser = auth.currentUser?.email;
+  const handleDislike = async (commentId) => {
+    const userEmail = auth.currentUser?.email;
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentSnap = await getDoc(commentRef);
+    const commentData = commentSnap.data();
 
-    if (dislikes.includes(currentUser)) {
-      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
-        dislikes: dislikes.filter((user) => user !== currentUser)
-      });
-    } else {
-      const updatedLikes = likes.filter((user) => user !== currentUser);
-      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
-        dislikes: [...dislikes, currentUser],
-        likes: updatedLikes
+    if (commentData && !commentData.dislikes.includes(userEmail)) {
+      await updateDoc(commentRef, {
+        dislikes: [...commentData.dislikes, userEmail],
+        likes: commentData.likes.filter((email) => email !== userEmail),
       });
     }
   };
@@ -159,18 +168,6 @@ function PostPage() {
   };
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
-
-  const handleReply = async (commentId, replyText) => {
-    if (!auth.currentUser) {
-      return; // Prevent replying if not logged in
-    }
-
-    await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
-      text: replyText,
-      user: displayName || auth.currentUser.email,
-      createdAt: new Date(),
-    });
-  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -334,51 +331,39 @@ function PostPage() {
                 <p className="font-semibold">{comment.user}</p>
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id, comment.likes || [], comment.dislikes || [])}>
-                    <HiThumbUp className="inline-block" /> {comment.likes?.length || 0}
+                  <button onClick={() => handleLike(comment.id)}>
+                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
                   </button>
-                  <button onClick={() => handleDislike(comment.id, comment.dislikes || [], comment.likes || [])}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes?.length || 0}
+                  <button onClick={() => handleDislike(comment.id)}>
+                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
-                    <div className="relative group">
-                      <div className="invisible group-hover:visible absolute right-0 top-0 flex space-x-2">
-                        <button onClick={() => handleEdit(comment.id, comment.text)}>
-                          <HiOutlinePencilAlt className="inline-block" /> Edit
-                        </button>
-                        <button onClick={() => handleDelete(comment.id)}>
-                          <HiOutlineTrash className="inline-block" /> Delete
-                        </button>
-                      </div>
-                    </div>
+                    <>
+                      <button onClick={() => handleEdit(comment.id, comment.text)}>
+                        <HiOutlinePencilAlt className="inline-block" /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(comment.id)}>
+                        <HiOutlineTrash className="inline-block" /> Delete
+                      </button>
+                    </>
                   )}
+                  <button onClick={() => setReply({ ...reply, [comment.id]: '' })}>
+                    <HiReply className="inline-block" /> Balas
+                  </button>
                 </div>
 
-                {/* Reply Section */}
-                {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-8">
-                    {comment.replies.map((reply) => (
-                      <div key={reply.id} className="py-2">
-                        <p className="font-semibold">{reply.user}</p>
-                        <p>{reply.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* Form Reply */}
-                {auth.currentUser && (
+                {reply[comment.id] !== undefined && (
                   <div className="ml-8 mt-2">
                     <TextInput
                       type="text"
                       placeholder="Balas komentar"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          handleReply(comment.id, e.target.value);
-                          e.target.value = ''; // Clear input after reply
-                        }
-                      }}
+                      value={reply[comment.id]}
+                      onChange={(e) => setReply({ ...reply, [comment.id]: e.target.value })}
                     />
+                    <Button onClick={() => handleReplySubmit(comment.id)} color="blue" className="mt-2">
+                      Kirim Balasan
+                    </Button>
                   </div>
                 )}
               </div>
