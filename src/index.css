@@ -1,16 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-html, body {
-  background-color: #1e1e1e; /* Warna latar belakang untuk dark mode */
-  color: #ffffff; /* Default color di dark mode */
-  transition: background-color 0.3s ease; /* Smooth transition antara mode */
-  min-height: 100%;
-}
 
-body.light {
-  background-color: #ffffff; /* Warna latar belakang untuk light mode */
-  color: #000000;
-}
 
 
