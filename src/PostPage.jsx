@@ -24,11 +24,22 @@ function PostPage() {
   const [editCommentId, setEditCommentId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
+  const [darkMode, setDarkMode] = useState(true);
 
-  // Set default dark mode on load
+  // Toggle dark mode sesuai preferensi pengguna
   useEffect(() => {
-    document.documentElement.classList.add('dark');
+    const savedMode = localStorage.getItem("theme") || "dark";
+    setDarkMode(savedMode === "dark");
+    document.documentElement.classList.toggle('dark', savedMode === "dark");
   }, []);
+
+  // Setel mode sesuai preferensi saat user berpindah halaman
+  const toggleTheme = () => {
+    const newMode = darkMode ? "light" : "dark";
+    setDarkMode(!darkMode);
+    localStorage.setItem("theme", newMode);
+    document.documentElement.classList.toggle('dark', newMode === "dark");
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -209,7 +220,7 @@ function PostPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen dark:bg-gray-900">
+    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center dark:text-white">{post.title}</h1>
 
       {/* Bagian Video */}
