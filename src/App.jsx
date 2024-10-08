@@ -22,11 +22,13 @@ function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+    } else if (savedTheme === 'light') {
+      setIsDarkMode(false);
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
+      // Jika tidak ada preferensi tersimpan, set default ke dark mode
+      setIsDarkMode(true); // Default ke dark mode
     }
 
     setLoading(false); // Hentikan loading setelah pengaturan tema diambil
