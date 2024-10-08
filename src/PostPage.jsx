@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 import { db, auth } from './firebase'; // Import Firebase config
 import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore"; // Import Firestore methods
-import { useAuthState } from "react-firebase-hooks/auth";
 import AuthPage from './AuthPage'; // Import AuthPage yang menggabungkan login dan register
 
 function PostPage() {
@@ -13,7 +12,6 @@ function PostPage() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
-  const [user] = useAuthState(auth); // Dapatkan user dari firebase auth
   const navigate = useNavigate();
 
   // Mengambil data post dari Firestore
@@ -41,10 +39,10 @@ function PostPage() {
   }, [postId, navigate]);
 
   const handleCommentSubmit = async () => {
-    if (comment.trim() !== '') {
+    if (comment.trim() !== '' && auth.currentUser) {
       await addDoc(collection(db, "posts", postId, "comments"), {
         text: comment,
-        user: user.email,
+        user: auth.currentUser.email,
         createdAt: new Date()
       });
       setComment(''); // Reset komentar setelah submit
@@ -60,7 +58,7 @@ function PostPage() {
   }
 
   // Jika user belum login, tampilkan AuthPage untuk login/register
-  if (!user) {
+  if (!auth.currentUser) {
     return <AuthPage />;
   }
 
@@ -119,18 +117,6 @@ function PostPage() {
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
           <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
-        </section>
-      )}
-
-      {/* Fitur Utama */}
-      {post.features && post.features.length > 0 && (
-        <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
-            {post.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
         </section>
       )}
 
