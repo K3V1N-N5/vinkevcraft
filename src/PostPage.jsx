@@ -87,6 +87,8 @@ function PostPage() {
     }
   };
 
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
+
   const handleReplySubmit = async (commentId) => {
     const replyText = reply[commentId];
     if (replyText && replyText.trim() !== '') {
@@ -243,7 +245,9 @@ function PostPage() {
 
         {/* Jika belum login, tampilkan pesan */}
         {!auth.currentUser && (
-          <div className="text-center mb-4 text-gray-500">Login untuk memberikan komentar dan like/dislike.</div>
+          <Button color="blue" pill onClick={toggleModal}>
+              Login untuk meninggalkan komentar
+          </Button>
         )}
 
         {/* Input komentar (hanya pengguna yang login dapat menulis) */}
