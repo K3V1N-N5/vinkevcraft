@@ -210,7 +210,9 @@ function PostPage() {
   }
 
   return (
-    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${
+              isDarkMode ? 'dark bg-[#1e1e1e]' : 'bg-white'
+            }`}>
       <h1 className={`text-3xl font-bold mt-4 mb-6 text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
         {post.title}
       </h1>
