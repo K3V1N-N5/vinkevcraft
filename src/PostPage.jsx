@@ -24,22 +24,13 @@ function PostPage() {
   const [editCommentId, setEditCommentId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
-  // Toggle dark mode sesuai preferensi pengguna
+  // Ambil preferensi tema dari App.js tanpa menyimpan kembali
   useEffect(() => {
-    const savedMode = localStorage.getItem("theme") || "dark";
+    const savedMode = localStorage.getItem("theme") || "light";
     setDarkMode(savedMode === "dark");
-    document.documentElement.classList.toggle('dark', savedMode === "dark");
   }, []);
-
-  // Setel mode sesuai preferensi saat user berpindah halaman
-  const toggleTheme = () => {
-    const newMode = darkMode ? "light" : "dark";
-    setDarkMode(!darkMode);
-    localStorage.setItem("theme", newMode);
-    document.documentElement.classList.toggle('dark', newMode === "dark");
-  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -129,6 +120,7 @@ function PostPage() {
   const handleDelete = async (commentId) => {
     await deleteDoc(doc(db, "posts", postId, "comments", commentId));
     setComments(comments.filter(comment => comment.id !== commentId));
+    setReply((prevReply) => ({ ...prevReply, [commentId]: false }));
   };
 
   const handleLike = async (commentId) => {
@@ -148,7 +140,6 @@ function PostPage() {
         dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
     } else {
-      // Undo Like
       await updateDoc(commentRef, {
         likes: commentData.likes.filter((email) => email !== userEmail),
       });
@@ -172,7 +163,6 @@ function PostPage() {
         likes: commentData.likes.filter((email) => email !== userEmail),
       });
     } else {
-      // Undo Dislike
       await updateDoc(commentRef, {
         dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
