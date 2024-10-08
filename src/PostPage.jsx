@@ -198,11 +198,17 @@ function PostPage() {
             </Button>
 
             {/* Modal untuk Login */}
-            <Modal show={isModalOpen} onClose={toggleModal} size="md">
-              <Modal.Header>
+            <Modal
+              show={isModalOpen}
+              onClose={toggleModal}
+              size="lg" // Ukuran modal diubah menjadi 'lg' agar sesuai dengan AuthPage
+              className="rounded-lg"
+            >
+              <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
                 Login
               </Modal.Header>
-              <Modal.Body className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+              <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+                {/* AuthPage sebagai konten modal */}
                 <AuthPage />
               </Modal.Body>
             </Modal>
