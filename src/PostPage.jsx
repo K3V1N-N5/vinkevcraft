@@ -5,14 +5,14 @@ import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbU
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
-import { useTheme } from './ThemeContext'; // Menggunakan context tema
+import { useTheme } from './ThemeContext';
 
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
-  const [reply, setReply] = useState({});
+  const [replyTo, setReplyTo] = useState(null); // Track if we're replying to a comment
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,7 +26,7 @@ function PostPage() {
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
 
-  const { isDarkMode } = useTheme(); // Mengambil tema dari context
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -72,12 +72,22 @@ function PostPage() {
 
     setFilterError('');
     if (auth.currentUser) {
-      if (editCommentId) {
+      if (replyTo) {
+        // We're replying to a comment
+        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+          text: comment,
+          user: displayName || auth.currentUser.email,
+          createdAt: new Date(),
+        });
+        setReplyTo(null); // Clear the reply state
+      } else if (editCommentId) {
+        // We're editing an existing comment
         await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
           text: comment,
         });
         setEditCommentId(null);
       } else {
+        // Posting a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: displayName || auth.currentUser.email,
@@ -86,37 +96,10 @@ function PostPage() {
           dislikes: [],
         });
       }
-      setComment('');
+      setComment(''); // Clear input after submitting
     } else {
-      setIsModalOpen(true);
+      setIsModalOpen(true); // Open login modal if user is not authenticated
     }
-  };
-
-  const handleReplySubmit = async (commentId) => {
-    const replyText = reply[commentId];
-    if (replyText && replyText.trim() !== '') {
-      if (auth.currentUser) {
-        await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
-          text: replyText,
-          user: displayName || auth.currentUser.email,
-          createdAt: new Date(),
-        });
-        setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
-      } else {
-        setIsModalOpen(true);
-      }
-    }
-  };
-
-  const handleEdit = (commentId, text) => {
-    setComment(text);
-    setEditCommentId(commentId);
-  };
-
-  const handleDelete = async (commentId) => {
-    await deleteDoc(doc(db, "posts", postId, "comments", commentId));
-    setComments(comments.filter(comment => comment.id !== commentId));
-    setReply((prevReply) => ({ ...prevReply, [commentId]: false }));
   };
 
   const handleLike = async (commentId) => {
@@ -209,7 +192,7 @@ function PostPage() {
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
-      {/* Bagian Video */}
+      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -255,7 +238,7 @@ function PostPage() {
         </div>
       )}
 
-      {/* Deskripsi */}
+      {/* Description */}
       {post.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
@@ -263,7 +246,7 @@ function PostPage() {
         </section>
       )}
 
-      {/* Fitur Utama */}
+      {/* Main Features */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
@@ -288,34 +271,31 @@ function PostPage() {
         </div>
       )}
 
-      {/* Komentar Section */}
+      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-        {/* Button login untuk meninggalkan komentar */}
-        {!auth.currentUser && (
-          <div className="text-center mb-4">
-            <Button color="blue" pill onClick={toggleModal}>
-              Login untuk meninggalkan komentar
-            </Button>
-          </div>
-        )}
-
-        {/* Input komentar (hanya pengguna yang login dapat menulis) */}
+        {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
+            {replyTo && (
+              <div className="mb-2">
+                <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
+                <Button onClick={() => setReplyTo(null)} size="sm" color="red">Cancel</Button>
+              </div>
+            )}
             <TextInput
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Tulis komentar Anda..."
+              placeholder={replyTo ? "Tulis balasan Anda..." : "Tulis komentar Anda..."}
               className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
-            <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
+            <Button onClick={handleCommentSubmit} className="mt-2">{replyTo ? "Kirim Balasan" : "Kirim Komentar"}</Button>
           </div>
         )}
 
-        {/* Daftar Komentar */}
+        {/* Comment List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
@@ -340,7 +320,10 @@ function PostPage() {
               </button>
 
               {auth.currentUser && (
-                <button className="flex items-center space-x-2" onClick={() => setReply((prevReply) => ({ ...prevReply, [comment.id]: !prevReply[comment.id] }))}>
+                <button
+                  className="flex items-center space-x-2"
+                  onClick={() => setReplyTo(comment)} // Set the comment we're replying to
+                >
                   <HiReply />
                   <span>Balas</span>
                 </button>
@@ -348,7 +331,7 @@ function PostPage() {
 
               {auth.currentUser?.email === comment.user && (
                 <>
-                  <button onClick={() => handleEdit(comment.id, comment.text)} className="flex items-center space-x-2">
+                  <button onClick={() => setEditCommentId(comment.id)} className="flex items-center space-x-2">
                     <HiOutlinePencilAlt />
                     <span>Edit</span>
                   </button>
@@ -360,20 +343,7 @@ function PostPage() {
               )}
             </div>
 
-            {/* Balasan Komentar */}
-            {reply[comment.id] && auth.currentUser && (
-              <div className="mt-4 ml-4">
-                <TextInput
-                  value={reply[comment.id] || ""}
-                  onChange={(e) => setReply((prevReply) => ({ ...prevReply, [comment.id]: e.target.value }))}
-                  placeholder="Tulis balasan Anda..."
-                  className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-                />
-                <Button onClick={() => handleReplySubmit(comment.id)} className="mt-2">Kirim Balasan</Button>
-              </div>
-            )}
-
-            {/* Daftar Balasan */}
+            {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -388,11 +358,11 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Modal untuk Login */}
+      {/* Modal for Login */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
-        size="lg" 
+        size="lg"
         className="flex justify-center items-center h-screen"
       >
         <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
