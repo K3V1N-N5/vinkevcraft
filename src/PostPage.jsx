@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
-import { db, auth } from './firebase'; // Import Firebase config
-import { doc, getDoc, collection, addDoc, onSnapshot, updateDoc } from "firebase/firestore"; // Import Firestore methods
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from './firebase'; // Firebase config
+import { doc, getDoc, updateDoc, addDoc, collection, onSnapshot } from "firebase/firestore"; // Firestore methods
 
 function PostPage() {
   const { postId } = useParams();
@@ -14,13 +13,10 @@ function PostPage() {
   const [comment, setComment] = useState('');
   const [reply, setReply] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // Untuk toggle antara login dan register
+  const [isLogin, setIsLogin] = useState(true); // Mengelola state login/register modal
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   // Mengambil data post dari Firestore
@@ -28,7 +24,7 @@ function PostPage() {
     const fetchPost = async () => {
       const postRef = doc(db, "posts", postId);
       const postSnap = await getDoc(postRef);
-
+      
       if (postSnap.exists()) {
         setPost(postSnap.data());
       } else {
@@ -37,6 +33,7 @@ function PostPage() {
       setLoading(false);
     };
 
+    // Mengambil komentar
     const fetchComments = () => {
       const commentsRef = collection(db, "posts", postId, "comments");
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
@@ -50,120 +47,71 @@ function PostPage() {
     fetchComments();
   }, [postId, navigate]);
 
-  // Pantau status login pengguna
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleCommentSubmit = async () => {
-    if (comment.trim() === '') return;
-
-    if (user) {
-      await addDoc(collection(db, "posts", postId, "comments"), {
-        text: comment,
-        user: user.email,
-        createdAt: new Date(),
-        likes: [],
-        dislikes: [],
-      });
-      setComment('');
-    } else {
-      toggleModal(); // Jika tidak login, buka modal
-    }
-  };
-
   const handleLike = async (commentId) => {
-    if (!user) return toggleModal(); // Buka modal login jika belum login
+    if (!auth.currentUser) {
+      toggleModal(); // Tampilkan modal jika belum login
+      return;
+    }
 
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
+    
+    const userEmail = auth.currentUser?.email;
 
-    if (commentData && !commentData.likes.includes(user.email)) {
+    if (commentData && !commentData.likes.includes(userEmail)) {
       await updateDoc(commentRef, {
-        likes: [...commentData.likes, user.email],
-        dislikes: commentData.dislikes.filter((email) => email !== user.email),
+        likes: [...commentData.likes, userEmail],
+        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
     }
   };
 
   const handleDislike = async (commentId) => {
-    if (!user) return toggleModal(); // Buka modal login jika belum login
+    if (!auth.currentUser) {
+      toggleModal(); // Tampilkan modal jika belum login
+      return;
+    }
 
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
 
-    if (commentData && !commentData.dislikes.includes(user.email)) {
+    const userEmail = auth.currentUser?.email;
+
+    if (commentData && !commentData.dislikes.includes(userEmail)) {
       await updateDoc(commentRef, {
-        dislikes: [...commentData.dislikes, user.email],
-        likes: commentData.likes.filter((email) => email !== user.email),
+        dislikes: [...commentData.dislikes, userEmail],
+        likes: commentData.likes.filter((email) => email !== userEmail),
       });
     }
   };
 
   const handleReplySubmit = async (commentId) => {
     const replyText = reply[commentId];
+    if (!auth.currentUser) {
+      toggleModal(); // Tampilkan modal jika belum login
+      return;
+    }
+
     if (replyText && replyText.trim() !== '') {
       await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
         text: replyText,
-        user: user.email,
+        user: auth.currentUser.email,
         createdAt: new Date(),
       });
       setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
     }
   };
 
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Login failed: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    if (password !== confirmPassword) {
-      setAuthError("Passwords do not match!");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Registration failed: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
+  const toggleModal = () => setIsModalOpen(!isModalOpen); // Fungsi toggle untuk modal login
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
-        <div className="loader">Loading...</div>
+        <div className="loader">Loading...</div> {/* Loader visual */}
       </div>
     );
-  }
-
-  if (!post) {
-    return null;
   }
 
   return (
@@ -210,84 +158,42 @@ function PostPage() {
               </div>
             ))}
           </Carousel>
-          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center">
-            Beberapa gambar terkait project ini.
-          </p>
         </div>
-      )}
-
-      {/* Deskripsi */}
-      {post.description && (
-        <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
-          <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
-        </section>
-      )}
-
-      {/* Fitur Utama */}
-      {post.features && post.features.length > 0 && (
-        <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
-            {post.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </section>
       )}
 
       {/* Komentar */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
 
-        {!user && (
-          <div className="text-center mb-4 text-gray-500">
-            <Button onClick={toggleModal}>Login untuk memberikan komentar dan like/dislike</Button>
-          </div>
-        )}
-
-        {user && (
-          <div className="mb-4">
-            <TextInput
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Tulis komentar Anda..."
-            />
-            <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
-          </div>
-        )}
-
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4">
             <p className="font-semibold">{comment.user}</p>
             <p>{comment.text}</p>
 
+            {/* Like/Dislike */}
             <div className="flex space-x-4 mt-2">
               <button
-                className={`flex items-center space-x-2 ${!user && 'opacity-50 cursor-not-allowed'}`}
+                className="flex items-center space-x-2"
                 onClick={() => handleLike(comment.id)}
-                disabled={!user}
               >
                 <HiThumbUp />
                 <span>{comment.likes.length}</span>
               </button>
               <button
-                className={`flex items-center space-x-2 ${!user && 'opacity-50 cursor-not-allowed'}`}
+                className="flex items-center space-x-2"
                 onClick={() => handleDislike(comment.id)}
-                disabled={!user}
               >
                 <HiThumbDown />
                 <span>{comment.dislikes.length}</span>
               </button>
-              {user && (
-                <button className="flex items-center space-x-2" onClick={() => setReply((prevReply) => ({ ...prevReply, [comment.id]: !prevReply[comment.id] }))}>
-                  <HiReply />
-                  <span>Balas</span>
-                </button>
-              )}
+
+              <button className="flex items-center space-x-2" onClick={() => setReply((prevReply) => ({ ...prevReply, [comment.id]: !prevReply[comment.id] }))}>
+                <HiReply />
+                <span>Balas</span>
+              </button>
             </div>
 
-            {reply[comment.id] && user && (
+            {reply[comment.id] && (
               <div className="mt-4 ml-4">
                 <TextInput
                   value={reply[comment.id]}
@@ -301,24 +207,12 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Download Links */}
-      {post.downloadLinks && post.downloadLinks.length > 0 && (
-        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
-          {post.downloadLinks.map((link, index) => (
-            <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white">
-                {link.text}
-              </a>
-            </Button>
-          ))}
-        </div>
-      )}
-
       {/* Modal login/register */}
       <Modal show={isModalOpen} onClose={toggleModal}>
         <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
         <Modal.Body>
-          <form onSubmit={isLogin ? handleLogin : handleRegister}>
+          {/* Form login/register */}
+          <form>
             <div className="mb-4">
               <TextInput
                 type="email"
@@ -337,21 +231,8 @@ function PostPage() {
                 required
               />
             </div>
-            {!isLogin && (
-              <div className="mb-4">
-                <TextInput
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
             {authError && <p className="text-red-500">{authError}</p>}
-            <Button type="submit" disabled={authLoading}>
-              {isLogin ? "Login" : "Register"}
-            </Button>
+            <Button onClick={toggleModal}>Login/Register</Button>
           </form>
         </Modal.Body>
       </Modal>
