@@ -123,11 +123,69 @@ function PostPage() {
         <AuthPage onLoginSuccess={handleLoginSuccess} />
       ) : (
         <>
+          {/* Video Section */}
+          {post.videoUrl && (
+            <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src={post.videoUrl}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={post.title}
+              />
+            </div>
+          )}
+
+          {/* Carousel */}
+          {post.carouselImages && post.carouselImages.length > 0 && (
+            <div className="relative w-full max-w-4xl mx-auto mb-8">
+              <Carousel
+                slideInterval={3000}
+                leftControl={
+                  <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                    <HiArrowLeft size={35} className="text-white" />
+                  </div>
+                }
+                rightControl={
+                  <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                    <HiArrowRight size={35} className="text-white" />
+                  </div>
+                }
+                className="rounded-lg"
+              >
+                {post.carouselImages.map((image, index) => (
+                  <div key={index} className="relative w-full aspect-video">
+                    <img
+                      src={image}
+                      alt={`Carousel image ${index + 1}`}
+                      className="object-cover w-full h-full rounded-lg"
+                    />
+                  </div>
+                ))}
+              </Carousel>
+              <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center">
+                Beberapa gambar terkait project ini.
+              </p>
+            </div>
+          )}
+
           {/* Deskripsi */}
           {post.description && (
             <section className="mb-8 mt-4">
               <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
               <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
+            </section>
+          )}
+
+          {/* Fitur Utama */}
+          {post.features && post.features.length > 0 && (
+            <section className="mb-8 mt-4">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
+              <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
+                {post.features.map((feature, index) => (
+                  <li key={index}>{feature}</li>
+                ))}
+              </ul>
             </section>
           )}
 
