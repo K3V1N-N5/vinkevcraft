@@ -1,28 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore";
 
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
-  const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); 
+  const [isLogin, setIsLogin] = useState(true); // Toggle antara login dan registrasi
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [editCommentId, setEditCommentId] = useState(null);
-  const [displayName, setDisplayName] = useState('');
-  const [filterError, setFilterError] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -43,13 +40,14 @@ function PostPage() {
       }
     };
 
-    const fetchComments = () => {
-      const commentsRef = collection(db, "posts", postId, "comments");
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        setComments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      });
-
-      return () => unsubscribe();
+    const fetchComments = async () => {
+      try {
+        const commentsRef = collection(db, "posts", postId, "comments");
+        const commentsSnap = await getDocs(commentsRef);
+        setComments(commentsSnap.docs.map((doc) => doc.data()));
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      }
     };
 
     fetchPost();
@@ -57,70 +55,13 @@ function PostPage() {
   }, [postId]);
 
   const handleCommentSubmit = async () => {
-    if (comment.trim() === '') {
-      setFilterError('Komentar tidak boleh kosong.');
-      return;
-    }
-    if (comment.length < 5) {
-      setFilterError('Komentar terlalu pendek.');
-      return;
-    }
-
-    setFilterError('');
-    if (auth.currentUser) {
-      if (editCommentId) {
-        await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
-          text: comment,
-        });
-        setEditCommentId(null);
-      } else {
-        await addDoc(collection(db, "posts", postId, "comments"), {
-          text: comment,
-          user: displayName || auth.currentUser.email,
-          createdAt: new Date(),
-          likes: [],
-          dislikes: [],
-        });
-      }
+    if (comment.trim() !== '' && auth.currentUser) {
+      await addDoc(collection(db, "posts", postId, "comments"), {
+        text: comment,
+        user: auth.currentUser.email,
+        createdAt: new Date(),
+      });
       setComment('');
-    }
-  };
-
-  const handleEdit = (commentId, text) => {
-    setComment(text);
-    setEditCommentId(commentId);
-  };
-
-  const handleDelete = async (commentId) => {
-    await deleteDoc(doc(db, "posts", postId, "comments", commentId));
-    setComments(comments.filter(comment => comment.id !== commentId));
-  };
-
-  const handleLike = async (commentId, likes) => {
-    const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
-    const commentSnap = await getDoc(commentRef);
-    const commentData = commentSnap.data();
-
-    if (commentData && !commentData.likes.includes(userEmail)) {
-      await updateDoc(commentRef, {
-        likes: [...commentData.likes, userEmail],
-        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
-      });
-    }
-  };
-
-  const handleDislike = async (commentId, dislikes) => {
-    const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
-    const commentSnap = await getDoc(commentRef);
-    const commentData = commentSnap.data();
-
-    if (commentData && !commentData.dislikes.includes(userEmail)) {
-      await updateDoc(commentRef, {
-        dislikes: [...commentData.dislikes, userEmail],
-        likes: commentData.likes.filter((email) => email !== userEmail),
-      });
     }
   };
 
@@ -157,18 +98,34 @@ function PostPage() {
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
+        <div className="loader">Loading...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center min-h-screen">{error}</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
+        <p className="text-white text-lg">{error}</p>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
+        <p className="text-white text-lg">Postingan tidak ditemukan</p>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center">{post.title}</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] bg-white min-h-screen flex flex-col justify-center">
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1>
 
-      {/* Bagian Video */}
+      {/* Bagian video */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -217,16 +174,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
-          <p>{post.description}</p>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -239,7 +196,7 @@ function PostPage() {
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
             <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
+              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white">
                 {link.text}
               </a>
             </Button>
@@ -247,23 +204,27 @@ function PostPage() {
         </div>
       )}
 
-      {/* Komentar Section */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
+      {/* Komentar */}
+      <section className="mb-8 mt-4">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Komentar</h2>
 
         {/* Formulir Komentar */}
         {auth.currentUser ? (
           <div>
-            {filterError && <p className="text-red-500 mb-2">{filterError}</p>}
             <TextInput
               type="text"
               placeholder="Tambahkan komentar"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="mb-4"
+              className="mb-4 dark:bg-gray-700 dark:text-white text-gray-900"
             />
-            <Button onClick={handleCommentSubmit} disabled={!comment.trim()} color="blue" className="w-full">
-              {editCommentId ? "Edit Komentar" : "Kirim Komentar"}
+            <Button
+              onClick={handleCommentSubmit}
+              disabled={!comment.trim()}
+              color="blue"
+              className="w-full"
+            >
+              Kirim Komentar
             </Button>
           </div>
         ) : (
@@ -272,18 +233,27 @@ function PostPage() {
               Login untuk meninggalkan komentar
             </Button>
 
-            {/* Modal Login/Register */}
-            <Modal show={isModalOpen} onClose={toggleModal} size="lg" className="flex items-center justify-center">
-              <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
-              <Modal.Body>
+            {/* Modal untuk Login */}
+            <Modal
+              show={isModalOpen}
+              onClose={toggleModal}
+              size="lg" // Ukuran modal diubah menjadi 'lg'
+              className="rounded-lg"
+            >
+              <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+                {isLogin ? "Login" : "Register"}
+              </Modal.Header>
+              <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+                {/* Form Login/Registrasi */}
                 <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
-                  {authError && <p className="text-red-500">{authError}</p>}
+                  {authError && <p className="text-red-500 text-center">{authError}</p>}
                   <TextInput
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
                   />
                   <TextInput
                     type="password"
@@ -291,6 +261,7 @@ function PostPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
                   />
                   {!isLogin && (
                     <TextInput
@@ -299,12 +270,30 @@ function PostPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      className="dark:bg-gray-700 dark:text-white text-gray-900"
                     />
                   )}
-                  <Button type="submit" color="blue" className="w-full">
-                    {authLoading ? "Loading..." : isLogin ? "Login" : "Register"}
+                  <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+                    {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
                   </Button>
                 </form>
+                <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+                  {isLogin ? (
+                    <p>
+                      Don't have an account?{" "}
+                      <button onClick={() => setIsLogin(false)} className="text-blue-500">
+                        Register
+                      </button>
+                    </p>
+                  ) : (
+                    <p>
+                      Already have an account?{" "}
+                      <button onClick={() => setIsLogin(true)} className="text-blue-500">
+                        Login
+                      </button>
+                    </p>
+                  )}
+                </div>
               </Modal.Body>
             </Modal>
           </div>
@@ -314,42 +303,20 @@ function PostPage() {
         <div className="mt-6">
           {comments.length > 0 ? (
             comments.map((comment, index) => (
-              <div key={index} className="border-b py-4">
-                <p className="font-semibold">{comment.user}</p>
-                <p>{comment.text}</p>
-                <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id, comment.likes)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
-                  </button>
-                  <button onClick={() => handleDislike(comment.id, comment.dislikes)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
-                  </button>
-                  {comment.user === (displayName || auth.currentUser.email) && (
-                    <div className="relative group">
-                      <div className="invisible group-hover:visible absolute right-0 top-0 flex space-x-2">
-                        <button onClick={() => handleEdit(comment.id, comment.text)}>
-                          <HiOutlinePencilAlt className="inline-block" /> Edit
-                        </button>
-                        <button onClick={() => handleDelete(comment.id)}>
-                          <HiOutlineTrash className="inline-block" /> Delete
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form Reply */}
-                <div className="ml-8 mt-2">
-                  <TextInput
-                    type="text"
-                    placeholder="Balas komentar"
-                    onChange={(e) => handleCommentSubmit(comment.id, e.target.value)}
-                  />
-                </div>
+              <div
+                key={index}
+                className="border-b border-gray-300 dark:border-gray-700 py-4"
+              >
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {comment.user}
+                </p>
+                <p className="text-gray-800 dark:text-gray-300">
+                  {comment.text}
+                </p>
               </div>
             ))
           ) : (
-            <p>Belum ada komentar.</p>
+            <p className="text-gray-800 dark:text-gray-300">Belum ada komentar.</p>
           )}
         </div>
       </section>
