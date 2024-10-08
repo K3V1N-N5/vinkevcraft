@@ -1,10 +1,10 @@
-import vinkev from './assets/vinkev_1.png';
-import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Flowbite, DarkThemeToggle, Drawer, Sidebar, Footer } from "flowbite-react";
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
+import vinkev from './assets/vinkev_1.png';
 import Loading from './utils/Loading';
-import { useTheme } from './ThemeContext';
+import { useTheme } from './ThemeContext'; // Pastikan menggunakan context untuk tema
 
 const LandingPage = lazy(() => import('./LandingPage'));
 const Profile = lazy(() => import('./list'));
@@ -18,12 +18,30 @@ function App() {
   const [loading, setLoading] = useState(true);
   const { isDarkMode, setIsDarkMode } = useTheme();
 
+  // Pastikan preferensi mode gelap diterapkan dari awal
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+    }
+
+    setLoading(false); // Hentikan loading setelah pengaturan tema diambil
+  }, [setIsDarkMode]);
+
+  // Efek untuk menambahkan atau menghapus class 'dark'
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen);
@@ -41,15 +59,6 @@ function App() {
     setTimeout(() => setLoading(false), 1000);
   };
 
-  // Tambahkan useEffect untuk memastikan 'dark' class diterapkan saat mode gelap
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark'); // Tambahkan class 'dark' di root (html)
-    } else {
-      document.documentElement.classList.remove('dark'); // Hapus class 'dark' saat mode terang
-    }
-  }, [isDarkMode]); // Akan dijalankan saat isDarkMode berubah
-
   if (loading) {
     return <Loading />;
   }
@@ -59,7 +68,7 @@ function App() {
       <Flowbite>
         <Suspense fallback={<Loading />}>
           <div 
-            className={`min-h-screen dark:bg-black bg-white overflow-x-hidden pt-16`} // Menggunakan dark:bg untuk mode gelap
+            className={`min-h-screen dark:bg-black bg-white overflow-x-hidden pt-16`}
             style={{ visibility: loading ? 'hidden' : 'visible' }}
           >
             <Routes>
