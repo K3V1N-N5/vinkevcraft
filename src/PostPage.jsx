@@ -11,11 +11,11 @@ function PostPage() {
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
-  const [reply, setReply] = useState({}); // Store replies for each comment
+  const [reply, setReply] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); 
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -117,7 +117,7 @@ function PostPage() {
 
   const handleLike = async (commentId) => {
     if (!auth.currentUser) {
-      setIsModalOpen(true); // If not logged in, open the login modal
+      setIsModalOpen(true);
       return;
     }
 
@@ -136,7 +136,7 @@ function PostPage() {
 
   const handleDislike = async (commentId) => {
     if (!auth.currentUser) {
-      setIsModalOpen(true); // If not logged in, open the login modal
+      setIsModalOpen(true);
       return;
     }
 
@@ -276,13 +276,17 @@ function PostPage() {
         </div>
       )}
 
-      {/* Komentar */}
+      {/* Komentar Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
 
-        {/* Jika belum login, tampilkan pesan */}
+        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
-          <div className="text-center mb-4 text-gray-500">Login untuk memberikan komentar, like/dislike.</div>
+          <div className="text-center mb-4">
+            <Button color="blue" pill onClick={toggleModal}>
+              Login untuk meninggalkan komentar
+            </Button>
+          </div>
         )}
 
         {/* Input komentar (hanya pengguna yang login dapat menulis) */}
@@ -304,7 +308,6 @@ function PostPage() {
             <p className="font-semibold">{comment.user}</p>
             <p>{comment.text}</p>
 
-            {/* Like/Dislike */}
             <div className="flex space-x-4 mt-2">
               <button
                 className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
@@ -322,16 +325,28 @@ function PostPage() {
                 <HiThumbDown />
                 <span>{comment.dislikes.length}</span>
               </button>
-              {/* Jika pengguna telah login, tampilkan tombol balas */}
+
               {auth.currentUser && (
                 <button className="flex items-center space-x-2" onClick={() => setReply((prevReply) => ({ ...prevReply, [comment.id]: !prevReply[comment.id] }))}>
                   <HiReply />
                   <span>Balas</span>
                 </button>
               )}
+
+              {auth.currentUser?.email === comment.user && (
+                <>
+                  <button onClick={() => handleEdit(comment.id, comment.text)} className="flex items-center space-x-2">
+                    <HiOutlinePencilAlt />
+                    <span>Edit</span>
+                  </button>
+                  <button onClick={() => handleDelete(comment.id)} className="flex items-center space-x-2">
+                    <HiOutlineTrash />
+                    <span>Hapus</span>
+                  </button>
+                </>
+              )}
             </div>
 
-            {/* Balasan Komentar (hanya pengguna yang login dapat membalas) */}
             {reply[comment.id] && auth.currentUser && (
               <div className="mt-4 ml-4">
                 <TextInput
