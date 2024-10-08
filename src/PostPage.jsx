@@ -110,6 +110,7 @@ function PostPage() {
   };
 
   const handleLike = async (commentId) => {
+    if (!auth.currentUser) return; // Block like if not logged in
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -124,6 +125,7 @@ function PostPage() {
   };
 
   const handleDislike = async (commentId) => {
+    if (!auth.currentUser) return; // Block dislike if not logged in
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -235,144 +237,117 @@ function PostPage() {
         </section>
       )}
 
-      {/* Fitur Utama */}
-      {post.features && post.features.length > 0 && (
-        <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2">
-            {post.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Download Links */}
-      {post.downloadLinks && post.downloadLinks.length > 0 && (
-        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
-          {post.downloadLinks.map((link, index) => (
-            <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.text}
-              </a>
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Komentar Section */}
-      <section className="mb-8">
+      {/* Komentar */}
+      <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
 
-        {/* Formulir Komentar */}
-        {auth.currentUser ? (
-          <div>
-            {filterError && <p className="text-red-500 mb-2">{filterError}</p>}
+        {/* Jika belum login, tampilkan pesan */}
+        {!auth.currentUser && (
+          <div className="text-center mb-4 text-gray-500">Login untuk memberikan komentar dan like/dislike.</div>
+        )}
+
+        {/* Input komentar (hanya pengguna yang login dapat menulis) */}
+        {auth.currentUser && (
+          <div className="mb-4">
             <TextInput
-              type="text"
-              placeholder="Tambahkan komentar"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="mb-4"
+              placeholder="Tulis komentar Anda..."
             />
-            <Button onClick={handleCommentSubmit} disabled={!comment.trim()} color="blue" className="w-full">
-              {editCommentId ? "Edit Komentar" : "Kirim Komentar"}
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <Button color="blue" pill onClick={toggleModal}>
-              Login untuk meninggalkan komentar
-            </Button>
-
-            {/* Modal Login/Register */}
-            <Modal show={isModalOpen} onClose={toggleModal} size="lg" className="flex items-center justify-center">
-              <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
-              <Modal.Body>
-                <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
-                  {authError && <p className="text-red-500">{authError}</p>}
-                  <TextInput
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <TextInput
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  {!isLogin && (
-                    <TextInput
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  )}
-                  <Button type="submit" color="blue" className="w-full">
-                    {authLoading ? "Loading..." : isLogin ? "Login" : "Register"}
-                  </Button>
-                </form>
-              </Modal.Body>
-            </Modal>
+            {filterError && <p className="text-red-500">{filterError}</p>}
+            <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
           </div>
         )}
 
         {/* Daftar Komentar */}
-        <div className="mt-6">
-          {comments.length > 0 ? (
-            comments.map((comment, index) => (
-              <div key={index} className="border-b py-4">
-                <p className="font-semibold">{comment.user}</p>
-                <p>{comment.text}</p>
-                <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
-                  </button>
-                  <button onClick={() => handleDislike(comment.id)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
-                  </button>
-                  {comment.user === (displayName || auth.currentUser.email) && (
-                    <>
-                      <button onClick={() => handleEdit(comment.id, comment.text)}>
-                        <HiOutlinePencilAlt className="inline-block" /> Edit
-                      </button>
-                      <button onClick={() => handleDelete(comment.id)}>
-                        <HiOutlineTrash className="inline-block" /> Delete
-                      </button>
-                    </>
-                  )}
-                  <button onClick={() => setReply({ ...reply, [comment.id]: '' })}>
-                    <HiReply className="inline-block" /> Balas
-                  </button>
-                </div>
+        {comments.map((comment) => (
+          <div key={comment.id} className="mb-4 border-b pb-4">
+            <p className="font-semibold">{comment.user}</p>
+            <p>{comment.text}</p>
 
-                {/* Form Reply */}
-                {reply[comment.id] !== undefined && (
-                  <div className="ml-8 mt-2">
-                    <TextInput
-                      type="text"
-                      placeholder="Balas komentar"
-                      value={reply[comment.id]}
-                      onChange={(e) => setReply({ ...reply, [comment.id]: e.target.value })}
-                    />
-                    <Button onClick={() => handleReplySubmit(comment.id)} color="blue" className="mt-2">
-                      Kirim Balasan
-                    </Button>
-                  </div>
-                )}
+            {/* Like/Dislike */}
+            <div className="flex space-x-4 mt-2">
+              <button
+                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                onClick={() => handleLike(comment.id)}
+                disabled={!auth.currentUser}
+              >
+                <HiThumbUp />
+                <span>{comment.likes.length}</span>
+              </button>
+              <button
+                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                onClick={() => handleDislike(comment.id)}
+                disabled={!auth.currentUser}
+              >
+                <HiThumbDown />
+                <span>{comment.dislikes.length}</span>
+              </button>
+              {/* Jika pengguna telah login, tampilkan tombol balas */}
+              {auth.currentUser && (
+                <button className="flex items-center space-x-2" onClick={() => setReply((prevReply) => ({ ...prevReply, [comment.id]: !prevReply[comment.id] }))}>
+                  <HiReply />
+                  <span>Balas</span>
+                </button>
+              )}
+            </div>
+
+            {/* Balasan Komentar (hanya pengguna yang login dapat membalas) */}
+            {reply[comment.id] && auth.currentUser && (
+              <div className="mt-4 ml-4">
+                <TextInput
+                  value={reply[comment.id]}
+                  onChange={(e) => setReply((prevReply) => ({ ...prevReply, [comment.id]: e.target.value }))}
+                  placeholder="Tulis balasan Anda..."
+                />
+                <Button onClick={() => handleReplySubmit(comment.id)} className="mt-2">Kirim Balasan</Button>
               </div>
-            ))
-          ) : (
-            <p>Belum ada komentar.</p>
-          )}
-        </div>
+            )}
+          </div>
+        ))}
       </section>
+
+      {/* Modal login/register */}
+      <Modal show={isModalOpen} onClose={toggleModal}>
+        <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
+        <Modal.Body>
+          <form onSubmit={isLogin ? handleLogin : handleRegister}>
+            <div className="mb-4">
+              <TextInput
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <TextInput
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {!isLogin && (
+              <div className="mb-4">
+                <TextInput
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+            {authError && <p className="text-red-500">{authError}</p>}
+            <Button type="submit" disabled={authLoading}>
+              {isLogin ? "Login" : "Register"}
+            </Button>
+          </form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
