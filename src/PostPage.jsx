@@ -14,15 +14,15 @@ function PostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // Toggle antara login dan registrasi
+  const [isLogin, setIsLogin] = useState(true); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [editCommentId, setEditCommentId] = useState(null); // ID untuk edit komentar
-  const [displayName, setDisplayName] = useState(''); // Nama pengguna
-  const [filterError, setFilterError] = useState(''); // Filter error
+  const [editCommentId, setEditCommentId] = useState(null); 
+  const [displayName, setDisplayName] = useState(''); 
+  const [filterError, setFilterError] = useState(''); 
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -45,12 +45,11 @@ function PostPage() {
 
     const fetchComments = () => {
       const commentsRef = collection(db, "posts", postId, "comments");
-      // Menggunakan onSnapshot untuk mendapatkan data real-time tanpa refresh
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
         setComments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       });
 
-      return () => unsubscribe(); // Cleanup subscription saat komponen di-unmount
+      return () => unsubscribe();
     };
 
     fetchPost();
@@ -67,16 +66,14 @@ function PostPage() {
       return;
     }
 
-    setFilterError(''); // Reset error jika tidak ada masalah
+    setFilterError('');
     if (auth.currentUser) {
       if (editCommentId) {
-        // Update existing comment
         await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
           text: comment,
         });
         setEditCommentId(null);
       } else {
-        // Add new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: displayName || auth.currentUser.email,
@@ -100,10 +97,12 @@ function PostPage() {
   };
 
   const handleLike = async (commentId, likes) => {
+    if (isNaN(likes)) likes = 0;
     await updateDoc(doc(db, "posts", postId, "comments", commentId), { likes: likes + 1 });
   };
 
   const handleDislike = async (commentId, dislikes) => {
+    if (isNaN(dislikes)) dislikes = 0;
     await updateDoc(doc(db, "posts", postId, "comments", commentId), { dislikes: dislikes + 1 });
   };
 
@@ -138,6 +137,15 @@ function PostPage() {
   };
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
+
+  const handleReply = async (commentId, replyText) => {
+    if (!auth.currentUser) return;
+    await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
+      text: replyText,
+      user: displayName || auth.currentUser.email,
+      createdAt: new Date(),
+    });
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -302,21 +310,44 @@ function PostPage() {
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
                   <button onClick={() => handleLike(comment.id, comment.likes)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes}
+                    <HiThumbUp className="inline-block" /> {comment.likes || 0}
                   </button>
                   <button onClick={() => handleDislike(comment.id, comment.dislikes)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes}
+                    <HiThumbDown className="inline-block" /> {comment.dislikes || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
-                    <>
-                      <button onClick={() => handleEdit(comment.id, comment.text)}>
-                        <HiOutlinePencilAlt className="inline-block" /> Edit
-                      </button>
-                      <button onClick={() => handleDelete(comment.id)}>
-                        <HiOutlineTrash className="inline-block" /> Delete
-                      </button>
-                    </>
+                    <div className="relative group">
+                      <div className="invisible group-hover:visible absolute right-0 top-0 flex space-x-2">
+                        <button onClick={() => handleEdit(comment.id, comment.text)}>
+                          <HiOutlinePencilAlt className="inline-block" /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(comment.id)}>
+                          <HiOutlineTrash className="inline-block" /> Delete
+                        </button>
+                      </div>
+                    </div>
                   )}
+                </div>
+
+                {/* Reply Section */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="ml-8">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id} className="py-2">
+                        <p className="font-semibold">{reply.user}</p>
+                        <p>{reply.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Form Reply */}
+                <div className="ml-8 mt-2">
+                  <TextInput
+                    type="text"
+                    placeholder="Balas komentar"
+                    onChange={(e) => handleReply(comment.id, e.target.value)}
+                  />
                 </div>
               </div>
             ))
