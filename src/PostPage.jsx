@@ -78,8 +78,8 @@ function PostPage() {
           text: comment,
           user: displayName || auth.currentUser.email,
           createdAt: new Date(),
-          likes: 0,
-          dislikes: 0,
+          likes: [],
+          dislikes: [],
         });
       }
       setComment('');
@@ -96,14 +96,36 @@ function PostPage() {
     setComments(comments.filter(comment => comment.id !== commentId));
   };
 
-  const handleLike = async (commentId, likes) => {
-    if (isNaN(likes)) likes = 0;
-    await updateDoc(doc(db, "posts", postId, "comments", commentId), { likes: likes + 1 });
+  const handleLike = async (commentId, likes, dislikes) => {
+    const currentUser = auth.currentUser?.email;
+
+    if (likes.includes(currentUser)) {
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        likes: likes.filter((user) => user !== currentUser)
+      });
+    } else {
+      const updatedDislikes = dislikes.filter((user) => user !== currentUser);
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        likes: [...likes, currentUser],
+        dislikes: updatedDislikes
+      });
+    }
   };
 
-  const handleDislike = async (commentId, dislikes) => {
-    if (isNaN(dislikes)) dislikes = 0;
-    await updateDoc(doc(db, "posts", postId, "comments", commentId), { dislikes: dislikes + 1 });
+  const handleDislike = async (commentId, dislikes, likes) => {
+    const currentUser = auth.currentUser?.email;
+
+    if (dislikes.includes(currentUser)) {
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        dislikes: dislikes.filter((user) => user !== currentUser)
+      });
+    } else {
+      const updatedLikes = likes.filter((user) => user !== currentUser);
+      await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+        dislikes: [...dislikes, currentUser],
+        likes: updatedLikes
+      });
+    }
   };
 
   const handleLogin = async (e) => {
@@ -309,11 +331,11 @@ function PostPage() {
                 <p className="font-semibold">{comment.user}</p>
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id, comment.likes)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes || 0}
+                  <button onClick={() => handleLike(comment.id, comment.likes, comment.dislikes)}>
+                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
                   </button>
-                  <button onClick={() => handleDislike(comment.id, comment.dislikes)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes || 0}
+                  <button onClick={() => handleDislike(comment.id, comment.dislikes, comment.likes)}>
+                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
                     <div className="relative group">
