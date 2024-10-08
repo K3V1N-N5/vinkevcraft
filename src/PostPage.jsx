@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Carousel, TextInput } from "flowbite-react";
-import { useParams, useNavigate } from 'react-router-dom';
+import { Button, Carousel, TextInput, Modal } from "flowbite-react"; // Import Modal dari Flowbite
+import { useParams } from 'react-router-dom'; // Tidak perlu navigate
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
-import { db, auth } from './firebase'; // Import Firebase config
-import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore"; // Import Firestore methods
+import { db, auth } from './firebase'; // Import konfigurasi Firebase
+import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore"; // Firestore methods
+import AuthPage from './AuthPage'; // Import komponen halaman autentikasi
 
 function PostPage() {
   const { postId } = useParams();
@@ -12,7 +13,7 @@ function PostPage() {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk modal
 
   // Mengambil data post dan komentar dari Firestore
   useEffect(() => {
@@ -24,7 +25,7 @@ function PostPage() {
         if (postSnap.exists()) {
           setPost(postSnap.data());
         } else {
-          navigate('*'); // Arahkan ke halaman NotFound jika post tidak ditemukan
+          setError("Postingan tidak ditemukan");
         }
       } catch (error) {
         setError("Gagal memuat data. Silakan coba lagi nanti.");
@@ -46,7 +47,7 @@ function PostPage() {
 
     fetchPost();
     fetchComments();
-  }, [postId, navigate]);
+  }, [postId]);
 
   const handleCommentSubmit = async () => {
     if (comment.trim() !== '' && auth.currentUser) {
@@ -59,28 +60,13 @@ function PostPage() {
     }
   };
 
+  // Fungsi untuk men-toggle modal login
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#1e1e1e] dark:bg-[#1e1e1e]">
         <div className="loader">Loading...</div>
-        <style jsx>{`
-          .loader {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-left-color: #fff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            0% {
-              transform: rotate(0deg);
-            }
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-        `}</style>
       </div>
     );
   }
@@ -105,7 +91,7 @@ function PostPage() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 dark:text-white dark:bg-[#1e1e1e] bg-white min-h-screen flex flex-col justify-center">
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-800 dark:text-white">{post.title}</h1>
 
-      {/* Video Section */}
+      {/* Bagian video */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -208,11 +194,21 @@ function PostPage() {
             </Button>
           </div>
         ) : (
-          <p className="text-gray-800 dark:text-gray-300">
-            <Button color="blue" pill>
+          <div>
+            <Button color="blue" pill onClick={toggleModal}>
               Login untuk meninggalkan komentar
             </Button>
-          </p>
+
+            {/* Modal untuk Login */}
+            <Modal show={isModalOpen} onClose={toggleModal}>
+              <Modal.Header>
+                Login
+              </Modal.Header>
+              <Modal.Body>
+                <AuthPage />
+              </Modal.Body>
+            </Modal>
+          </div>
         )}
 
         {/* Daftar Komentar */}
