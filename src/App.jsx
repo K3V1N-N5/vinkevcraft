@@ -4,7 +4,7 @@ import { Flowbite, DarkThemeToggle, Drawer, Sidebar, Footer } from "flowbite-rea
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import vinkev from './assets/vinkev_1.png';
 import Loading from './utils/Loading';
-import { useTheme } from './ThemeContext'; // Pastikan menggunakan context untuk tema
+import { useTheme } from './ThemeContext'; // Gunakan context untuk tema
 
 const LandingPage = lazy(() => import('./LandingPage'));
 const Profile = lazy(() => import('./list'));
@@ -16,9 +16,8 @@ const NotFound = lazy(() => import('./NotFound'));
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { isDarkMode, setIsDarkMode } = useTheme();
+  const { isDarkMode, setIsDarkMode } = useTheme(); // Pastikan gunakan useTheme
 
-  // Pastikan preferensi mode gelap diterapkan dari awal
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     
@@ -27,21 +26,20 @@ function App() {
     } else if (savedTheme === 'light') {
       setIsDarkMode(false);
     } else {
-      // Jika tidak ada preferensi tersimpan, set default ke dark mode
-      setIsDarkMode(true); // Default ke dark mode
+      // Set default ke dark mode
+      setIsDarkMode(true); // Selalu default ke dark mode jika tidak ada setting di localStorage
     }
 
-    setLoading(false); // Hentikan loading setelah pengaturan tema diambil
+    setLoading(false); // Setelah set tema, hentikan loading
   }, [setIsDarkMode]);
 
-  // Efek untuk menambahkan atau menghapus class 'dark'
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add('dark'); // Tambahkan class dark
+      localStorage.setItem('theme', 'dark'); // Simpan preferensi
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove('dark'); // Hapus class dark
+      localStorage.setItem('theme', 'light'); // Simpan preferensi
     }
   }, [isDarkMode]);
 
@@ -69,10 +67,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}>
-          <div 
-            className={`min-h-screen dark:bg-black bg-white overflow-x-hidden pt-16`}
-            style={{ visibility: loading ? 'hidden' : 'visible' }}
-          >
+          <div className={`min-h-screen dark:bg-black bg-white overflow-x-hidden pt-16`}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/list" element={<Profile />} />
