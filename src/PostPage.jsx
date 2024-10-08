@@ -46,6 +46,10 @@ function PostPage() {
         createdAt: new Date()
       });
       setComment(''); // Reset komentar setelah submit
+      fetchComments(); // Fetch comments again after submission
+    } else {
+      // Jika belum login, arahkan ke halaman login
+      navigate('/login');
     }
   };
 
@@ -55,11 +59,6 @@ function PostPage() {
         <p>Loading...</p>
       </div>
     );
-  }
-
-  // Jika user belum login, tampilkan AuthPage untuk login/register
-  if (!auth.currentUser) {
-    return <AuthPage />;
   }
 
   return (
@@ -123,19 +122,7 @@ function PostPage() {
       {/* Komentar */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Komentar</h2>
-        {/* Formulir Komentar */}
-        <div>
-          <TextInput
-            type="text"
-            placeholder="Tambahkan komentar"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="mb-4 dark:bg-gray-700 dark:text-white text-gray-900"
-          />
-          <Button onClick={handleCommentSubmit} disabled={!comment.trim()} color="blue" className="w-full">
-            Kirim Komentar
-          </Button>
-        </div>
+
         {/* Daftar Komentar */}
         <div className="mt-6">
           {comments.length > 0 ? (
@@ -147,6 +134,26 @@ function PostPage() {
             ))
           ) : (
             <p className="text-gray-800 dark:text-gray-300">Belum ada komentar.</p>
+          )}
+        </div>
+
+        {/* Formulir Komentar */}
+        <div>
+          <TextInput
+            type="text"
+            placeholder="Tambahkan komentar"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="mb-4 dark:bg-gray-700 dark:text-white text-gray-900"
+          />
+          {auth.currentUser ? (
+            <Button onClick={handleCommentSubmit} disabled={!comment.trim()} color="blue" className="w-full">
+              Kirim Komentar
+            </Button>
+          ) : (
+            <Button onClick={() => navigate('/login')} color="red" className="w-full">
+              Login untuk Komentar
+            </Button>
           )}
         </div>
       </section>
