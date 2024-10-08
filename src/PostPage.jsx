@@ -26,7 +26,7 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
-  // Ambil preferensi tema dari App.js tanpa menyimpan kembali
+  // Ambil preferensi tema dari localStorage
   useEffect(() => {
     const savedMode = localStorage.getItem("theme") || "light";
     setDarkMode(savedMode === "dark");
@@ -169,36 +169,6 @@ function PostPage() {
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Login failed: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    if (password !== confirmPassword) {
-      setAuthError("Passwords do not match!");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Registration failed: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   if (loading) {
@@ -211,10 +181,10 @@ function PostPage() {
 
   return (
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post?.title}</h1>
 
       {/* Bagian Video */}
-      {post.videoUrl && (
+      {post?.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
             className="absolute top-0 left-0 w-full h-full"
@@ -227,7 +197,7 @@ function PostPage() {
       )}
 
       {/* Carousel */}
-      {post.carouselImages && post.carouselImages.length > 0 && (
+      {post?.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
             slideInterval={3000}
@@ -260,7 +230,7 @@ function PostPage() {
       )}
 
       {/* Deskripsi */}
-      {post.description && (
+      {post?.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
           <p className="text-gray-900 dark:text-gray-300">{post.description}</p>
@@ -268,7 +238,7 @@ function PostPage() {
       )}
 
       {/* Fitur Utama */}
-      {post.features && post.features.length > 0 && (
+      {post?.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
           <ul className="list-disc list-inside space-y-2 text-gray-900 dark:text-gray-300">
@@ -280,7 +250,7 @@ function PostPage() {
       )}
 
       {/* Download Links */}
-      {post.downloadLinks && post.downloadLinks.length > 0 && (
+      {post?.downloadLinks && post.downloadLinks.length > 0 && (
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
             <Button key={index} color="gray" pill>
@@ -296,7 +266,6 @@ function PostPage() {
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -305,7 +274,6 @@ function PostPage() {
           </div>
         )}
 
-        {/* Input komentar (hanya pengguna yang login dapat menulis) */}
         {auth.currentUser && (
           <div className="mb-4">
             <TextInput
@@ -319,26 +287,17 @@ function PostPage() {
           </div>
         )}
 
-        {/* Daftar Komentar */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
             <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id)}
-                disabled={!auth.currentUser}
-              >
+              <button className="flex items-center space-x-2" onClick={() => handleLike(comment.id)}>
                 <HiThumbUp />
                 <span>{comment.likes.length}</span>
               </button>
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id)}
-                disabled={!auth.currentUser}
-              >
+              <button className="flex items-center space-x-2" onClick={() => handleDislike(comment.id)}>
                 <HiThumbDown />
                 <span>{comment.dislikes.length}</span>
               </button>
@@ -364,7 +323,6 @@ function PostPage() {
               )}
             </div>
 
-            {/* Balasan Komentar */}
             {reply[comment.id] && auth.currentUser && (
               <div className="mt-4 ml-4">
                 <TextInput
@@ -377,7 +335,6 @@ function PostPage() {
               </div>
             )}
 
-            {/* Daftar Balasan */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -396,7 +353,7 @@ function PostPage() {
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
-        size="lg" 
+        size="lg"
         className="flex justify-center items-center h-screen"
       >
         <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
