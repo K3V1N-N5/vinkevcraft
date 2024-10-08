@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore";
-import AuthPage from './AuthPage';
 
 function PostPage() {
   const { postId } = useParams();
@@ -14,6 +14,12 @@ function PostPage() {
   const [comments, setComments] = useState([]);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLogin, setIsLogin] = useState(true); // Toggle antara login dan registrasi
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -57,6 +63,36 @@ function PostPage() {
       });
       setComment('');
     }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+    } catch (error) {
+      setAuthError('Login failed: ' + error.message);
+    }
+    setAuthLoading(false);
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (password !== confirmPassword) {
+      setAuthError("Passwords do not match!");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+    } catch (error) {
+      setAuthError('Registration failed: ' + error.message);
+    }
+    setAuthLoading(false);
   };
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
@@ -201,15 +237,63 @@ function PostPage() {
             <Modal
               show={isModalOpen}
               onClose={toggleModal}
-              size="lg" // Ukuran modal diubah menjadi 'lg' agar sesuai dengan AuthPage
+              size="lg" // Ukuran modal diubah menjadi 'lg'
               className="rounded-lg"
             >
               <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
-                Login
+                {isLogin ? "Login" : "Register"}
               </Modal.Header>
               <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
-                {/* AuthPage sebagai konten modal */}
-                <AuthPage />
+                {/* Form Login/Registrasi */}
+                <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+                  {authError && <p className="text-red-500 text-center">{authError}</p>}
+                  <TextInput
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
+                  />
+                  <TextInput
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="dark:bg-gray-700 dark:text-white text-gray-900"
+                  />
+                  {!isLogin && (
+                    <TextInput
+                      type="password"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="dark:bg-gray-700 dark:text-white text-gray-900"
+                    />
+                  )}
+                  <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+                    {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+                  </Button>
+                </form>
+                <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+                  {isLogin ? (
+                    <p>
+                      Don't have an account?{" "}
+                      <button onClick={() => setIsLogin(false)} className="text-blue-500">
+                        Register
+                      </button>
+                    </p>
+                  ) : (
+                    <p>
+                      Already have an account?{" "}
+                      <button onClick={() => setIsLogin(true)} className="text-blue-500">
+                        Login
+                      </button>
+                    </p>
+                  )}
+                </div>
               </Modal.Body>
             </Modal>
           </div>
