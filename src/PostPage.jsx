@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Carousel, TextInput, Modal } from "flowbite-react"; // Import Modal dari Flowbite
-import { useParams } from 'react-router-dom'; // Tidak perlu navigate
+import { Button, Carousel, TextInput, Modal } from "flowbite-react";
+import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
-import { db, auth } from './firebase'; // Import konfigurasi Firebase
-import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore"; // Firestore methods
-import AuthPage from './AuthPage'; // Import komponen halaman autentikasi
+import { db, auth } from './firebase';
+import { doc, getDoc, addDoc, collection, getDocs } from "firebase/firestore";
+import AuthPage from './AuthPage';
 
 function PostPage() {
   const { postId } = useParams();
@@ -13,9 +13,8 @@ function PostPage() {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mengambil data post dan komentar dari Firestore
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -56,11 +55,10 @@ function PostPage() {
         user: auth.currentUser.email,
         createdAt: new Date(),
       });
-      setComment(''); // Reset komentar setelah submit
+      setComment('');
     }
   };
 
-  // Fungsi untuk men-toggle modal login
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   if (loading) {
@@ -200,11 +198,11 @@ function PostPage() {
             </Button>
 
             {/* Modal untuk Login */}
-            <Modal show={isModalOpen} onClose={toggleModal}>
+            <Modal show={isModalOpen} onClose={toggleModal} size="md">
               <Modal.Header>
                 Login
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <AuthPage />
               </Modal.Body>
             </Modal>
