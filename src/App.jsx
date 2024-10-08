@@ -69,7 +69,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
+          <div className={`bg-white dark:bg-gray-900 text-gray-800 dark:text-white pt-16`}>
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
