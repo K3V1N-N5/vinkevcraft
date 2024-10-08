@@ -25,6 +25,11 @@ function PostPage() {
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
 
+  // Set default dark mode on load
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -85,7 +90,7 @@ function PostPage() {
       }
       setComment('');
     } else {
-      setIsModalOpen(true); // If not logged in, open the login modal
+      setIsModalOpen(true);
     }
   };
 
@@ -100,7 +105,7 @@ function PostPage() {
         });
         setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
       } else {
-        setIsModalOpen(true); // If not logged in, open the login modal
+        setIsModalOpen(true);
       }
     }
   };
@@ -131,6 +136,11 @@ function PostPage() {
         likes: [...commentData.likes, userEmail],
         dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
+    } else {
+      // Undo Like
+      await updateDoc(commentRef, {
+        likes: commentData.likes.filter((email) => email !== userEmail),
+      });
     }
   };
 
@@ -149,6 +159,11 @@ function PostPage() {
       await updateDoc(commentRef, {
         dislikes: [...commentData.dislikes, userEmail],
         likes: commentData.likes.filter((email) => email !== userEmail),
+      });
+    } else {
+      // Undo Dislike
+      await updateDoc(commentRef, {
+        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
     }
   };
@@ -194,8 +209,8 @@ function PostPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
-      <h1 className="text-3xl font-bold mt-4 mb-6 text-center">{post.title}</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen dark:bg-gray-900">
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center dark:text-white">{post.title}</h1>
 
       {/* Bagian Video */}
       {post.videoUrl && (
@@ -246,16 +261,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
-          <p>{post.description}</p>
+          <h2 className="text-2xl font-semibold mb-4 dark:text-white">Deskripsi</h2>
+          <p className="dark:text-gray-300">{post.description}</p>
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2">
+          <h2 className="text-2xl font-semibold mb-4 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 dark:text-gray-300">
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -278,7 +293,7 @@ function PostPage() {
 
       {/* Komentar Section */}
       <section className="mb-8 mt-4">
-        <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
+        <h2 className="text-2xl font-semibold mb-4 dark:text-white">Komentar</h2>
 
         {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
@@ -296,6 +311,7 @@ function PostPage() {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tulis komentar Anda..."
+              className="dark:bg-gray-800 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
             <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
@@ -304,9 +320,9 @@ function PostPage() {
 
         {/* Daftar Komentar */}
         {comments.map((comment) => (
-          <div key={comment.id} className="mb-4 border-b pb-4">
-            <p className="font-semibold">{comment.user}</p>
-            <p>{comment.text}</p>
+          <div key={comment.id} className="mb-4 border-b pb-4 dark:border-gray-700">
+            <p className="font-semibold dark:text-white">{comment.user}</p>
+            <p className="dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
               <button
@@ -347,85 +363,96 @@ function PostPage() {
               )}
             </div>
 
+            {/* Balasan Komentar */}
             {reply[comment.id] && auth.currentUser && (
               <div className="mt-4 ml-4">
                 <TextInput
-                  value={reply[comment.id]}
+                  value={reply[comment.id] || ""}
                   onChange={(e) => setReply((prevReply) => ({ ...prevReply, [comment.id]: e.target.value }))}
                   placeholder="Tulis balasan Anda..."
+                  className="dark:bg-gray-800 dark:text-white"
                 />
                 <Button onClick={() => handleReplySubmit(comment.id)} className="mt-2">Kirim Balasan</Button>
+              </div>
+            )}
+
+            {/* Daftar Balasan */}
+            {comment.replies && comment.replies.length > 0 && (
+              <div className="ml-8 mt-4">
+                {comment.replies.map((reply, index) => (
+                  <div key={index} className="mb-2 dark:text-gray-400">
+                    <p className="font-semibold">{reply.user}</p>
+                    <p>{reply.text}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         ))}
       </section>
 
-                  {/* Modal untuk Login */}
-            <Modal
-              show={isModalOpen}
-              onClose={toggleModal}
-              size="lg" // Ukuran modal diubah menjadi 'lg'
-              className="rounded-lg"
-            >
-              <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
-                {isLogin ? "Login" : "Register"}
-              </Modal.Header>
-              <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
-                {/* Form Login/Registrasi */}
-                <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
-                  {authError && <p className="text-red-500 text-center">{authError}</p>}
-                  <TextInput
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:text-white text-gray-900"
-                  />
-                  <TextInput
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:text-white text-gray-900"
-                  />
-                  {!isLogin && (
-                    <TextInput
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className="dark:bg-gray-700 dark:text-white text-gray-900"
-                    />
-                  )}
-                  <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
-                    {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
-                  </Button>
-                </form>
-                <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
-                  {isLogin ? (
-                    <p>
-                      Don't have an account?{" "}
-                      <button onClick={() => setIsLogin(false)} className="text-blue-500">
-                        Register
-                      </button>
-                    </p>
-                  ) : (
-                    <p>
-                      Already have an account?{" "}
-                      <button onClick={() => setIsLogin(true)} className="text-blue-500">
-                        Login
-                      </button>
-                    </p>
-                  )}
-                </div>
-              </Modal.Body>
-            </Modal>
-      
-
+      {/* Modal untuk Login */}
+      <Modal
+        show={isModalOpen}
+        onClose={toggleModal}
+        size="lg" 
+        className="flex justify-center items-center h-screen"
+      >
+        <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+          {isLogin ? "Login" : "Register"}
+        </Modal.Header>
+        <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+          <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+            {authError && <p className="text-red-500 text-center">{authError}</p>}
+            <TextInput
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
+            />
+            <TextInput
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="dark:bg-gray-700 dark:text-white text-gray-900"
+            />
+            {!isLogin && (
+              <TextInput
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="dark:bg-gray-700 dark:text-white text-gray-900"
+              />
+            )}
+            <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+              {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+            </Button>
+          </form>
+          <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+            {isLogin ? (
+              <p>
+                Don't have an account?{" "}
+                <button onClick={() => setIsLogin(false)} className="text-blue-500">
+                  Register
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{" "}
+                <button onClick={() => setIsLogin(true)} className="text-blue-500">
+                  Login
+                </button>
+              </p>
+            )}
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
