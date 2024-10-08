@@ -5,6 +5,7 @@ import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbU
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+import { useTheme } from './ThemeContext'; // Menggunakan context tema
 
 function PostPage() {
   const { postId } = useParams();
@@ -24,13 +25,8 @@ function PostPage() {
   const [editCommentId, setEditCommentId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
 
-  // Fetch theme from local storage
-  useEffect(() => {
-    const savedMode = localStorage.getItem("theme") || "light";
-    setDarkMode(savedMode === "dark");
-  }, []);
+  const { isDarkMode } = useTheme(); // Mengambil tema dari context
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -210,10 +206,8 @@ function PostPage() {
   }
 
   return (
-    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <h1 className={`text-3xl font-bold mt-4 mb-6 text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-        {post.title}
-      </h1>
+    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
       {/* Bagian Video */}
       {post.videoUrl && (
@@ -255,7 +249,7 @@ function PostPage() {
               </div>
             ))}
           </Carousel>
-          <p className={`text-base mt-4 text-center ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center">
             Beberapa gambar terkait project ini.
           </p>
         </div>
@@ -264,16 +258,16 @@ function PostPage() {
       {/* Deskripsi */}
       {post.description && (
         <section className="mb-8 mt-4">
-          <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Deskripsi</h2>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{post.description}</p>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-900 dark:text-gray-300">{post.description}</p>
         </section>
       )}
 
       {/* Fitur Utama */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
-          <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Fitur Utama</h2>
-          <ul className={`${darkMode ? 'text-gray-300' : 'text-gray-900'} list-disc list-inside space-y-2`}>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-900 dark:text-gray-300">
             {post.features.map((feature, index) => (
               <li key={index}>{feature}</li>
             ))}
@@ -296,8 +290,9 @@ function PostPage() {
 
       {/* Komentar Section */}
       <section className="mb-8 mt-4">
-        <h2 className={`text-2xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Komentar</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
+        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -306,23 +301,25 @@ function PostPage() {
           </div>
         )}
 
+        {/* Input komentar (hanya pengguna yang login dapat menulis) */}
         {auth.currentUser && (
           <div className="mb-4">
             <TextInput
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tulis komentar Anda..."
-              className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'}`}
+              className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
             <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
           </div>
         )}
 
+        {/* Daftar Komentar */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
-            <p className={`${darkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>{comment.user}</p>
-            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{comment.text}</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+            <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
               <button
@@ -363,18 +360,20 @@ function PostPage() {
               )}
             </div>
 
+            {/* Balasan Komentar */}
             {reply[comment.id] && auth.currentUser && (
               <div className="mt-4 ml-4">
                 <TextInput
                   value={reply[comment.id] || ""}
                   onChange={(e) => setReply((prevReply) => ({ ...prevReply, [comment.id]: e.target.value }))}
                   placeholder="Tulis balasan Anda..."
-                  className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'}`}
+                  className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
                 />
                 <Button onClick={() => handleReplySubmit(comment.id)} className="mt-2">Kirim Balasan</Button>
               </div>
             )}
 
+            {/* Daftar Balasan */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -389,6 +388,7 @@ function PostPage() {
         ))}
       </section>
 
+      {/* Modal untuk Login */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
