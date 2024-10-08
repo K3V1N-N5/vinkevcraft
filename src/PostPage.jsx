@@ -11,7 +11,7 @@ function PostPage() {
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
-  const [reply, setReply] = useState({}); // Balasan per komentar
+  const [reply, setReply] = useState({}); // Store replies for each comment
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,20 +84,24 @@ function PostPage() {
         });
       }
       setComment('');
+    } else {
+      setIsModalOpen(true); // If not logged in, open the login modal
     }
   };
-
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   const handleReplySubmit = async (commentId) => {
     const replyText = reply[commentId];
     if (replyText && replyText.trim() !== '') {
-      await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
-        text: replyText,
-        user: displayName || auth.currentUser.email,
-        createdAt: new Date(),
-      });
-      setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
+      if (auth.currentUser) {
+        await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
+          text: replyText,
+          user: displayName || auth.currentUser.email,
+          createdAt: new Date(),
+        });
+        setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
+      } else {
+        setIsModalOpen(true); // If not logged in, open the login modal
+      }
     }
   };
 
@@ -112,7 +116,11 @@ function PostPage() {
   };
 
   const handleLike = async (commentId) => {
-    if (!auth.currentUser) return; // Block like if not logged in
+    if (!auth.currentUser) {
+      setIsModalOpen(true); // If not logged in, open the login modal
+      return;
+    }
+
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -127,7 +135,11 @@ function PostPage() {
   };
 
   const handleDislike = async (commentId) => {
-    if (!auth.currentUser) return; // Block dislike if not logged in
+    if (!auth.currentUser) {
+      setIsModalOpen(true); // If not logged in, open the login modal
+      return;
+    }
+
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -239,15 +251,38 @@ function PostPage() {
         </section>
       )}
 
+      {/* Fitur Utama */}
+      {post.features && post.features.length > 0 && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2">
+            {post.features.map((feature, index) => (
+              <li key={index}>{feature}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Download Links */}
+      {post.downloadLinks && post.downloadLinks.length > 0 && (
+        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
+          {post.downloadLinks.map((link, index) => (
+            <Button key={index} color="gray" pill>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.text}
+              </a>
+            </Button>
+          ))}
+        </div>
+      )}
+
       {/* Komentar */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
 
         {/* Jika belum login, tampilkan pesan */}
         {!auth.currentUser && (
-          <Button color="blue" pill onClick={toggleModal}>
-              Login untuk meninggalkan komentar
-          </Button>
+          <div className="text-center mb-4 text-gray-500">Login untuk memberikan komentar, like/dislike.</div>
         )}
 
         {/* Input komentar (hanya pengguna yang login dapat menulis) */}
