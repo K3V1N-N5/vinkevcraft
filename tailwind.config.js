@@ -6,9 +6,14 @@ export const content = [
   "./src/**/*.{js,ts,jsx,tsx}",
   _content(),
 ];
+
 export const theme = {
   extend: {},
 };
+
 export const plugins = [
   plugin(),
 ];
+
+// Tambahkan konfigurasi ini untuk mengaktifkan dark mode
+export const darkMode = 'class'; // Aktifkan dark mode berdasarkan class
