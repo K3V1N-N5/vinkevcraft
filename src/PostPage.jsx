@@ -161,7 +161,10 @@ function PostPage() {
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   const handleReply = async (commentId, replyText) => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      return; // Prevent replying if not logged in
+    }
+
     await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
       text: replyText,
       user: displayName || auth.currentUser.email,
@@ -331,11 +334,11 @@ function PostPage() {
                 <p className="font-semibold">{comment.user}</p>
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id, comment.likes, comment.dislikes)}>
-                    <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
+                  <button onClick={() => handleLike(comment.id, comment.likes || [], comment.dislikes || [])}>
+                    <HiThumbUp className="inline-block" /> {comment.likes?.length || 0}
                   </button>
-                  <button onClick={() => handleDislike(comment.id, comment.dislikes, comment.likes)}>
-                    <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
+                  <button onClick={() => handleDislike(comment.id, comment.dislikes || [], comment.likes || [])}>
+                    <HiThumbDown className="inline-block" /> {comment.dislikes?.length || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
                     <div className="relative group">
@@ -364,13 +367,20 @@ function PostPage() {
                 )}
 
                 {/* Form Reply */}
-                <div className="ml-8 mt-2">
-                  <TextInput
-                    type="text"
-                    placeholder="Balas komentar"
-                    onChange={(e) => handleReply(comment.id, e.target.value)}
-                  />
-                </div>
+                {auth.currentUser && (
+                  <div className="ml-8 mt-2">
+                    <TextInput
+                      type="text"
+                      placeholder="Balas komentar"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          handleReply(comment.id, e.target.value);
+                          e.target.value = ''; // Clear input after reply
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             ))
           ) : (
