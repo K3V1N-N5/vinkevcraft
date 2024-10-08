@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
+  const [reply, setReply] = useState({}); // Menyimpan balasan untuk setiap komentar
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,6 +87,18 @@ function PostPage() {
     }
   };
 
+  const handleReplySubmit = async (commentId) => {
+    const replyText = reply[commentId];
+    if (replyText && replyText.trim() !== '') {
+      await addDoc(collection(db, "posts", postId, "comments", commentId, "replies"), {
+        text: replyText,
+        user: displayName || auth.currentUser.email,
+        createdAt: new Date(),
+      });
+      setReply((prevReply) => ({ ...prevReply, [commentId]: '' }));
+    }
+  };
+
   const handleEdit = (commentId, text) => {
     setComment(text);
     setEditCommentId(commentId);
@@ -96,7 +109,7 @@ function PostPage() {
     setComments(comments.filter(comment => comment.id !== commentId));
   };
 
-  const handleLike = async (commentId, likes) => {
+  const handleLike = async (commentId) => {
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -110,7 +123,7 @@ function PostPage() {
     }
   };
 
-  const handleDislike = async (commentId, dislikes) => {
+  const handleDislike = async (commentId) => {
     const userEmail = auth.currentUser?.email;
     const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
@@ -222,31 +235,6 @@ function PostPage() {
         </section>
       )}
 
-      {/* Fitur Utama */}
-      {post.features && post.features.length > 0 && (
-        <section className="mb-8 mt-4">
-          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
-          <ul className="list-disc list-inside space-y-2">
-            {post.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Download Links */}
-      {post.downloadLinks && post.downloadLinks.length > 0 && (
-        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
-          {post.downloadLinks.map((link, index) => (
-            <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.text}
-              </a>
-            </Button>
-          ))}
-        </div>
-      )}
-
       {/* Komentar Section */}
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
@@ -318,34 +306,41 @@ function PostPage() {
                 <p className="font-semibold">{comment.user}</p>
                 <p>{comment.text}</p>
                 <div className="flex space-x-4 mt-2">
-                  <button onClick={() => handleLike(comment.id, comment.likes)}>
+                  <button onClick={() => handleLike(comment.id)}>
                     <HiThumbUp className="inline-block" /> {comment.likes.length || 0}
                   </button>
-                  <button onClick={() => handleDislike(comment.id, comment.dislikes)}>
+                  <button onClick={() => handleDislike(comment.id)}>
                     <HiThumbDown className="inline-block" /> {comment.dislikes.length || 0}
                   </button>
                   {comment.user === (displayName || auth.currentUser.email) && (
-                    <div className="relative group">
-                      <div className="invisible group-hover:visible absolute right-0 top-0 flex space-x-2">
-                        <button onClick={() => handleEdit(comment.id, comment.text)}>
-                          <HiOutlinePencilAlt className="inline-block" /> Edit
-                        </button>
-                        <button onClick={() => handleDelete(comment.id)}>
-                          <HiOutlineTrash className="inline-block" /> Delete
-                        </button>
-                      </div>
-                    </div>
+                    <>
+                      <button onClick={() => handleEdit(comment.id, comment.text)}>
+                        <HiOutlinePencilAlt className="inline-block" /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(comment.id)}>
+                        <HiOutlineTrash className="inline-block" /> Delete
+                      </button>
+                    </>
                   )}
+                  <button onClick={() => setReply({ ...reply, [comment.id]: '' })}>
+                    <HiReply className="inline-block" /> Balas
+                  </button>
                 </div>
 
                 {/* Form Reply */}
-                <div className="ml-8 mt-2">
-                  <TextInput
-                    type="text"
-                    placeholder="Balas komentar"
-                    onChange={(e) => handleCommentSubmit(comment.id, e.target.value)}
-                  />
-                </div>
+                {reply[comment.id] !== undefined && (
+                  <div className="ml-8 mt-2">
+                    <TextInput
+                      type="text"
+                      placeholder="Balas komentar"
+                      value={reply[comment.id]}
+                      onChange={(e) => setReply({ ...reply, [comment.id]: e.target.value })}
+                    />
+                    <Button onClick={() => handleReplySubmit(comment.id)} color="blue" className="mt-2">
+                      Kirim Balasan
+                    </Button>
+                  </div>
+                )}
               </div>
             ))
           ) : (
