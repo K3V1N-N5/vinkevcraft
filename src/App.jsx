@@ -25,6 +25,10 @@ function App() {
     const savedTheme = localStorage.getItem('isDarkMode');
     if (savedTheme !== null) {
       setIsDarkMode(savedTheme === 'true'); // Terapkan tema yang disimpan
+    } else {
+      // Jika tidak ada tema yang disimpan, set default ke dark mode
+      setIsDarkMode(true);
+      localStorage.setItem('isDarkMode', 'true'); // Simpan tema default ke localStorage
     }
 
     // Atur class 'dark' pada html saat isDarkMode berubah
