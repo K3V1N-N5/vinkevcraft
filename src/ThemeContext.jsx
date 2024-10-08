@@ -1,4 +1,3 @@
-// ThemeContext.js
 import { createContext, useState, useEffect, useContext } from 'react';
 
 // Membuat context untuk tema
@@ -21,9 +20,18 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+    
+    // Set mode dark atau light pada root (html)
+    if (isDarkMode) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    
+    // Simpan preferensi tema ke localStorage
+    window.localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
   return (
