@@ -26,12 +26,22 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
-  // Ambil preferensi tema dari App.js tanpa menyimpan kembali
+  // Load theme preference from localStorage and apply it
   useEffect(() => {
     const savedMode = localStorage.getItem("theme") || "light";
     setDarkMode(savedMode === "dark");
+    document.documentElement.classList.toggle('dark', savedMode === "dark");
   }, []);
 
+  // Function to toggle between light and dark mode
+  const toggleDarkMode = () => {
+    const newMode = darkMode ? "light" : "dark";
+    setDarkMode(!darkMode);
+    localStorage.setItem("theme", newMode);
+    document.documentElement.classList.toggle('dark', newMode === "dark");
+  };
+
+  // Fetch post data and comments
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -64,6 +74,7 @@ function PostPage() {
     fetchComments();
   }, [postId]);
 
+  // Handle comment submission
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
       setFilterError('Komentar tidak boleh kosong.');
@@ -96,6 +107,7 @@ function PostPage() {
     }
   };
 
+  // Handle replies
   const handleReplySubmit = async (commentId) => {
     const replyText = reply[commentId];
     if (replyText && replyText.trim() !== '') {
@@ -112,17 +124,7 @@ function PostPage() {
     }
   };
 
-  const handleEdit = (commentId, text) => {
-    setComment(text);
-    setEditCommentId(commentId);
-  };
-
-  const handleDelete = async (commentId) => {
-    await deleteDoc(doc(db, "posts", postId, "comments", commentId));
-    setComments(comments.filter(comment => comment.id !== commentId));
-    setReply((prevReply) => ({ ...prevReply, [commentId]: false }));
-  };
-
+  // Handle like and dislike functionality
   const handleLike = async (commentId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
@@ -169,36 +171,7 @@ function PostPage() {
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Login gagal: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    if (password !== confirmPassword) {
-      setAuthError("Password tidak cocok!");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-    } catch (error) {
-      setAuthError('Registrasi gagal: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
+  // Handle modal visibility
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   if (loading) {
@@ -211,9 +184,10 @@ function PostPage() {
 
   return (
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${darkMode ? 'dark' : ''}`}>
+      {/* Header */}
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
-      {/* Bagian Video */}
+      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -231,25 +205,13 @@ function PostPage() {
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
             slideInterval={3000}
-            leftControl={
-              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
-                <HiArrowLeft size={35} className="text-white" />
-              </div>
-            }
-            rightControl={
-              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
-                <HiArrowRight size={35} className="text-white" />
-              </div>
-            }
+            leftControl={<HiArrowLeft size={35} className="text-white" />}
+            rightControl={<HiArrowRight size={35} className="text-white" />}
             className="rounded-lg"
           >
             {post.carouselImages.map((image, index) => (
               <div key={index} className="relative w-full aspect-video">
-                <img
-                  src={image}
-                  alt={`Carousel image ${index + 1}`}
-                  className="object-cover w-full h-full rounded-lg"
-                />
+                <img src={image} alt={`Carousel image ${index + 1}`} className="object-cover w-full h-full rounded-lg" />
               </div>
             ))}
           </Carousel>
@@ -259,7 +221,7 @@ function PostPage() {
         </div>
       )}
 
-      {/* Deskripsi */}
+      {/* Description */}
       {post.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
@@ -284,28 +246,24 @@ function PostPage() {
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
             <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.text}
-              </a>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">{link.text}</a>
             </Button>
           ))}
         </div>
       )}
 
-      {/* Komentar Section */}
+      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-        {/* Button login untuk meninggalkan komentar */}
+        {/* Login Button */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
-            <Button color="blue" pill onClick={toggleModal}>
-              Login untuk meninggalkan komentar
-            </Button>
+            <Button color="blue" pill onClick={toggleModal}>Login untuk meninggalkan komentar</Button>
           </div>
         )}
 
-        {/* Input komentar (hanya pengguna yang login dapat menulis) */}
+        {/* Comment Input */}
         {auth.currentUser && (
           <div className="mb-4">
             <TextInput
@@ -319,26 +277,18 @@ function PostPage() {
           </div>
         )}
 
-        {/* Daftar Komentar */}
+        {/* Comments List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
             <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id)}
-                disabled={!auth.currentUser}
-              >
+              <button className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`} onClick={() => handleLike(comment.id)} disabled={!auth.currentUser}>
                 <HiThumbUp />
                 <span>{comment.likes.length}</span>
               </button>
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id)}
-                disabled={!auth.currentUser}
-              >
+              <button className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`} onClick={() => handleDislike(comment.id)} disabled={!auth.currentUser}>
                 <HiThumbDown />
                 <span>{comment.dislikes.length}</span>
               </button>
@@ -364,7 +314,7 @@ function PostPage() {
               )}
             </div>
 
-            {/* Balasan Komentar */}
+            {/* Reply Input */}
             {reply[comment.id] && auth.currentUser && (
               <div className="mt-4 ml-4">
                 <TextInput
@@ -377,7 +327,7 @@ function PostPage() {
               </div>
             )}
 
-            {/* Daftar Balasan */}
+            {/* Replies List */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -392,13 +342,8 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Modal untuk Login */}
-      <Modal
-        show={isModalOpen}
-        onClose={toggleModal}
-        size="lg" 
-        className="flex justify-center items-center h-screen"
-      >
+      {/* Authentication Modal */}
+      <Modal show={isModalOpen} onClose={toggleModal} size="lg" className="flex justify-center items-center h-screen">
         <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
           {isLogin ? "Login" : "Register"}
         </Modal.Header>
