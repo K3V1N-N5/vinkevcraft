@@ -11,7 +11,7 @@ function PostPage() {
   const [post, setPost] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
-  const [reply, setReply] = useState({}); // Menyimpan balasan untuk setiap komentar
+  const [reply, setReply] = useState({}); // Balasan per komentar
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -233,6 +233,31 @@ function PostPage() {
           <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
           <p>{post.description}</p>
         </section>
+      )}
+
+      {/* Fitur Utama */}
+      {post.features && post.features.length > 0 && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2">
+            {post.features.map((feature, index) => (
+              <li key={index}>{feature}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Download Links */}
+      {post.downloadLinks && post.downloadLinks.length > 0 && (
+        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
+          {post.downloadLinks.map((link, index) => (
+            <Button key={index} color="gray" pill>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.text}
+              </a>
+            </Button>
+          ))}
+        </div>
       )}
 
       {/* Komentar Section */}
