@@ -104,6 +104,27 @@ function PostPage() {
     }
   };
 
+  const handleCommentSubmit = async () => {
+    if (!auth.currentUser) {
+      toggleModal(); // Tampilkan modal jika belum login
+      return;
+    }
+
+    if (comment.trim() === '') {
+      return; // Jangan submit jika komentar kosong
+    }
+
+    await addDoc(collection(db, "posts", postId, "comments"), {
+      text: comment,
+      user: auth.currentUser.email,
+      createdAt: new Date(),
+      likes: [],
+      dislikes: [],
+    });
+
+    setComment(''); // Bersihkan input setelah submit
+  };
+
   const toggleModal = () => setIsModalOpen(!isModalOpen); // Fungsi toggle untuk modal login
 
   if (loading) {
@@ -161,6 +182,39 @@ function PostPage() {
         </div>
       )}
 
+      {/* Deskripsi */}
+      {post.description && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-800 dark:text-gray-300">{post.description}</p>
+        </section>
+      )}
+
+      {/* Fitur Utama */}
+      {post.features && post.features.length > 0 && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-300">
+            {post.features.map((feature, index) => (
+              <li key={index}>{feature}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Download Links */}
+      {post.downloadLinks && post.downloadLinks.length > 0 && (
+        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
+          {post.downloadLinks.map((link, index) => (
+            <Button key={index} color="gray" pill>
+              <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-white">
+                {link.text}
+              </a>
+            </Button>
+          ))}
+        </div>
+      )}
+
       {/* Komentar */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4">Komentar</h2>
@@ -205,6 +259,16 @@ function PostPage() {
             )}
           </div>
         ))}
+
+        {/* Input komentar */}
+        <div className="mb-4">
+          <TextInput
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Tulis komentar Anda..."
+          />
+          <Button onClick={handleCommentSubmit} className="mt-2">Kirim Komentar</Button>
+        </div>
       </section>
 
       {/* Modal login/register */}
