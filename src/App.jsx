@@ -1,7 +1,7 @@
 import vinkev from './assets/vinkev_1.png'; // Ganti dengan path gambar logo yang benar
 import { Footer, DarkThemeToggle, Flowbite, Drawer, Sidebar } from "flowbite-react";
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 import { useTheme } from './ThemeContext'; // Import context tema
@@ -18,7 +18,6 @@ function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
   const { isDarkMode, setIsDarkMode } = useTheme(); // Menggunakan tema dari context
-  const location = useLocation(); // Untuk mendeteksi perubahan rute
 
   // Mengatur loading screen saat aplikasi pertama kali di-refresh
   useEffect(() => {
@@ -28,20 +27,6 @@ function App() {
     
     return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
   }, []);
-
-  // Set theme based on isDarkMode value and route change
-  useEffect(() => {
-    const rootElement = document.documentElement;
-    const bodyElement = document.body;
-
-    if (isDarkMode) {
-      rootElement.classList.add('dark');
-      bodyElement.classList.add('dark');
-    } else {
-      rootElement.classList.remove('dark');
-      bodyElement.classList.remove('dark');
-    }
-  }, [isDarkMode, location.pathname]); // Update when dark mode or route changes
 
   const toggleDrawer = () => {
     setIsOpen(!isOpen); // Toggle untuk membuka/tutup Drawer (Sidebar)
@@ -69,7 +54,7 @@ function App() {
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
-          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
+          <div className={`dark:bg-[#1e1e1e] bg-white overflow-x-hidden ${isDarkMode ? 'dark' : 'light'} pt-16`} style={{ visibility: loading ? 'hidden' : 'visible' }}>
             {/* Routes untuk menentukan halaman yang dirender berdasarkan path */}
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -119,7 +104,7 @@ function App() {
             </nav>
 
             {/* Drawer (Sidebar) */}
-            <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72 dark:bg-gray-900">
+            <Drawer open={isOpen} onClose={closeDrawer} className="mt-14 w-72">
               <Drawer.Items>
                 <Sidebar aria-label="Sidebar" className="[&>div]:bg-transparent [&>div]:p-0">
                   <div className="flex h-full flex-col justify-between py-2">
@@ -147,7 +132,7 @@ function App() {
             </Drawer>
 
             {/* Footer */}
-            <Footer container className="bg-slate-200 dark:bg-gray-900">
+            <Footer container className="bg-slate-200">
               <div className="w-full text-center">
                 <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
                   <Footer.Brand href="#landing" src={vinkev} alt="Vinkev Logo" name="VinKev Craft" />
