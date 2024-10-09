@@ -28,7 +28,6 @@ function PostPage() {
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light'); // default theme is light
 
-  // Fungsi untuk memuat reCAPTCHA v2 hanya saat modal terbuka
   const loadRecaptcha = () => {
     if (!document.querySelector('#recaptcha-script')) {
       const script = document.createElement('script');
@@ -42,7 +41,6 @@ function PostPage() {
     }
   };
 
-  // Menghapus reCAPTCHA ketika modal ditutup
   const unloadRecaptcha = () => {
     const recaptchaElement = document.querySelector('.g-recaptcha');
     if (recaptchaElement) {
@@ -83,7 +81,6 @@ function PostPage() {
   }, [postId]);
 
   useEffect(() => {
-    // Set theme based on user preference
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
 
@@ -94,6 +91,15 @@ function PostPage() {
       mediaQuery.removeEventListener('change', handleChange); // Clean up
     };
   }, []);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      loadRecaptcha(); // Load reCAPTCHA saat modal dibuka
+    }
+    return () => {
+      unloadRecaptcha(); // Unload saat modal ditutup
+    };
+  }, [isModalOpen]);
 
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
@@ -228,11 +234,6 @@ function PostPage() {
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
-    if (!isModalOpen) {
-      loadRecaptcha(); // Muat reCAPTCHA saat modal dibuka
-    } else {
-      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
-    }
   };
 
   if (loading) {
