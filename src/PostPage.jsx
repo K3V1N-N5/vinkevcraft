@@ -447,7 +447,7 @@ function PostPage() {
             )}
             
             {/* reCAPTCHA Checkbox */}
-            <div style={{ transform: scale(0.9), transform-origin: 0 0, width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ width: '300px', display: 'flex', justifyContent: 'center' }}>
               <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
             </div>
             
