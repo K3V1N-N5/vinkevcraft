@@ -84,10 +84,19 @@ function PostPage() {
     };
   }, []);
 
+  // Load reCAPTCHA script dynamically if it doesn't exist
+  const loadRecaptchaScript = () => {
+    if (!window.grecaptcha) {
+      const script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=grecaptchaLoaded&render=explicit';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  };
+
   useEffect(() => {
-    if (captchaLoaded) return;
-    const loadCaptcha = () => {
-      if (window.grecaptcha) {
+    window.grecaptchaLoaded = () => {
+      if (!captchaLoaded) {
         window.grecaptcha.render('captcha-container', {
           sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
           theme: theme,
@@ -96,12 +105,7 @@ function PostPage() {
       }
     };
 
-    if (!captchaLoaded) {
-      loadCaptcha();
-    }
-
-    window.addEventListener('grecaptchaLoaded', loadCaptcha);
-    return () => window.removeEventListener('grecaptchaLoaded', loadCaptcha);
+    loadRecaptchaScript();
   }, [theme, captchaLoaded]);
 
   const handleCommentSubmit = async () => {
@@ -148,104 +152,6 @@ function PostPage() {
       setComment('');
     } else {
       setIsModalOpen(true);
-    }
-  };
-
-  const handleEditComment = (commentId, text) => {
-    setEditCommentId(commentId);
-    setComment(text); 
-  };
-
-  const handleEditReply = (replyId, text) => {
-    setEditReplyId(replyId);
-    setComment(text); 
-  };
-
-  const handleLike = async (commentId) => {
-    if (!auth.currentUser) {
-      setIsModalOpen(true);
-      return;
-    }
-    const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
-    const commentSnap = await getDoc(commentRef);
-    const commentData = commentSnap.data();
-
-    if (commentData && !commentData.likes.includes(userEmail)) {
-      await updateDoc(commentRef, {
-        likes: [...commentData.likes, userEmail],
-        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
-      });
-    } else {
-      await updateDoc(commentRef, {
-        likes: commentData.likes.filter((email) => email !== userEmail),
-      });
-    }
-  };
-
-  const handleDislike = async (commentId) => {
-    if (!auth.currentUser) {
-      setIsModalOpen(true);
-      return;
-    }
-    const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
-    const commentSnap = await getDoc(commentRef);
-    const commentData = commentSnap.data();
-
-    if (commentData && !commentData.dislikes.includes(userEmail)) {
-      await updateDoc(commentRef, {
-        dislikes: [...commentData.dislikes, userEmail],
-        likes: commentData.likes.filter((email) => email !== userEmail),
-      });
-    } else {
-      await updateDoc(commentRef, {
-        dislikes: commentData.dislikes.filter((email) => email !== userEmail),
-      });
-    }
-  };
-
-  const handleLikeReply = async (commentId, replyId) => {
-    if (!auth.currentUser) {
-      setIsModalOpen(true);
-      return;
-    }
-    const userEmail = auth.currentUser?.email;
-    const replyRef = doc(db, "posts", postId, "comments", commentId, "replies", replyId);
-    const replySnap = await getDoc(replyRef);
-    const replyData = replySnap.data();
-
-    if (replyData && !replyData.likes.includes(userEmail)) {
-      await updateDoc(replyRef, {
-        likes: [...replyData.likes, userEmail],
-        dislikes: replyData.dislikes.filter((email) => email !== userEmail),
-      });
-    } else {
-      await updateDoc(replyRef, {
-        likes: replyData.likes.filter((email) => email !== userEmail),
-      });
-    }
-  };
-
-  const handleDislikeReply = async (commentId, replyId) => {
-    if (!auth.currentUser) {
-      setIsModalOpen(true);
-      return;
-    }
-    const userEmail = auth.currentUser?.email;
-    const replyRef = doc(db, "posts", postId, "comments", commentId, "replies", replyId);
-    const replySnap = await getDoc(replyRef);
-    const replyData = replySnap.data();
-
-    if (replyData && !replyData.dislikes.includes(userEmail)) {
-      await updateDoc(replyRef, {
-        dislikes: [...replyData.dislikes, userEmail],
-        likes: replyData.likes.filter((email) => email !== userEmail),
-      });
-    } else {
-      await updateDoc(replyRef, {
-        dislikes: replyData.dislikes.filter((email) => email !== userEmail),
-      });
     }
   };
 
@@ -301,6 +207,10 @@ function PostPage() {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    // Reset captcha when opening or closing the modal
+    if (window.grecaptcha) {
+      grecaptcha.reset();
+    }
   };
 
   if (loading) {
@@ -411,7 +321,7 @@ function PostPage() {
             <TextInput
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={replyTo ? `Balas @${replyTo.user}` : "Tulis komentar Anda..."}
+              placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
               className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
@@ -470,15 +380,7 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    {/* Display the "replying to" only for nested replies */}
-                    {reply.repliedTo && (
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">
-                        {reply.user} membalas {reply.repliedTo}
-                      </p>
-                    )}
-                    {!reply.repliedTo && (
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">@{reply.user}</p>
-                    )}
+                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
