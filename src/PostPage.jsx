@@ -411,8 +411,9 @@ function PostPage() {
   show={isModalOpen}
   onClose={toggleModal}
   size="lg"
-  className="flex justify-center items-center h-screen"
+  className="fixed inset-0 flex justify-center items-center"
 >
+  <div className="absolute inset-0 bg-black opacity-50"></div> {/* Optional: Background overlay */}
   <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
     {isLogin ? "Login" : "Register"}
   </Modal.Header>
@@ -489,6 +490,7 @@ function PostPage() {
     </div>
   </Modal.Body>
 </Modal>
+
 
     </div>
   );
