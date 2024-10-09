@@ -84,7 +84,6 @@ function PostPage() {
     };
   }, []);
 
-  // Fix reCAPTCHA: Ensure it loads only once
   useEffect(() => {
     if (captchaLoaded) return;
     const loadCaptcha = () => {
@@ -127,7 +126,7 @@ function PostPage() {
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: displayName || auth.currentUser.email,
-            repliedTo: replyTo.user,  // Store the user being replied to
+            repliedTo: replyTo.user,  
             createdAt: new Date(),
           });
         }
@@ -471,7 +470,15 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">@{reply.repliedTo}</p>
+                    {/* Display the "replying to" only for nested replies */}
+                    {reply.repliedTo && (
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">
+                        @{reply.user} membalas @{reply.repliedTo}
+                      </p>
+                    )}
+                    {!reply.repliedTo && (
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">@{reply.user}</p>
+                    )}
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
