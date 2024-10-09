@@ -27,7 +27,9 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light'); // default theme is light
+  const [modalKey, setModalKey] = useState(0); // Key to force modal re-render
 
+  // Fungsi untuk memuat reCAPTCHA v2 hanya saat modal terbuka
   const loadRecaptcha = () => {
     if (!document.querySelector('#recaptcha-script')) {
       const script = document.createElement('script');
@@ -41,6 +43,7 @@ function PostPage() {
     }
   };
 
+  // Menghapus reCAPTCHA ketika modal ditutup
   const unloadRecaptcha = () => {
     const recaptchaElement = document.querySelector('.g-recaptcha');
     if (recaptchaElement) {
@@ -94,10 +97,10 @@ function PostPage() {
 
   useEffect(() => {
     if (isModalOpen) {
-      loadRecaptcha(); // Load reCAPTCHA saat modal dibuka
+      loadRecaptcha(); // Muat reCAPTCHA saat modal dibuka
     }
     return () => {
-      unloadRecaptcha(); // Unload saat modal ditutup
+      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
     };
   }, [isModalOpen]);
 
@@ -234,6 +237,7 @@ function PostPage() {
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
+    setModalKey(prevKey => prevKey + 1); // Memaksa modal di-render ulang
   };
 
   if (loading) {
@@ -427,13 +431,14 @@ function PostPage() {
       <Modal
   show={isModalOpen}
   onClose={toggleModal}
+  key={modalKey} // Gunakan key untuk memaksa modal re-render
   size="lg"
-  className="flex justify-center items-center h-screen"
+  className={`flex justify-center items-center h-screen ${isDarkMode ? 'dark' : ''}`}
 >
-  <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+  <Modal.Header className={`dark:bg-gray-800 bg-white text-gray-900 dark:text-white`}>
     {isLogin ? "Login" : "Register"}
   </Modal.Header>
-  <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+  <Modal.Body className={`p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg`}>
     <form
       onSubmit={isLogin ? handleLogin : handleRegister}
       className="space-y-4"
