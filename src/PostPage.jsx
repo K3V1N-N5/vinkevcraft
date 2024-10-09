@@ -437,6 +437,7 @@ function PostPage() {
               </p>
             )}
           </div>
+          <script src="https://www.google.com/recaptcha/api.js?render=6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH" async defer></script>
         </Modal.Body>
       </Modal>
     </div>
