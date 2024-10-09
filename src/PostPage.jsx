@@ -27,6 +27,26 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
 
+  // Fungsi untuk memuat reCAPTCHA v2 hanya saat modal terbuka
+  const loadRecaptcha = () => {
+    if (!document.querySelector('#recaptcha-script')) {
+      const script = document.createElement('script');
+      script.id = 'recaptcha-script';
+      script.src = 'https://www.google.com/recaptcha/api.js';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  };
+
+  // Menghapus reCAPTCHA ketika modal ditutup
+  const unloadRecaptcha = () => {
+    const recaptchaElement = document.querySelector('.g-recaptcha');
+    if (recaptchaElement) {
+      recaptchaElement.innerHTML = ''; // Hapus captcha
+    }
+  };
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -72,7 +92,6 @@ function PostPage() {
     setFilterError('');
     if (auth.currentUser) {
       if (replyTo) {
-        // We're replying to a comment
         await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
           text: comment,
           user: displayName || auth.currentUser.email,
@@ -80,13 +99,11 @@ function PostPage() {
         });
         setReplyTo(null);
       } else if (editCommentId) {
-        // We're editing an existing comment
         await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
           text: comment,
         });
         setEditCommentId(null);
       } else {
-        // Posting a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: displayName || auth.currentUser.email,
@@ -152,11 +169,16 @@ function PostPage() {
     setAuthError(null);
     setAuthLoading(true);
     try {
-      const token = await grecaptcha.execute('6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH', { action: 'login' });
-      if (!token) throw new Error("reCAPTCHA tidak berhasil dijalankan.");
+      const recaptchaResponse = grecaptcha.getResponse();
+      if (!recaptchaResponse) {
+        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
+        setAuthLoading(false);
+        return;
+      }
 
       await signInWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
+      grecaptcha.reset(); // Reset captcha setelah login
     } catch (error) {
       setAuthError('Login gagal: ' + error.message);
     }
@@ -172,11 +194,16 @@ function PostPage() {
     }
     setAuthLoading(true);
     try {
-      const token = await grecaptcha.execute('6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH', { action: 'register' });
-      if (!token) throw new Error("reCAPTCHA tidak berhasil dijalankan.");
+      const recaptchaResponse = grecaptcha.getResponse();
+      if (!recaptchaResponse) {
+        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
+        setAuthLoading(false);
+        return;
+      }
 
       await createUserWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
+      grecaptcha.reset(); // Reset captcha setelah registrasi
     } catch (error) {
       setAuthError('Registrasi gagal: ' + error.message);
     }
@@ -186,17 +213,9 @@ function PostPage() {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
     if (!isModalOpen) {
-      if (typeof grecaptcha === 'undefined') {
-        // Load reCAPTCHA script only if it's not already loaded
-        const script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js?render=6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => grecaptcha.ready(() => console.log('reCAPTCHA ready'));
-        document.body.appendChild(script);
-      } else {
-        grecaptcha.reset(); // Ensure reCAPTCHA is reset if it was already loaded
-      }
+      loadRecaptcha(); // Muat reCAPTCHA saat modal dibuka
+    } else {
+      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
     }
   };
 
@@ -426,6 +445,10 @@ function PostPage() {
                 className="dark:bg-gray-700 dark:text-white text-gray-900"
               />
             )}
+            
+            {/* reCAPTCHA Checkbox */}
+            <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
+
             <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
               {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
             </Button>
