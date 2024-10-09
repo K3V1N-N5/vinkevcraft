@@ -6,7 +6,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, query, getDocs } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
-
+ 
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
