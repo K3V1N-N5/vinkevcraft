@@ -407,89 +407,91 @@ function PostPage() {
       </section>
 
       {/* Modal for Login */}
-      <Modal
-  show={isModalOpen}
-  onClose={toggleModal}
-  size="lg"
-  className="fixed inset-0 flex justify-center items-center"
->
-  <div className="absolute inset-0 bg-black opacity-50"></div> {/* Optional: Background overlay */}
-  <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
-    {isLogin ? "Login" : "Register"}
-  </Modal.Header>
-  <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
-    <form
-      onSubmit={isLogin ? handleLogin : handleRegister}
-      className="space-y-4"
-    >
-      {authError && (
-        <p className="text-red-500 text-center">{authError}</p>
-      )}
-      <TextInput
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-      />
-      <TextInput
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-      />
-      {!isLogin && (
+      <div className="flex justify-center items-center h-screen">
+  <Modal
+    show={isModalOpen}
+    onClose={toggleModal}
+    size="lg"
+    className="flex justify-center items-center"
+  >
+    <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+      {isLogin ? "Login" : "Register"}
+    </Modal.Header>
+    <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+      <form
+        onSubmit={isLogin ? handleLogin : handleRegister}
+        className="space-y-4"
+      >
+        {authError && (
+          <p className="text-red-500 text-center">{authError}</p>
+        )}
         <TextInput
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
         />
-      )}
+        <TextInput
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+        />
+        {!isLogin && (
+          <TextInput
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+          />
+        )}
 
-      {/* reCAPTCHA Checkbox */}
-      <div className="w-full flex justify-center">
-        <div
-          style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
-        >
-          <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
+        {/* reCAPTCHA Checkbox */}
+        <div className="w-full flex justify-center">
+          <div
+            style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
+          >
+            <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
+          </div>
         </div>
-      </div>
 
-      <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
-        {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
-      </Button>
-    </form>
-    <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
-      {isLogin ? (
-        <p>
-          Don't have an account?{" "}
-          <button
-            onClick={() => setIsLogin(false)}
-            className="text-blue-500"
-          >
-            Register
-          </button>
-        </p>
-      ) : (
-        <p>
-          Already have an account?{" "}
-          <button
-            onClick={() => setIsLogin(true)}
-            className="text-blue-500"
-          >
-            Login
-          </button>
-        </p>
-      )}
-    </div>
-  </Modal.Body>
-</Modal>
+        <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+          {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+        </Button>
+      </form>
+      <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+        {isLogin ? (
+          <p>
+            Don't have an account?{" "}
+            <button
+              onClick={() => setIsLogin(false)}
+              className="text-blue-500"
+            >
+              Register
+            </button>
+          </p>
+        ) : (
+          <p>
+            Already have an account?{" "}
+            <button
+              onClick={() => setIsLogin(true)}
+              className="text-blue-500"
+            >
+              Login
+            </button>
+          </p>
+        )}
+      </div>
+    </Modal.Body>
+  </Modal>
+</div>
+
 
 
     </div>
