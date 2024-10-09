@@ -275,6 +275,15 @@ function PostPage() {
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
+        {/* Button login untuk meninggalkan komentar */}
+        {!auth.currentUser && (
+          <div className="text-center mb-4">
+            <Button color="blue" pill onClick={toggleModal}>
+              Login untuk meninggalkan komentar
+            </Button>
+          </div>
+        )}
+
         {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
@@ -335,7 +344,7 @@ function PostPage() {
                     <HiOutlinePencilAlt />
                     <span>Edit</span>
                   </button>
-                  <button onClick={() => handleDelete(comment.id)} className="flex items-center space-x-2">
+                  <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
                     <HiOutlineTrash />
                     <span>Hapus</span>
                   </button>
