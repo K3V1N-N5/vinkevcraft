@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, query, getDocs } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
 
 function PostPage() {
@@ -27,31 +27,9 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light');
-  const [modalKey, setModalKey] = useState(0);
+  const [captchaLoaded, setCaptchaLoaded] = useState(false);
 
-  // Fungsi untuk memuat reCAPTCHA hanya saat modal terbuka
-  const loadRecaptcha = () => {
-    if (!document.querySelector('#recaptcha-script')) {
-      const script = document.createElement('script');
-      script.id = 'recaptcha-script';
-      script.src = 'https://www.google.com/recaptcha/api.js';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    } else {
-      window.grecaptcha.reset();
-    }
-  };
-
-  // Menghapus reCAPTCHA ketika modal ditutup
-  const unloadRecaptcha = () => {
-    const recaptchaElement = document.querySelector('.g-recaptcha');
-    if (recaptchaElement) {
-      recaptchaElement.innerHTML = ''; // Hapus konten reCAPTCHA
-    }
-  };
-
-  // Fetch post dan komentar dari database Firestore
+  // Fetch post dan komentar dari Firestore
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -70,10 +48,25 @@ function PostPage() {
       }
     };
 
-    const fetchComments = () => {
+    const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        setComments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      const unsubscribe = onSnapshot(commentsRef, async (snapshot) => {
+        const commentData = await Promise.all(snapshot.docs.map(async (doc) => {
+          // Fetching replies for each comment
+          const repliesRef = collection(db, "posts", postId, "comments", doc.id, "replies");
+          const repliesSnapshot = await getDocs(repliesRef);
+          const replies = repliesSnapshot.docs.map(replyDoc => ({
+            id: replyDoc.id,
+            ...replyDoc.data(),
+          }));
+          
+          return {
+            id: doc.id,
+            ...doc.data(),
+            replies, // Include replies in comment data
+          };
+        }));
+        setComments(commentData); // Set comments with replies
       });
 
       return () => unsubscribe();
@@ -83,27 +76,38 @@ function PostPage() {
     fetchComments();
   }, [postId]);
 
-  // Menyinkronkan tema dengan preferensi sistem (light/dark)
+  // Update tema berdasarkan preferensi pengguna
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
 
-    handleChange(); // Set theme saat komponen dimuat
-    mediaQuery.addEventListener('change', handleChange);
+    handleChange(); // Set theme saat mount
+    mediaQuery.addEventListener('change', handleChange); // Listen for theme changes
 
     return () => {
-      mediaQuery.removeEventListener('change', handleChange); // Bersihkan event listener
+      mediaQuery.removeEventListener('change', handleChange); // Clean up
     };
   }, []);
 
-  // Muat dan hapus reCAPTCHA saat modal dibuka atau ditutup
+  // Muat reCAPTCHA hanya sekali dan sesuai tema
   useEffect(() => {
-    if (isModalOpen) {
-      setTimeout(() => loadRecaptcha(), 200); // Load reCAPTCHA setelah modal terbuka
+    if (!captchaLoaded) {
+      if (window.grecaptcha) {
+        window.grecaptcha.render('captcha-container', {
+          sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
+          theme: theme,
+        });
+        setCaptchaLoaded(true); // Captcha hanya di-load sekali
+      }
     } else {
-      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
+      // Mengganti tema reCAPTCHA ketika tema berubah
+      window.grecaptcha.reset();
+      window.grecaptcha.render('captcha-container', {
+        sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
+        theme: theme,
+      });
     }
-  }, [isModalOpen, theme]);
+  }, [theme, captchaLoaded]);
 
   // Submit komentar atau balasan
   const handleCommentSubmit = async () => {
@@ -129,7 +133,7 @@ function PostPage() {
         await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
           text: comment,
         });
-        setEditCommentId(null);
+        setEditCommentId(null); // Clear edit state
       } else {
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
@@ -139,10 +143,16 @@ function PostPage() {
           dislikes: [],
         });
       }
-      setComment('');
+      setComment(''); // Clear input
     } else {
       setIsModalOpen(true);
     }
+  };
+
+  // Fungsi edit komentar
+  const handleEditComment = (commentId, text) => {
+    setEditCommentId(commentId);
+    setComment(text); // Masukkan teks komentar yang ingin diubah ke dalam input
   };
 
   // Like dan Dislike komentar
@@ -246,7 +256,6 @@ function PostPage() {
     setEmail(''); // Kosongkan email input
     setPassword(''); // Kosongkan password input
     setConfirmPassword(''); // Kosongkan confirm password
-    setModalKey(prevKey => prevKey + 1); // Memaksa modal re-render
   };
 
   if (loading) {
@@ -400,7 +409,7 @@ function PostPage() {
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)} // Set the comment we're replying to
+                  onClick={() => setReplyTo(comment)}
                 >
                   <HiReply />
                   <span>Balas</span>
@@ -409,7 +418,7 @@ function PostPage() {
 
               {auth.currentUser?.email === comment.user && (
                 <>
-                  <button onClick={() => setEditCommentId(comment.id)} className="flex items-center space-x-2">
+                  <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
                     <HiOutlinePencilAlt />
                     <span>Edit</span>
                   </button>
@@ -440,7 +449,6 @@ function PostPage() {
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
-        key={modalKey}
         size="lg"
         className={`flex justify-center items-center h-screen ${isDarkMode ? 'dark' : ''}`}
       >
@@ -484,11 +492,7 @@ function PostPage() {
 
             {/* reCAPTCHA Checkbox */}
             <div className="w-full flex justify-center">
-              <div
-                style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
-              >
-                <div className={`g-recaptcha`} data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv" data-theme={theme}></div>
-              </div>
+              <div id="captcha-container" style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}></div>
             </div>
 
             <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
