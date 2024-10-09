@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, query, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
 
 function PostPage() {
@@ -23,7 +23,7 @@ function PostPage() {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [editCommentId, setEditCommentId] = useState(null);
-  const [editReplyId, setEditReplyId] = useState(null);  // For editing replies
+  const [editReplyId, setEditReplyId] = useState(null);  
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
@@ -84,8 +84,10 @@ function PostPage() {
     };
   }, []);
 
+  // Fix reCAPTCHA: Ensure it loads only once
   useEffect(() => {
-    if (!captchaLoaded) {
+    if (captchaLoaded) return;
+    const loadCaptcha = () => {
       if (window.grecaptcha) {
         window.grecaptcha.render('captcha-container', {
           sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
@@ -93,13 +95,14 @@ function PostPage() {
         });
         setCaptchaLoaded(true);
       }
-    } else {
-      window.grecaptcha.reset();
-      window.grecaptcha.render('captcha-container', {
-        sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
-        theme: theme,
-      });
+    };
+
+    if (!captchaLoaded) {
+      loadCaptcha();
     }
+
+    window.addEventListener('grecaptchaLoaded', loadCaptcha);
+    return () => window.removeEventListener('grecaptchaLoaded', loadCaptcha);
   }, [theme, captchaLoaded]);
 
   const handleCommentSubmit = async () => {
@@ -124,6 +127,7 @@ function PostPage() {
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: displayName || auth.currentUser.email,
+            repliedTo: replyTo.user,  // Store the user being replied to
             createdAt: new Date(),
           });
         }
@@ -408,7 +412,7 @@ function PostPage() {
             <TextInput
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={replyTo ? "Tulis balasan Anda..." : "Tulis komentar Anda..."}
+              placeholder={replyTo ? `Balas @${replyTo.user}` : "Tulis komentar Anda..."}
               className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
             />
             {filterError && <p className="text-red-500">{filterError}</p>}
@@ -467,7 +471,7 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                    <p className="font-semibold text-gray-700 dark:text-gray-300">@{reply.repliedTo}</p>
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
