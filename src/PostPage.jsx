@@ -407,12 +407,12 @@ function PostPage() {
       </section>
 
       {/* Modal for Login */}
-      <div className="flex justify-center items-center h-screen">
+      <div className="fixed inset-0 flex justify-center items-center">
   <Modal
     show={isModalOpen}
     onClose={toggleModal}
     size="lg"
-    className="flex justify-center items-center"
+    className="relative z-50"
   >
     <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
       {isLogin ? "Login" : "Register"}
