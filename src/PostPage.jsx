@@ -25,59 +25,104 @@ function PostPage() {
   const [editCommentId, setEditCommentId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
-  const { isDarkMode } = useTheme();
+  const { isDarkMode } = useTheme(); // Mendapatkan status dark mode dari context
+  const [theme, setTheme] = useState('light'); // default theme adalah light
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
-  // Fungsi untuk memuat reCAPTCHA v2 hanya saat modal terbuka
+  useEffect(() => {
+    // Deteksi preferensi mode gelap
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
+    
+    handleChange(); // setel tema saat komponen dipasang
+    mediaQuery.addEventListener('change', handleChange); // mendengarkan perubahan
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange); // bersihkan listener
+    };
+  }, []);
+
+  useEffect(() => {
+    if (window.grecaptcha) {
+      window.grecaptcha.reset(); // Reset reCAPTCHA untuk menerapkan tema baru
+    }
+  }, [theme]);
+
   const loadRecaptcha = () => {
-    if (!document.querySelector('#recaptcha-script')) {
+    if (!recaptchaLoaded) {
       const script = document.createElement('script');
       script.id = 'recaptcha-script';
       script.src = 'https://www.google.com/recaptcha/api.js';
       script.async = true;
       script.defer = true;
       document.body.appendChild(script);
+      setRecaptchaLoaded(true);
+    } else if (window.grecaptcha) {
+      window.grecaptcha.reset(); // Reset saat modal dibuka kembali
     }
   };
 
-  // Menghapus reCAPTCHA ketika modal ditutup
   const unloadRecaptcha = () => {
     const recaptchaElement = document.querySelector('.g-recaptcha');
-    if (recaptchaElement) {
-      recaptchaElement.innerHTML = ''; // Hapus captcha
+    if (recaptchaElement && window.grecaptcha) {
+      window.grecaptcha.reset(); // Reset ulang captcha saat modal dibuka/ditutup
     }
   };
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const postRef = doc(db, "posts", postId);
-        const postSnap = await getDoc(postRef);
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+    if (!isModalOpen) {
+      loadRecaptcha(); // Muat reCAPTCHA saat modal dibuka
+    } else {
+      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
+    }
+  };
 
-        if (postSnap.exists()) {
-          setPost(postSnap.data());
-        } else {
-          setError("Postingan tidak ditemukan");
-        }
-      } catch (error) {
-        setError("Gagal memuat data. Silakan coba lagi nanti.");
-        console.error("Error fetching post:", error);
-      } finally {
-        setLoading(false);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const recaptchaResponse = grecaptcha.getResponse();
+      if (!recaptchaResponse) {
+        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
+        setAuthLoading(false);
+        return;
       }
-    };
 
-    const fetchComments = () => {
-      const commentsRef = collection(db, "posts", postId, "comments");
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        setComments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      });
+      await signInWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+      grecaptcha.reset(); // Reset captcha setelah login
+    } catch (error) {
+      setAuthError('Login gagal: ' + error.message);
+    }
+    setAuthLoading(false);
+  };
 
-      return () => unsubscribe();
-    };
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (password !== confirmPassword) {
+      setAuthError("Password tidak cocok!");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const recaptchaResponse = grecaptcha.getResponse();
+      if (!recaptchaResponse) {
+        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
+        setAuthLoading(false);
+        return;
+      }
 
-    fetchPost();
-    fetchComments();
-  }, [postId]);
+      await createUserWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+      grecaptcha.reset(); // Reset captcha setelah registrasi
+    } catch (error) {
+      setAuthError('Registrasi gagal: ' + error.message);
+    }
+    setAuthLoading(false);
+  };
 
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
@@ -161,61 +206,6 @@ function PostPage() {
       await updateDoc(commentRef, {
         dislikes: commentData.dislikes.filter((email) => email !== userEmail),
       });
-    }
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-    try {
-      const recaptchaResponse = grecaptcha.getResponse();
-      if (!recaptchaResponse) {
-        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
-        setAuthLoading(false);
-        return;
-      }
-
-      await signInWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-      grecaptcha.reset(); // Reset captcha setelah login
-    } catch (error) {
-      setAuthError('Login gagal: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setAuthError(null);
-    if (password !== confirmPassword) {
-      setAuthError("Password tidak cocok!");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      const recaptchaResponse = grecaptcha.getResponse();
-      if (!recaptchaResponse) {
-        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
-        setAuthLoading(false);
-        return;
-      }
-
-      await createUserWithEmailAndPassword(auth, email, password);
-      setIsModalOpen(false);
-      grecaptcha.reset(); // Reset captcha setelah registrasi
-    } catch (error) {
-      setAuthError('Registrasi gagal: ' + error.message);
-    }
-    setAuthLoading(false);
-  };
-
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
-    if (!isModalOpen) {
-      loadRecaptcha(); // Muat reCAPTCHA saat modal dibuka
-    } else {
-      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
     }
   };
 
@@ -314,7 +304,6 @@ function PostPage() {
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -323,7 +312,6 @@ function PostPage() {
           </div>
         )}
 
-        {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
@@ -343,7 +331,6 @@ function PostPage() {
           </div>
         )}
 
-        {/* Comment List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
@@ -370,7 +357,7 @@ function PostPage() {
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)} // Set the comment we're replying to
+                  onClick={() => setReplyTo(comment)}
                 >
                   <HiReply />
                   <span>Balas</span>
@@ -391,7 +378,6 @@ function PostPage() {
               )}
             </div>
 
-            {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -406,91 +392,74 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Modal for Login */}
       <Modal
-  show={isModalOpen}
-  onClose={toggleModal}
-  size="lg"
-  className="flex justify-center items-center h-screen"
->
-  <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
-    {isLogin ? "Login" : "Register"}
-  </Modal.Header>
-  <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
-    <form
-      onSubmit={isLogin ? handleLogin : handleRegister}
-      className="space-y-4"
-    >
-      {authError && (
-        <p className="text-red-500 text-center">{authError}</p>
-      )}
-      <TextInput
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-      />
-      <TextInput
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-      />
-      {!isLogin && (
-        <TextInput
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-        />
-      )}
+        show={isModalOpen}
+        onClose={toggleModal}
+        size="lg"
+        className={`flex justify-center items-center h-screen ${isDarkMode ? 'dark' : ''}`} // Pastikan modal juga sesuai dengan tema
+      >
+        <Modal.Header className="dark:bg-gray-800 bg-white text-gray-900 dark:text-white">
+          {isLogin ? "Login" : "Register"}
+        </Modal.Header>
+        <Modal.Body className="p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg">
+          <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+            {authError && <p className="text-red-500 text-center">{authError}</p>}
+            <TextInput
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+            />
+            <TextInput
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+            />
+            {!isLogin && (
+              <TextInput
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+              />
+            )}
 
-      {/* reCAPTCHA Checkbox */}
-      <div className="w-full flex justify-center">
-        <div
-          style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
-        >
-          {/* Tambahkan data-theme="dark" */}
-          <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv" data-theme="dark"></div>
-        </div>
-      </div>
+            <div className="w-full flex justify-center">
+              <div style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}>
+                <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv" data-theme={theme}></div>
+              </div>
+            </div>
 
-      <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
-        {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
-      </Button>
-    </form>
-    <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
-      {isLogin ? (
-        <p>
-          Don't have an account?{" "}
-          <button
-            onClick={() => setIsLogin(false)}
-            className="text-blue-500"
-          >
-            Register
-          </button>
-        </p>
-      ) : (
-        <p>
-          Already have an account?{" "}
-          <button
-            onClick={() => setIsLogin(true)}
-            className="text-blue-500"
-          >
-            Login
-          </button>
-        </p>
-      )}
-    </div>
-  </Modal.Body>
-</Modal>
-
+            <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+              {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+            </Button>
+          </form>
+          <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
+            {isLogin ? (
+              <p>
+                Don't have an account?{" "}
+                <button onClick={() => setIsLogin(false)} className="text-blue-500">
+                  Register
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{" "}
+                <button onClick={() => setIsLogin(true)} className="text-blue-500">
+                  Login
+                </button>
+              </p>
+            )}
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
