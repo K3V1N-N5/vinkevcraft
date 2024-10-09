@@ -27,26 +27,6 @@ function PostPage() {
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
 
-  // Function to dynamically load the reCAPTCHA script when the modal opens
-  const loadRecaptcha = () => {
-    if (!document.querySelector('#recaptcha-script')) {
-      const script = document.createElement('script');
-      script.id = 'recaptcha-script';
-      script.src = 'https://www.google.com/recaptcha/api.js?render=6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-  };
-
-  // Remove reCAPTCHA script when modal closes
-  const unloadRecaptcha = () => {
-    const script = document.querySelector('#recaptcha-script');
-    if (script) {
-      script.remove();
-    }
-  };
-
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -206,9 +186,17 @@ function PostPage() {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
     if (!isModalOpen) {
-      loadRecaptcha(); // Load the reCAPTCHA when the modal is opened
-    } else {
-      unloadRecaptcha(); // Unload when the modal is closed
+      if (typeof grecaptcha === 'undefined') {
+        // Load reCAPTCHA script only if it's not already loaded
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?render=6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => grecaptcha.ready(() => console.log('reCAPTCHA ready'));
+        document.body.appendChild(script);
+      } else {
+        grecaptcha.reset(); // Ensure reCAPTCHA is reset if it was already loaded
+      }
     }
   };
 
@@ -224,6 +212,7 @@ function PostPage() {
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
+      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -236,6 +225,7 @@ function PostPage() {
         </div>
       )}
 
+      {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
@@ -268,6 +258,7 @@ function PostPage() {
         </div>
       )}
 
+      {/* Description */}
       {post.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
@@ -275,6 +266,7 @@ function PostPage() {
         </section>
       )}
 
+      {/* Main Features */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
@@ -286,6 +278,7 @@ function PostPage() {
         </section>
       )}
 
+      {/* Download Links */}
       {post.downloadLinks && post.downloadLinks.length > 0 && (
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
@@ -298,9 +291,11 @@ function PostPage() {
         </div>
       )}
 
+      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
+        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -309,6 +304,7 @@ function PostPage() {
           </div>
         )}
 
+        {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
@@ -328,6 +324,7 @@ function PostPage() {
           </div>
         )}
 
+        {/* Comment List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
@@ -354,7 +351,7 @@ function PostPage() {
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)}
+                  onClick={() => setReplyTo(comment)} // Set the comment we're replying to
                 >
                   <HiReply />
                   <span>Balas</span>
@@ -375,6 +372,7 @@ function PostPage() {
               )}
             </div>
 
+            {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -389,6 +387,7 @@ function PostPage() {
         ))}
       </section>
 
+      {/* Modal for Login */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
