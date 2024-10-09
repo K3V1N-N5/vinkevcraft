@@ -153,6 +153,11 @@ function PostPage() {
     setAuthError(null);
     setAuthLoading(true);
     try {
+      // Add reCAPTCHA token verification
+      const token = await grecaptcha.execute('6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH', { action: 'login' });
+      if (!token) throw new Error("reCAPTCHA tidak berhasil dijalankan.");
+
+      // Perform login
       await signInWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
     } catch (error) {
@@ -170,6 +175,11 @@ function PostPage() {
     }
     setAuthLoading(true);
     try {
+      // Add reCAPTCHA token verification
+      const token = await grecaptcha.execute('6LekDFwqAAAAAK1C2EkHUuVG7tZsqMkp6g7d2ynH', { action: 'register' });
+      if (!token) throw new Error("reCAPTCHA tidak berhasil dijalankan.");
+
+      // Perform registration
       await createUserWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
     } catch (error) {
