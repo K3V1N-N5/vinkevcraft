@@ -29,6 +29,7 @@ function PostPage() {
   const [theme, setTheme] = useState('light');
   const [modalKey, setModalKey] = useState(0);
 
+  // Fungsi untuk memuat reCAPTCHA hanya saat modal terbuka
   const loadRecaptcha = () => {
     if (!document.querySelector('#recaptcha-script')) {
       const script = document.createElement('script');
@@ -42,13 +43,15 @@ function PostPage() {
     }
   };
 
+  // Menghapus reCAPTCHA ketika modal ditutup
   const unloadRecaptcha = () => {
     const recaptchaElement = document.querySelector('.g-recaptcha');
     if (recaptchaElement) {
-      recaptchaElement.innerHTML = '';
+      recaptchaElement.innerHTML = ''; // Hapus konten reCAPTCHA
     }
   };
 
+  // Fetch post dan komentar dari database Firestore
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -62,7 +65,6 @@ function PostPage() {
         }
       } catch (error) {
         setError("Gagal memuat data. Silakan coba lagi nanti.");
-        console.error("Error fetching post:", error);
       } finally {
         setLoading(false);
       }
@@ -81,27 +83,29 @@ function PostPage() {
     fetchComments();
   }, [postId]);
 
+  // Menyinkronkan tema dengan preferensi sistem (light/dark)
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
 
-    handleChange();
+    handleChange(); // Set theme saat komponen dimuat
     mediaQuery.addEventListener('change', handleChange);
 
     return () => {
-      mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.removeEventListener('change', handleChange); // Bersihkan event listener
     };
   }, []);
 
+  // Muat dan hapus reCAPTCHA saat modal dibuka atau ditutup
   useEffect(() => {
     if (isModalOpen) {
-      loadRecaptcha();
+      setTimeout(() => loadRecaptcha(), 200); // Load reCAPTCHA setelah modal terbuka
+    } else {
+      unloadRecaptcha(); // Hapus reCAPTCHA saat modal ditutup
     }
-    return () => {
-      unloadRecaptcha();
-    };
-  }, [isModalOpen]);
+  }, [isModalOpen, theme]);
 
+  // Submit komentar atau balasan
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
       setFilterError('Komentar tidak boleh kosong.');
@@ -141,6 +145,7 @@ function PostPage() {
     }
   };
 
+  // Like dan Dislike komentar
   const handleLike = async (commentId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
@@ -187,6 +192,7 @@ function PostPage() {
     }
   };
 
+  // Fungsi login dan register
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
@@ -201,7 +207,7 @@ function PostPage() {
 
       await signInWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset();
+      grecaptcha.reset(); // Reset captcha setelah login
     } catch (error) {
       setAuthError('Login gagal: ' + error.message);
     }
@@ -226,16 +232,21 @@ function PostPage() {
 
       await createUserWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset();
+      grecaptcha.reset(); // Reset captcha setelah registrasi
     } catch (error) {
       setAuthError('Registrasi gagal: ' + error.message);
     }
     setAuthLoading(false);
   };
 
+  // Toggle modal dan reset state input
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
-    setModalKey(prevKey => prevKey + 1);
+    setAuthError(null); // Reset error setiap kali modal dibuka
+    setEmail(''); // Kosongkan email input
+    setPassword(''); // Kosongkan password input
+    setConfirmPassword(''); // Kosongkan confirm password
+    setModalKey(prevKey => prevKey + 1); // Memaksa modal re-render
   };
 
   if (loading) {
@@ -250,6 +261,7 @@ function PostPage() {
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
+      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -262,6 +274,7 @@ function PostPage() {
         </div>
       )}
 
+      {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
@@ -294,6 +307,7 @@ function PostPage() {
         </div>
       )}
 
+      {/* Description */}
       {post.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
@@ -301,6 +315,7 @@ function PostPage() {
         </section>
       )}
 
+      {/* Main Features */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
@@ -312,6 +327,7 @@ function PostPage() {
         </section>
       )}
 
+      {/* Download Links */}
       {post.downloadLinks && post.downloadLinks.length > 0 && (
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
@@ -324,9 +340,11 @@ function PostPage() {
         </div>
       )}
 
+      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
+        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -335,6 +353,7 @@ function PostPage() {
           </div>
         )}
 
+        {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
@@ -354,6 +373,7 @@ function PostPage() {
           </div>
         )}
 
+        {/* Comment List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
@@ -380,7 +400,7 @@ function PostPage() {
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)}
+                  onClick={() => setReplyTo(comment)} // Set the comment we're replying to
                 >
                   <HiReply />
                   <span>Balas</span>
@@ -401,6 +421,7 @@ function PostPage() {
               )}
             </div>
 
+            {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
@@ -415,6 +436,7 @@ function PostPage() {
         ))}
       </section>
 
+      {/* Modal for Login */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
@@ -460,6 +482,7 @@ function PostPage() {
               />
             )}
 
+            {/* reCAPTCHA Checkbox */}
             <div className="w-full flex justify-center">
               <div
                 style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
