@@ -4,9 +4,9 @@ import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, query, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
- 
+
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
@@ -102,7 +102,7 @@ function PostPage() {
 
   // Muat reCAPTCHA hanya sekali dan sesuai tema
   useEffect(() => {
-    if (!captchaLoaded) {
+    if (typeof window !== "undefined" && !captchaLoaded) {
       if (window.grecaptcha) {
         window.grecaptcha.render('captcha-container', {
           sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
@@ -110,7 +110,7 @@ function PostPage() {
         });
         setCaptchaLoaded(true); // Captcha hanya di-load sekali
       }
-    } else {
+    } else if (captchaLoaded && typeof window !== "undefined" && window.grecaptcha) {
       // Mengganti tema reCAPTCHA ketika tema berubah
       window.grecaptcha.reset();
       window.grecaptcha.render('captcha-container', {
