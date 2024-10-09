@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, query, getDocs } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
 
 function PostPage() {
@@ -23,13 +23,13 @@ function PostPage() {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [editCommentId, setEditCommentId] = useState(null);
+  const [editReplyId, setEditReplyId] = useState(null);  // For editing replies
   const [displayName, setDisplayName] = useState('');
   const [filterError, setFilterError] = useState('');
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light');
   const [captchaLoaded, setCaptchaLoaded] = useState(false);
 
-  // Fetch post dan komentar dari Firestore
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -52,66 +52,48 @@ function PostPage() {
       const commentsRef = collection(db, "posts", postId, "comments");
       const unsubscribe = onSnapshot(commentsRef, async (snapshot) => {
         const commentData = await Promise.all(snapshot.docs.map(async (doc) => {
-          // Fetching replies for each comment
           const repliesRef = collection(db, "posts", postId, "comments", doc.id, "replies");
           const repliesSnapshot = await getDocs(repliesRef);
           const replies = repliesSnapshot.docs.map(replyDoc => ({
             id: replyDoc.id,
             ...replyDoc.data(),
-            // Nested replies for multi-level comment threads
-            nestedReplies: await getReplies(postId, doc.id, replyDoc.id),
           }));
-          
           return {
             id: doc.id,
             ...doc.data(),
-            replies, // Include replies in comment data
+            replies, 
           };
         }));
-        setComments(commentData); // Set comments with replies
+        setComments(commentData); 
       });
 
       return () => unsubscribe();
-    };
-
-    const getReplies = async (postId, commentId, replyId) => {
-      const repliesRef = collection(db, "posts", postId, "comments", commentId, "replies", replyId, "replies");
-      const repliesSnapshot = await getDocs(repliesRef);
-      return repliesSnapshot.docs.map(replyDoc => ({
-        id: replyDoc.id,
-        ...replyDoc.data(),
-      }));
     };
 
     fetchPost();
     fetchComments();
   }, [postId]);
 
-  // Update tema berdasarkan preferensi pengguna
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-    handleChange(); // Set theme saat mount
-    mediaQuery.addEventListener('change', handleChange); // Listen for theme changes
-
+    handleChange(); 
+    mediaQuery.addEventListener('change', handleChange); 
     return () => {
-      mediaQuery.removeEventListener('change', handleChange); // Clean up
+      mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
 
-  // Muat reCAPTCHA hanya sekali dan sesuai tema
   useEffect(() => {
-    if (typeof window !== "undefined" && !captchaLoaded) {
+    if (!captchaLoaded) {
       if (window.grecaptcha) {
         window.grecaptcha.render('captcha-container', {
           sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
           theme: theme,
         });
-        setCaptchaLoaded(true); // Captcha hanya di-load sekali
+        setCaptchaLoaded(true);
       }
-    } else if (captchaLoaded && typeof window !== "undefined" && window.grecaptcha) {
-      // Mengganti tema reCAPTCHA ketika tema berubah
+    } else {
       window.grecaptcha.reset();
       window.grecaptcha.render('captcha-container', {
         sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
@@ -120,7 +102,6 @@ function PostPage() {
     }
   }, [theme, captchaLoaded]);
 
-  // Submit komentar atau balasan
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
       setFilterError('Komentar tidak boleh kosong.');
@@ -134,17 +115,24 @@ function PostPage() {
     setFilterError('');
     if (auth.currentUser) {
       if (replyTo) {
-        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
-          text: comment,
-          user: displayName || auth.currentUser.email,
-          createdAt: new Date(),
-        });
+        if (editReplyId) {
+          await updateDoc(doc(db, "posts", postId, "comments", replyTo.id, "replies", editReplyId), {
+            text: comment,
+          });
+          setEditReplyId(null);
+        } else {
+          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+            text: comment,
+            user: displayName || auth.currentUser.email,
+            createdAt: new Date(),
+          });
+        }
         setReplyTo(null);
       } else if (editCommentId) {
         await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
           text: comment,
         });
-        setEditCommentId(null); // Clear edit state
+        setEditCommentId(null);
       } else {
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
@@ -154,29 +142,29 @@ function PostPage() {
           dislikes: [],
         });
       }
-      setComment(''); // Clear input
+      setComment('');
     } else {
       setIsModalOpen(true);
     }
   };
 
-  // Fungsi edit komentar
   const handleEditComment = (commentId, text) => {
     setEditCommentId(commentId);
-    setComment(text); // Masukkan teks komentar yang ingin diubah ke dalam input
+    setComment(text); 
   };
 
-  // Like dan Dislike komentar atau balasan
-  const handleLike = async (commentId, isReply, replyId) => {
+  const handleEditReply = (replyId, text) => {
+    setEditReplyId(replyId);
+    setComment(text); 
+  };
+
+  const handleLike = async (commentId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
       return;
     }
-
     const userEmail = auth.currentUser?.email;
-    const commentRef = isReply
-      ? doc(db, "posts", postId, "comments", commentId, "replies", replyId)
-      : doc(db, "posts", postId, "comments", commentId);
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
 
@@ -192,16 +180,13 @@ function PostPage() {
     }
   };
 
-  const handleDislike = async (commentId, isReply, replyId) => {
+  const handleDislike = async (commentId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
       return;
     }
-
     const userEmail = auth.currentUser?.email;
-    const commentRef = isReply
-      ? doc(db, "posts", postId, "comments", commentId, "replies", replyId)
-      : doc(db, "posts", postId, "comments", commentId);
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
 
@@ -217,7 +202,50 @@ function PostPage() {
     }
   };
 
-  // Fungsi login dan register
+  const handleLikeReply = async (commentId, replyId) => {
+    if (!auth.currentUser) {
+      setIsModalOpen(true);
+      return;
+    }
+    const userEmail = auth.currentUser?.email;
+    const replyRef = doc(db, "posts", postId, "comments", commentId, "replies", replyId);
+    const replySnap = await getDoc(replyRef);
+    const replyData = replySnap.data();
+
+    if (replyData && !replyData.likes.includes(userEmail)) {
+      await updateDoc(replyRef, {
+        likes: [...replyData.likes, userEmail],
+        dislikes: replyData.dislikes.filter((email) => email !== userEmail),
+      });
+    } else {
+      await updateDoc(replyRef, {
+        likes: replyData.likes.filter((email) => email !== userEmail),
+      });
+    }
+  };
+
+  const handleDislikeReply = async (commentId, replyId) => {
+    if (!auth.currentUser) {
+      setIsModalOpen(true);
+      return;
+    }
+    const userEmail = auth.currentUser?.email;
+    const replyRef = doc(db, "posts", postId, "comments", commentId, "replies", replyId);
+    const replySnap = await getDoc(replyRef);
+    const replyData = replySnap.data();
+
+    if (replyData && !replyData.dislikes.includes(userEmail)) {
+      await updateDoc(replyRef, {
+        dislikes: [...replyData.dislikes, userEmail],
+        likes: replyData.likes.filter((email) => email !== userEmail),
+      });
+    } else {
+      await updateDoc(replyRef, {
+        dislikes: replyData.dislikes.filter((email) => email !== userEmail),
+      });
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
@@ -232,7 +260,7 @@ function PostPage() {
 
       await signInWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset(); // Reset captcha setelah login
+      grecaptcha.reset();
     } catch (error) {
       setAuthError('Login gagal: ' + error.message);
     }
@@ -257,20 +285,19 @@ function PostPage() {
 
       await createUserWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset(); // Reset captcha setelah registrasi
+      grecaptcha.reset();
     } catch (error) {
       setAuthError('Registrasi gagal: ' + error.message);
     }
     setAuthLoading(false);
   };
 
-  // Toggle modal dan reset state input
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
-    setAuthError(null); // Reset error setiap kali modal dibuka
-    setEmail(''); // Kosongkan email input
-    setPassword(''); // Kosongkan password input
-    setConfirmPassword(''); // Kosongkan confirm password
+    setAuthError(null);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
   };
 
   if (loading) {
@@ -285,7 +312,6 @@ function PostPage() {
     <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
 
-      {/* Video Section */}
       {post.videoUrl && (
         <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
           <iframe
@@ -298,7 +324,6 @@ function PostPage() {
         </div>
       )}
 
-      {/* Carousel */}
       {post.carouselImages && post.carouselImages.length > 0 && (
         <div className="relative w-full max-w-4xl mx-auto mb-8">
           <Carousel
@@ -331,7 +356,6 @@ function PostPage() {
         </div>
       )}
 
-      {/* Description */}
       {post.description && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
@@ -339,7 +363,6 @@ function PostPage() {
         </section>
       )}
 
-      {/* Main Features */}
       {post.features && post.features.length > 0 && (
         <section className="mb-8 mt-4">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
@@ -351,7 +374,6 @@ function PostPage() {
         </section>
       )}
 
-      {/* Download Links */}
       {post.downloadLinks && post.downloadLinks.length > 0 && (
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
@@ -364,11 +386,9 @@ function PostPage() {
         </div>
       )}
 
-      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-        {/* Button login untuk meninggalkan komentar */}
         {!auth.currentUser && (
           <div className="text-center mb-4">
             <Button color="blue" pill onClick={toggleModal}>
@@ -377,7 +397,6 @@ function PostPage() {
           </div>
         )}
 
-        {/* Comment/Reply Input */}
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
@@ -397,7 +416,6 @@ function PostPage() {
           </div>
         )}
 
-        {/* Comment List */}
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
@@ -406,7 +424,7 @@ function PostPage() {
             <div className="flex space-x-4 mt-2">
               <button
                 className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id, false)}
+                onClick={() => handleLike(comment.id)}
                 disabled={!auth.currentUser}
               >
                 <HiThumbUp />
@@ -414,7 +432,7 @@ function PostPage() {
               </button>
               <button
                 className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id, false)}
+                onClick={() => handleDislike(comment.id)}
                 disabled={!auth.currentUser}
               >
                 <HiThumbDown />
@@ -445,36 +463,35 @@ function PostPage() {
               )}
             </div>
 
-            {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
-                  <div key={reply.id} className="mb-2 text-gray-700 dark:text-gray-400">
-                    <p className="font-semibold">{reply.user}</p>
-                    <p>{reply.text}</p>
+                  <div key={reply.id} className="mb-4">
+                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                    <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
                       <button
                         className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleLike(comment.id, true, reply.id)}
+                        onClick={() => handleLikeReply(comment.id, reply.id)}
                         disabled={!auth.currentUser}
                       >
                         <HiThumbUp />
-                        <span>{reply.likes.length}</span>
+                        <span>{reply.likes?.length || 0}</span>
                       </button>
                       <button
                         className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleDislike(comment.id, true, reply.id)}
+                        onClick={() => handleDislikeReply(comment.id, reply.id)}
                         disabled={!auth.currentUser}
                       >
                         <HiThumbDown />
-                        <span>{reply.dislikes.length}</span>
+                        <span>{reply.dislikes?.length || 0}</span>
                       </button>
 
                       {auth.currentUser && (
                         <button
                           className="flex items-center space-x-2"
-                          onClick={() => setReplyTo(reply)}
+                          onClick={() => setReplyTo({ id: comment.id, user: reply.user })}
                         >
                           <HiReply />
                           <span>Balas</span>
@@ -483,7 +500,7 @@ function PostPage() {
 
                       {auth.currentUser?.email === reply.user && (
                         <>
-                          <button onClick={() => handleEditComment(reply.id, reply.text)} className="flex items-center space-x-2">
+                          <button onClick={() => handleEditReply(reply.id, reply.text)} className="flex items-center space-x-2">
                             <HiOutlinePencilAlt />
                             <span>Edit</span>
                           </button>
@@ -494,18 +511,6 @@ function PostPage() {
                         </>
                       )}
                     </div>
-
-                    {/* Nested replies */}
-                    {reply.nestedReplies && reply.nestedReplies.length > 0 && (
-                      <div className="ml-8 mt-4">
-                        {reply.nestedReplies.map((nestedReply) => (
-                          <div key={nestedReply.id} className="mb-2 text-gray-600 dark:text-gray-400">
-                            <p className="font-semibold">{nestedReply.user}</p>
-                            <p>{nestedReply.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -514,7 +519,6 @@ function PostPage() {
         ))}
       </section>
 
-      {/* Modal for Login */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
@@ -559,7 +563,6 @@ function PostPage() {
               />
             )}
 
-            {/* reCAPTCHA Checkbox */}
             <div className="w-full flex justify-center">
               <div id="captcha-container" style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}></div>
             </div>
