@@ -447,9 +447,10 @@ function PostPage() {
             )}
             
             {/* reCAPTCHA Checkbox */}
-            <div style={{ width: '300px', margin: '0 auto' }}>
-              <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
-            </div>
+            <div class="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv" 
+                         style="transform: scale(0.9); transform-origin: 0 0;"></div>
+          
+            
             <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
               {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
             </Button>
