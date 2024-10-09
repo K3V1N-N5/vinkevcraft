@@ -456,7 +456,8 @@ function PostPage() {
         <div
           style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}
         >
-          <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv"></div>
+          {/* Tambahkan data-theme="dark" */}
+          <div className="g-recaptcha" data-sitekey="6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv" data-theme="dark"></div>
         </div>
       </div>
 
