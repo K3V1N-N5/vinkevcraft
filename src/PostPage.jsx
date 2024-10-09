@@ -473,7 +473,7 @@ function PostPage() {
                     {/* Display the "replying to" only for nested replies */}
                     {reply.repliedTo && (
                       <p className="font-semibold text-gray-700 dark:text-gray-300">
-                        @{reply.user} membalas @{reply.repliedTo}
+                        {reply.user} membalas {reply.repliedTo}
                       </p>
                     )}
                     {!reply.repliedTo && (
