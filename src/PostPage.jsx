@@ -58,6 +58,8 @@ function PostPage() {
           const replies = repliesSnapshot.docs.map(replyDoc => ({
             id: replyDoc.id,
             ...replyDoc.data(),
+            // Nested replies for multi-level comment threads
+            nestedReplies: await getReplies(postId, doc.id, replyDoc.id),
           }));
           
           return {
@@ -70,6 +72,15 @@ function PostPage() {
       });
 
       return () => unsubscribe();
+    };
+
+    const getReplies = async (postId, commentId, replyId) => {
+      const repliesRef = collection(db, "posts", postId, "comments", commentId, "replies", replyId, "replies");
+      const repliesSnapshot = await getDocs(repliesRef);
+      return repliesSnapshot.docs.map(replyDoc => ({
+        id: replyDoc.id,
+        ...replyDoc.data(),
+      }));
     };
 
     fetchPost();
@@ -155,15 +166,17 @@ function PostPage() {
     setComment(text); // Masukkan teks komentar yang ingin diubah ke dalam input
   };
 
-  // Like dan Dislike komentar
-  const handleLike = async (commentId) => {
+  // Like dan Dislike komentar atau balasan
+  const handleLike = async (commentId, isReply, replyId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
       return;
     }
 
     const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentRef = isReply
+      ? doc(db, "posts", postId, "comments", commentId, "replies", replyId)
+      : doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
 
@@ -179,14 +192,16 @@ function PostPage() {
     }
   };
 
-  const handleDislike = async (commentId) => {
+  const handleDislike = async (commentId, isReply, replyId) => {
     if (!auth.currentUser) {
       setIsModalOpen(true);
       return;
     }
 
     const userEmail = auth.currentUser?.email;
-    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentRef = isReply
+      ? doc(db, "posts", postId, "comments", commentId, "replies", replyId)
+      : doc(db, "posts", postId, "comments", commentId);
     const commentSnap = await getDoc(commentRef);
     const commentData = commentSnap.data();
 
@@ -391,7 +406,7 @@ function PostPage() {
             <div className="flex space-x-4 mt-2">
               <button
                 className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id)}
+                onClick={() => handleLike(comment.id, false)}
                 disabled={!auth.currentUser}
               >
                 <HiThumbUp />
@@ -399,7 +414,7 @@ function PostPage() {
               </button>
               <button
                 className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id)}
+                onClick={() => handleDislike(comment.id, false)}
                 disabled={!auth.currentUser}
               >
                 <HiThumbDown />
@@ -433,10 +448,64 @@ function PostPage() {
             {/* List of replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
-                {comment.replies.map((reply, index) => (
-                  <div key={index} className="mb-2 text-gray-700 dark:text-gray-400">
+                {comment.replies.map((reply) => (
+                  <div key={reply.id} className="mb-2 text-gray-700 dark:text-gray-400">
                     <p className="font-semibold">{reply.user}</p>
                     <p>{reply.text}</p>
+
+                    <div className="flex space-x-4 mt-2">
+                      <button
+                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => handleLike(comment.id, true, reply.id)}
+                        disabled={!auth.currentUser}
+                      >
+                        <HiThumbUp />
+                        <span>{reply.likes.length}</span>
+                      </button>
+                      <button
+                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => handleDislike(comment.id, true, reply.id)}
+                        disabled={!auth.currentUser}
+                      >
+                        <HiThumbDown />
+                        <span>{reply.dislikes.length}</span>
+                      </button>
+
+                      {auth.currentUser && (
+                        <button
+                          className="flex items-center space-x-2"
+                          onClick={() => setReplyTo(reply)}
+                        >
+                          <HiReply />
+                          <span>Balas</span>
+                        </button>
+                      )}
+
+                      {auth.currentUser?.email === reply.user && (
+                        <>
+                          <button onClick={() => handleEditComment(reply.id, reply.text)} className="flex items-center space-x-2">
+                            <HiOutlinePencilAlt />
+                            <span>Edit</span>
+                          </button>
+                          <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
+                            <HiOutlineTrash />
+                            <span>Hapus</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Nested replies */}
+                    {reply.nestedReplies && reply.nestedReplies.length > 0 && (
+                      <div className="ml-8 mt-4">
+                        {reply.nestedReplies.map((nestedReply) => (
+                          <div key={nestedReply.id} className="mb-2 text-gray-600 dark:text-gray-400">
+                            <p className="font-semibold">{nestedReply.user}</p>
+                            <p>{nestedReply.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
