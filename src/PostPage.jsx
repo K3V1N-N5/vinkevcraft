@@ -342,10 +342,8 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    {/* Logika: Tampilkan 'User membalas User' hanya jika ini balasan terhadap balasan lain */}
-                    {reply.repliedTo && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
-                    )}
+                    {/* Menampilkan user membalas user */}
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
                     <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
