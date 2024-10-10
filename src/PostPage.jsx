@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { doc, getDoc, addDoc, collection, onSnapshot, deleteDoc, getDocs } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, onSnapshot, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { useTheme } from './ThemeContext';
 
 function PostPage() {
@@ -124,6 +124,8 @@ function PostPage() {
           user: auth.currentUser.email,
           repliedTo: replyTo.user,
           createdAt: new Date(),
+          likes: [],
+          dislikes: []
         });
         setReplyTo(null);
       } else {
@@ -131,11 +133,67 @@ function PostPage() {
           text: comment,
           user: auth.currentUser.email,
           createdAt: new Date(),
+          likes: [],
+          dislikes: []
         });
       }
       setComment('');
     } else {
       setIsModalOpen(true);
+    }
+  };
+
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
+    const user = auth.currentUser.email;
+    if (isReply && parentId) {
+      const replyRef = doc(db, "posts", postId, "comments", parentId, "replies", commentId);
+      const replyDoc = await getDoc(replyRef);
+      if (replyDoc.exists()) {
+        const { likes, dislikes } = replyDoc.data();
+        if (likes.includes(user)) {
+          await updateDoc(replyRef, { likes: arrayRemove(user) });
+        } else {
+          await updateDoc(replyRef, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
+        }
+      }
+    } else {
+      const commentRef = doc(db, "posts", postId, "comments", commentId);
+      const commentDoc = await getDoc(commentRef);
+      if (commentDoc.exists()) {
+        const { likes, dislikes } = commentDoc.data();
+        if (likes.includes(user)) {
+          await updateDoc(commentRef, { likes: arrayRemove(user) });
+        } else {
+          await updateDoc(commentRef, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
+        }
+      }
+    }
+  };
+
+  const handleDislike = async (commentId, isReply = false, parentId = null) => {
+    const user = auth.currentUser.email;
+    if (isReply && parentId) {
+      const replyRef = doc(db, "posts", postId, "comments", parentId, "replies", commentId);
+      const replyDoc = await getDoc(replyRef);
+      if (replyDoc.exists()) {
+        const { likes, dislikes } = replyDoc.data();
+        if (dislikes.includes(user)) {
+          await updateDoc(replyRef, { dislikes: arrayRemove(user) });
+        } else {
+          await updateDoc(replyRef, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
+        }
+      }
+    } else {
+      const commentRef = doc(db, "posts", postId, "comments", commentId);
+      const commentDoc = await getDoc(commentRef);
+      if (commentDoc.exists()) {
+        const { likes, dislikes } = commentDoc.data();
+        if (dislikes.includes(user)) {
+          await updateDoc(commentRef, { dislikes: arrayRemove(user) });
+        } else {
+          await updateDoc(commentRef, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
+        }
+      }
     }
   };
 
@@ -273,6 +331,23 @@ function PostPage() {
             <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
+              <button
+                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                onClick={() => handleLike(comment.id)}
+                disabled={!auth.currentUser}
+              >
+                <HiThumbUp />
+                <span>{comment.likes.length}</span>
+              </button>
+              <button
+                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                onClick={() => handleDislike(comment.id)}
+                disabled={!auth.currentUser}
+              >
+                <HiThumbDown />
+                <span>{comment.dislikes.length}</span>
+              </button>
+
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
@@ -300,13 +375,41 @@ function PostPage() {
             {/* Nested Replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
-                {comment.replies.map((reply) => (
+                {comment.replies.map((reply, index) => (
                   <div key={reply.id} className="mb-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                    <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                    {index === 0 ? (
+                      <>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                        <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {reply.user} membalas {reply.repliedTo}
+                        </p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                        <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                      </>
+                    )}
 
                     <div className="flex space-x-4 mt-2">
+                      <button
+                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => handleLike(reply.id, true, comment.id)}
+                        disabled={!auth.currentUser}
+                      >
+                        <HiThumbUp />
+                        <span>{reply.likes?.length || 0}</span>
+                      </button>
+                      <button
+                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => handleDislike(reply.id, true, comment.id)}
+                        disabled={!auth.currentUser}
+                      >
+                        <HiThumbDown />
+                        <span>{reply.dislikes?.length || 0}</span>
+                      </button>
+
                       {auth.currentUser && (
                         <button
                           className="flex items-center space-x-2"
