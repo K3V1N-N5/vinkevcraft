@@ -144,59 +144,35 @@ function PostPage() {
   };
 
   const handleLike = async (commentId, isReply = false, parentId = null) => {
-    const user = auth.currentUser?.email;
-    if (!user) return;
+    const user = auth.currentUser.email;
+    const ref = isReply && parentId
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
 
-    if (isReply && parentId) {
-      const replyRef = doc(db, "posts", postId, "comments", parentId, "replies", commentId);
-      const replyDoc = await getDoc(replyRef);
-      if (replyDoc.exists()) {
-        const { likes, dislikes } = replyDoc.data();
-        if (likes.includes(user)) {
-          await updateDoc(replyRef, { likes: arrayRemove(user) });
-        } else {
-          await updateDoc(replyRef, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
-        }
-      }
-    } else {
-      const commentRef = doc(db, "posts", postId, "comments", commentId);
-      const commentDoc = await getDoc(commentRef);
-      if (commentDoc.exists()) {
-        const { likes, dislikes } = commentDoc.data();
-        if (likes.includes(user)) {
-          await updateDoc(commentRef, { likes: arrayRemove(user) });
-        } else {
-          await updateDoc(commentRef, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
-        }
+    const docSnap = await getDoc(ref);
+    if (docSnap.exists()) {
+      const { likes, dislikes } = docSnap.data();
+      if (likes.includes(user)) {
+        await updateDoc(ref, { likes: arrayRemove(user) });
+      } else {
+        await updateDoc(ref, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
       }
     }
   };
 
   const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    const user = auth.currentUser?.email;
-    if (!user) return;
+    const user = auth.currentUser.email;
+    const ref = isReply && parentId
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
 
-    if (isReply && parentId) {
-      const replyRef = doc(db, "posts", postId, "comments", parentId, "replies", commentId);
-      const replyDoc = await getDoc(replyRef);
-      if (replyDoc.exists()) {
-        const { likes, dislikes } = replyDoc.data();
-        if (dislikes.includes(user)) {
-          await updateDoc(replyRef, { dislikes: arrayRemove(user) });
-        } else {
-          await updateDoc(replyRef, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
-        }
-      }
-    } else {
-      const commentRef = doc(db, "posts", postId, "comments", commentId);
-      const commentDoc = await getDoc(commentRef);
-      if (commentDoc.exists()) {
-        const { likes, dislikes } = commentDoc.data();
-        if (dislikes.includes(user)) {
-          await updateDoc(commentRef, { dislikes: arrayRemove(user) });
-        } else {
-          await updateDoc(commentRef, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
-        }
+    const docSnap = await getDoc(ref);
+    if (docSnap.exists()) {
+      const { likes, dislikes } = docSnap.data();
+      if (dislikes.includes(user)) {
+        await updateDoc(ref, { dislikes: arrayRemove(user) });
+      } else {
+        await updateDoc(ref, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
       }
     }
   };
@@ -381,8 +357,20 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply, index) => (
                   <div key={reply.id} className="mb-4">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                    <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                    {index === 0 ? (
+                      <>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                        <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {reply.user} membalas {reply.repliedTo}
+                        </p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                        <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                      </>
+                    )}
 
                     <div className="flex space-x-4 mt-2">
                       <button
