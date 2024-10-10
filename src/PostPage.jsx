@@ -343,7 +343,7 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    {/* Showing "replied to" only for replies, not main comments */}
+                    {/* Only show "replied to" for replies, not main comments */}
                     {reply.repliedTo && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
                     )}
