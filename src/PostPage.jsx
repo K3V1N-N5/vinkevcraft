@@ -315,11 +315,15 @@ function PostPage() {
               )}
             </div>
 
+            {/* Bagian balasan komentar */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
+                    {/* Logika: Tampilkan 'membalas' hanya jika yang membalas bukan pengguna yang sama */}
+                    {reply.user !== comment.user && (
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
+                    )}
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
