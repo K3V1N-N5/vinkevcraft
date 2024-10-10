@@ -327,6 +327,312 @@ function PostPage() {
 
         {comments.map((comment) => (
           <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
+import React, { useEffect, useState } from 'react';
+import { Button, Carousel, TextInput, Modal } from "flowbite-react";
+import { useParams } from 'react-router-dom';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from './firebase';
+import { doc, getDoc, addDoc, collection, onSnapshot, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { useTheme } from './ThemeContext';
+
+function PostPage() {
+  const { postId } = useParams();
+  const [post, setPost] = useState(null);
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState([]);
+  const [replyTo, setReplyTo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const { isDarkMode } = useTheme();
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const postRef = doc(db, "posts", postId);
+        const postSnap = await getDoc(postRef);
+
+        if (postSnap.exists()) {
+          setPost(postSnap.data());
+        } else {
+          setError("Postingan tidak ditemukan");
+        }
+      } catch (error) {
+        setError("Gagal memuat data. Silakan coba lagi nanti.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchComments = async () => {
+      const commentsRef = collection(db, "posts", postId, "comments");
+      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+        const commentData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          replies: [],
+        }));
+        setComments(commentData);
+      });
+
+      return () => unsubscribe();
+    };
+
+    fetchPost();
+    fetchComments();
+  }, [postId]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+    } catch (error) {
+      setAuthError('Login gagal: ' + error.message);
+    }
+    setAuthLoading(false);
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (password !== confirmPassword) {
+      setAuthError("Password tidak cocok!");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      setIsModalOpen(false);
+    } catch (error) {
+      setAuthError('Registrasi gagal: ' + error.message);
+    }
+    setAuthLoading(false);
+  };
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+    setAuthError(null);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleCommentSubmit = async () => {
+    if (comment.trim() === '') {
+      setError('Komentar tidak boleh kosong.');
+      return;
+    }
+    if (comment.length < 5) {
+      setError('Komentar terlalu pendek.');
+      return;
+    }
+
+    setError('');
+    if (auth.currentUser) {
+      const commentObj = {
+        text: comment,
+        user: auth.currentUser.email,
+        createdAt: new Date(),
+        likes: [],
+        dislikes: []
+      };
+
+      if (replyTo) {
+        const replyRef = collection(db, "posts", postId, "comments", replyTo.id, "replies");
+        await addDoc(replyRef, {
+          ...commentObj,
+          repliedTo: replyTo.user,
+        });
+        setReplyTo(null);
+      } else {
+        await addDoc(collection(db, "posts", postId, "comments"), commentObj);
+      }
+      setComment('');
+    } else {
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
+    const user = auth.currentUser.email;
+    const docPath = isReply ? `posts/${postId}/comments/${parentId}/replies/${commentId}` : `posts/${postId}/comments/${commentId}`;
+    const commentRef = doc(db, docPath);
+    const commentSnap = await getDoc(commentRef);
+    const { likes, dislikes } = commentSnap.data();
+
+    if (likes.includes(user)) {
+      await updateDoc(commentRef, { likes: arrayRemove(user) });
+    } else {
+      await updateDoc(commentRef, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
+    }
+  };
+
+  const handleDislike = async (commentId, isReply = false, parentId = null) => {
+    const user = auth.currentUser.email;
+    const docPath = isReply ? `posts/${postId}/comments/${parentId}/replies/${commentId}` : `posts/${postId}/comments/${commentId}`;
+    const commentRef = doc(db, docPath);
+    const commentSnap = await getDoc(commentRef);
+    const { likes, dislikes } = commentSnap.data();
+
+    if (dislikes.includes(user)) {
+      await updateDoc(commentRef, { dislikes: arrayRemove(user) });
+    } else {
+      await updateDoc(commentRef, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
+    }
+  };
+
+  const loadReplies = async (commentId) => {
+    const repliesRef = collection(db, "posts", postId, "comments", commentId, "replies");
+    const repliesSnapshot = await getDocs(repliesRef);
+    const replies = repliesSnapshot.docs.map(reply => ({
+      id: reply.id,
+      ...reply.data(),
+    }));
+    setComments(prevComments =>
+      prevComments.map(c => c.id === commentId ? { ...c, replies } : c)
+    );
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen">{error}</div>;
+  }
+
+  return (
+    <div className={`container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+      <h1 className="text-3xl font-bold mt-4 mb-6 text-center text-gray-900 dark:text-white">{post.title}</h1>
+
+      {post.videoUrl && (
+        <div className="relative w-full pt-[56.25%] mx-auto max-w-4xl mb-8">
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={post.videoUrl}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={post.title}
+          />
+        </div>
+      )}
+
+      {post.carouselImages && post.carouselImages.length > 0 && (
+        <div className="relative w-full max-w-4xl mx-auto mb-8">
+          <Carousel
+            slideInterval={3000}
+            leftControl={
+              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                <HiArrowLeft size={35} className="text-white" />
+              </div>
+            }
+            rightControl={
+              <div className="bg-black bg-opacity-30 hover:bg-opacity-60 p-2 rounded-full">
+                <HiArrowRight size={35} className="text-white" />
+              </div>
+            }
+            className="rounded-lg"
+          >
+            {post.carouselImages.map((image, index) => (
+              <div key={index} className="relative w-full aspect-video">
+                <img
+                  src={image}
+                  alt={`Carousel image ${index + 1}`}
+                  className="object-cover w-full h-full rounded-lg"
+                />
+              </div>
+            ))}
+          </Carousel>
+          <p className="text-base text-gray-800 dark:text-gray-300 mt-4 text-center">
+            Beberapa gambar terkait project ini.
+          </p>
+        </div>
+      )}
+
+      {post.description && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Deskripsi</h2>
+          <p className="text-gray-900 dark:text-gray-300">{post.description}</p>
+        </section>
+      )}
+
+      {post.features && post.features.length > 0 && (
+        <section className="mb-8 mt-4">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Fitur Utama</h2>
+          <ul className="list-disc list-inside space-y-2 text-gray-900 dark:text-gray-300">
+            {post.features.map((feature, index) => (
+              <li key={index}>{feature}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {post.downloadLinks && post.downloadLinks.length > 0 && (
+        <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
+          {post.downloadLinks.map((link, index) => (
+            <Button key={index} color="gray" pill>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.text}
+              </a>
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {/* Comment Section */}
+      <section className="mb-8 mt-4">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
+
+        {!auth.currentUser && (
+          <div className="text-center mb-4">
+            <Button color="blue" pill onClick={toggleModal}>
+              Login untuk meninggalkan komentar
+            </Button>
+          </div>
+        )}
+
+        {auth.currentUser && (
+          <div className="mb-4">
+            {replyTo && (
+              <div className="mb-2">
+                <div className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
+                  <p className="text-gray-500 dark:text-gray-400">Membalas {replyTo.user}</p>
+                  <button onClick={() => setReplyTo(null)} className="text-red-500">
+                    <HiX size={20} />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="relative">
+              <TextInput
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
+                className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-4 pr-12"
+              />
+              <button
+                onClick={handleCommentSubmit}
+                className="absolute right-2 top-2 text-blue-500 hover:text-blue-700 transform rotate-90"
+              >
+                <HiPaperAirplane size={24} />
+              </button>
+            </div>
+            {error && <p className="text-red-500 mt-1 text-sm">{error}</p>}
+          </div>
+        )}
+
+        {comments.map((comment) => (
+          <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
             <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
             <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
@@ -351,7 +657,10 @@ function PostPage() {
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)}
+                  onClick={() => {
+                    setReplyTo(comment);
+                    loadReplies(comment.id);
+                  }}
                 >
                   <HiReply />
                   <span>Balas</span>
