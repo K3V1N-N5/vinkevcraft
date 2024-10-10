@@ -263,11 +263,13 @@ function PostPage() {
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
-              <div className="mb-2 flex justify-between items-center">
-                <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
-                <button onClick={() => setReplyTo(null)} className="text-red-500 ml-auto mr-4">
-                  <HiX size={20} />
-                </button>
+              <div className="mb-2">
+                <div className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
+                  <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
+                  <button onClick={() => setReplyTo(null)} className="text-red-500">
+                    <HiX size={20} />
+                  </button>
+                </div>
               </div>
             )}
             <div className="relative">
@@ -340,10 +342,7 @@ function PostPage() {
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    {/* Logika: Tampilkan 'membalas' hanya jika yang membalas bukan pengguna yang sama */}
-                    {reply.user !== comment.user && (
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
-                    )}
+                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
