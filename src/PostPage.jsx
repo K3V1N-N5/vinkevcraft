@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, deleteDoc, getDocs } from "firebase/firestore";
@@ -23,7 +23,6 @@ function PostPage() {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const { isDarkMode } = useTheme();
-  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -43,7 +42,7 @@ function PostPage() {
       }
     };
 
-    const fetchComments = () => {
+    const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
       const unsubscribe = onSnapshot(commentsRef, async (snapshot) => {
         const commentData = await Promise.all(snapshot.docs.map(async (doc) => {
@@ -68,16 +67,6 @@ function PostPage() {
     fetchPost();
     fetchComments();
   }, [postId]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
-    handleChange();
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -142,25 +131,12 @@ function PostPage() {
           text: comment,
           user: auth.currentUser.email,
           createdAt: new Date(),
-          likes: [],
-          dislikes: [],
         });
       }
       setComment('');
     } else {
       setIsModalOpen(true);
     }
-  };
-
-  const renderError = () => {
-    if (error) {
-      return (
-        <p className="text-red-500 mt-2 text-sm">
-          {error}
-        </p>
-      );
-    }
-    return null;
   };
 
   if (loading) {
@@ -249,10 +225,9 @@ function PostPage() {
         </div>
       )}
 
+      {/* Comment Section */}
       <section className="mb-8 mt-4">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
-        {/* Error text for comment validation */}
-        {renderError()}
 
         {!auth.currentUser && (
           <div className="text-center mb-4">
@@ -288,6 +263,7 @@ function PostPage() {
                 <HiPaperAirplane size={24} />
               </button>
             </div>
+            {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
           </div>
         )}
 
@@ -297,23 +273,6 @@ function PostPage() {
             <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
             <div className="flex space-x-4 mt-2">
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id)}
-                disabled={!auth.currentUser}
-              >
-                <HiThumbUp />
-                <span>{comment.likes.length}</span>
-              </button>
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id)}
-                disabled={!auth.currentUser}
-              >
-                <HiThumbDown />
-                <span>{comment.dislikes.length}</span>
-              </button>
-
               {auth.currentUser && (
                 <button
                   className="flex items-center space-x-2"
@@ -338,36 +297,16 @@ function PostPage() {
               )}
             </div>
 
-            {/* Replies section */}
+            {/* Nested Replies */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="ml-8 mt-4">
                 {comment.replies.map((reply) => (
                   <div key={reply.id} className="mb-4">
-                    {/* Only show "replied to" for replies, not main comments */}
-                    {reply.repliedTo && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
-                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
                     <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
                     <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                     <div className="flex space-x-4 mt-2">
-                      <button
-                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleLikeReply(comment.id, reply.id)}
-                        disabled={!auth.currentUser}
-                      >
-                        <HiThumbUp />
-                        <span>{reply.likes?.length || 0}</span>
-                      </button>
-                      <button
-                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleDislikeReply(comment.id, reply.id)}
-                        disabled={!auth.currentUser}
-                      >
-                        <HiThumbDown />
-                        <span>{reply.dislikes?.length || 0}</span>
-                      </button>
-
                       {auth.currentUser && (
                         <button
                           className="flex items-center space-x-2"
@@ -399,6 +338,7 @@ function PostPage() {
         ))}
       </section>
 
+      {/* Auth Modal */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
