@@ -14,7 +14,7 @@ function PostPage() {
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -240,234 +240,135 @@ function PostPage() {
       {post.downloadLinks && post.downloadLinks.length > 0 && (
         <div className="flex flex-col items-center space-y-4 mt-12 mb-20">
           {post.downloadLinks.map((link, index) => (
-            <Button key={index} color="gray" pill>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.text}
-              </a>
+            <Button
+              key={index}
+              className="w-64 text-center"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download {link.title}
             </Button>
           ))}
         </div>
       )}
 
-      <section className="mb-8 mt-4">
+      {/* Bagian Komentar */}
+      <section className="mt-8">
         <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
-
-        {!auth.currentUser && (
-          <div className="text-center mb-4">
-            <Button color="blue" pill onClick={toggleModal}>
-              Login untuk meninggalkan komentar
-            </Button>
-          </div>
-        )}
-
-        {auth.currentUser && (
-          <div className="mb-4">
-            {replyTo && (
-              <div className="mb-2">
-                <div className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
-                  <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
-                  <button onClick={() => setReplyTo(null)} className="text-red-500">
-                    <HiX size={20} />
-                  </button>
+        <div className="mb-4">
+          <TextInput
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Tulis komentar Anda..."
+            className="w-full"
+          />
+          {renderError()}
+          <Button
+            className="mt-2"
+            onClick={handleCommentSubmit}
+          >
+            <HiPaperAirplane className="mr-2" /> Kirim
+          </Button>
+        </div>
+        <div>
+          {comments.map((comment) => (
+            <div key={comment.id} className="mb-6 border-b pb-4">
+              <div className="flex justify-between">
+                <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+                <div className="flex space-x-2">
+                  <Button
+                    className="text-gray-600 dark:text-gray-400"
+                    onClick={() => setReplyTo(comment)}
+                  >
+                    <HiReply className="mr-1" /> Balas
+                  </Button>
+                  <Button className="text-red-600">
+                    <HiThumbDown />
+                  </Button>
+                  <Button className="text-blue-600">
+                    <HiThumbUp />
+                  </Button>
                 </div>
               </div>
-            )}
-            <div className="relative">
-              <TextInput
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
-                className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-4 pr-12"
-              />
-              <button
-                onClick={handleCommentSubmit}
-                className="absolute right-2 top-2 text-blue-500 hover:text-blue-700 transform rotate-90"
-              >
-                <HiPaperAirplane size={24} />
-              </button>
-            </div>
-            {renderError()}
-          </div>
-        )}
+              <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
-        {comments.map((comment) => (
-          <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
-            <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
-            <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
-
-            <div className="flex space-x-4 mt-2">
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleLike(comment.id)}
-                disabled={!auth.currentUser}
-              >
-                <HiThumbUp />
-                <span>{comment.likes.length}</span>
-              </button>
-              <button
-                className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                onClick={() => handleDislike(comment.id)}
-                disabled={!auth.currentUser}
-              >
-                <HiThumbDown />
-                <span>{comment.dislikes.length}</span>
-              </button>
-
-              {auth.currentUser && (
-                <button
-                  className="flex items-center space-x-2"
-                  onClick={() => setReplyTo(comment)}
-                >
-                  <HiReply />
-                  <span>Balas</span>
-                </button>
-              )}
-
-              {auth.currentUser?.email === comment.user && (
-                <>
-                  <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
-                    <HiOutlinePencilAlt />
-                    <span>Edit</span>
-                  </button>
-                  <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
-                    <HiOutlineTrash />
-                    <span>Hapus</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Bagian balasan komentar */}
-            {comment.replies && comment.replies.length > 0 && (
-              <div className="ml-8 mt-4">
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} className="mb-4">
-                    {/* Menampilkan user membalas user */}
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{reply.user} membalas {reply.repliedTo}</p>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                    <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
-
-                    <div className="flex space-x-4 mt-2">
-                      <button
-                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleLikeReply(comment.id, reply.id)}
-                        disabled={!auth.currentUser}
-                      >
-                        <HiThumbUp />
-                        <span>{reply.likes?.length || 0}</span>
-                      </button>
-                      <button
-                        className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
-                        onClick={() => handleDislikeReply(comment.id, reply.id)}
-                        disabled={!auth.currentUser}
-                      >
-                        <HiThumbDown />
-                        <span>{reply.dislikes?.length || 0}</span>
-                      </button>
-
-                      {auth.currentUser && (
-                        <button
-                          className="flex items-center space-x-2"
-                          onClick={() => setReplyTo({ id: comment.id, user: reply.user })}
-                        >
-                          <HiReply />
-                          <span>Balas</span>
-                        </button>
-                      )}
-
-                      {auth.currentUser?.email === reply.user && (
-                        <>
-                          <button onClick={() => handleEditReply(reply.id, reply.text)} className="flex items-center space-x-2">
-                            <HiOutlinePencilAlt />
-                            <span>Edit</span>
-                          </button>
-                          <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
-                            <HiOutlineTrash />
-                            <span>Hapus</span>
-                          </button>
-                        </>
-                      )}
+              {/* Render Balasan */}
+              {comment.replies.length > 0 && (
+                <div className="ml-8 mt-4">
+                  {comment.replies.map((reply) => (
+                    <div key={reply.id} className="mb-4">
+                      <p className="font-semibold text-gray-800 dark:text-gray-300">{reply.user}</p>
+                      <p className="text-gray-900 dark:text-gray-400">
+                        <span className="text-sm text-gray-600 dark:text-gray-500">Membalas {reply.repliedTo}</span>: {reply.text}
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
+      {/* Modal Login/Registrasi */}
       <Modal
         show={isModalOpen}
         onClose={toggleModal}
-        size="lg"
-        className={`flex justify-center items-center h-screen ${isDarkMode ? 'dark' : ''}`}
       >
-        <Modal.Header className={`dark:bg-gray-800 bg-white text-gray-900 dark:text-white`}>
-          {isLogin ? "Login" : "Register"}
-        </Modal.Header>
-        <Modal.Body className={`p-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg`}>
-          <form
-            onSubmit={isLogin ? handleLogin : handleRegister}
-            className="space-y-4"
-          >
-            {authError && (
-              <p className="text-red-500 text-center">{authError}</p>
-            )}
-            <TextInput
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-            />
-            <TextInput
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
-            />
-            {!isLogin && (
+        <Modal.Header>{isLogin ? 'Login' : 'Register'}</Modal.Header>
+        <Modal.Body>
+          <form onSubmit={isLogin ? handleLogin : handleRegister}>
+            <div className="mb-4">
+              <TextInput
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                required
+                className="w-full"
+              />
+            </div>
+            <div className="mb-4">
               <TextInput
                 type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
                 required
-                className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
+                className="w-full"
               />
+            </div>
+            {!isLogin && (
+              <div className="mb-4">
+                <TextInput
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Konfirmasi Password"
+                  required
+                  className="w-full"
+                />
+              </div>
             )}
-
-            <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
-              {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+            {authError && <p className="text-red-500 mb-4">{authError}</p>}
+            <Button type="submit" className="w-full">
+              {authLoading ? 'Loading...' : isLogin ? 'Login' : 'Register'}
             </Button>
           </form>
-          <div className="text-center text-gray-600 dark:text-gray-300 mt-4">
-            {isLogin ? (
-              <p>
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setIsLogin(false)}
-                  className="text-blue-500"
-                >
-                  Register
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{" "}
-                <button
-                  onClick={() => setIsLogin(true)}
-                  className="text-blue-500"
-                >
-                  Login
-                </button>
-              </p>
-            )}
-          </div>
         </Modal.Body>
+        <Modal.Footer>
+          <p className="text-sm text-gray-500">
+            {isLogin ? 'Belum punya akun?' : 'Sudah punya akun?'}{' '}
+            <Button
+              variant="link"
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? 'Register' : 'Login'}
+            </Button>
+          </p>
+        </Modal.Footer>
       </Modal>
     </div>
   );
