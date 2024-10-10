@@ -22,13 +22,10 @@ function PostPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [editCommentId, setEditCommentId] = useState(null);
-  const [editReplyId, setEditReplyId] = useState(null);  
-  const [displayName, setDisplayName] = useState('');
-  const [filterError, setFilterError] = useState('');
+  const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  const [captchaRendered, setCaptchaRendered] = useState(false);
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light');
-  const [captchaLoaded, setCaptchaLoaded] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -61,10 +58,10 @@ function PostPage() {
           return {
             id: doc.id,
             ...doc.data(),
-            replies, 
+            replies,
           };
         }));
-        setComments(commentData); 
+        setComments(commentData);
       });
 
       return () => unsubscribe();
@@ -77,14 +74,13 @@ function PostPage() {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => setTheme(mediaQuery.matches ? 'dark' : 'light');
-    handleChange(); 
-    mediaQuery.addEventListener('change', handleChange); 
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
 
-  // Load reCAPTCHA script dynamically if it doesn't exist
   const loadRecaptchaScript = () => {
     if (!window.grecaptcha) {
       const script = document.createElement('script');
@@ -96,54 +92,42 @@ function PostPage() {
 
   useEffect(() => {
     window.grecaptchaLoaded = () => {
-      if (!captchaLoaded) {
+      if (!captchaRendered) {
         window.grecaptcha.render('captcha-container', {
           sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
           theme: theme,
         });
-        setCaptchaLoaded(true);
+        setCaptchaRendered(true);
       }
     };
 
     loadRecaptchaScript();
-  }, [theme, captchaLoaded]);
+  }, [theme, captchaRendered]);
 
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
-      setFilterError('Komentar tidak boleh kosong.');
+      setError('Komentar tidak boleh kosong.');
       return;
     }
     if (comment.length < 5) {
-      setFilterError('Komentar terlalu pendek.');
+      setError('Komentar terlalu pendek.');
       return;
     }
 
-    setFilterError('');
+    setError('');
     if (auth.currentUser) {
       if (replyTo) {
-        if (editReplyId) {
-          await updateDoc(doc(db, "posts", postId, "comments", replyTo.id, "replies", editReplyId), {
-            text: comment,
-          });
-          setEditReplyId(null);
-        } else {
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
-            text: comment,
-            user: displayName || auth.currentUser.email,
-            repliedTo: replyTo.user,  
-            createdAt: new Date(),
-          });
-        }
-        setReplyTo(null);
-      } else if (editCommentId) {
-        await updateDoc(doc(db, "posts", postId, "comments", editCommentId), {
+        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
           text: comment,
+          user: auth.currentUser.email,
+          repliedTo: replyTo.user,
+          createdAt: new Date(),
         });
-        setEditCommentId(null);
+        setReplyTo(null);
       } else {
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
-          user: displayName || auth.currentUser.email,
+          user: auth.currentUser.email,
           createdAt: new Date(),
           likes: [],
           dislikes: [],
@@ -207,7 +191,6 @@ function PostPage() {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
-    // Reset captcha when opening or closing the modal
     if (window.grecaptcha) {
       grecaptcha.reset();
     }
@@ -324,7 +307,7 @@ function PostPage() {
               placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
               className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
             />
-            {filterError && <p className="text-red-500">{filterError}</p>}
+            {error && <p className="text-red-500">{error}</p>}
             <Button onClick={handleCommentSubmit} className="mt-2">{replyTo ? "Kirim Balasan" : "Kirim Komentar"}</Button>
           </div>
         )}
@@ -509,7 +492,6 @@ function PostPage() {
           </div>
         </Modal.Body>
       </Modal>
-
     </div>
   );
 }
