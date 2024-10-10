@@ -364,10 +364,7 @@ function PostPage() {
                       </>
                     ) : (
                       <>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {reply.user} membalas {reply.repliedTo}
-                        </p>
-                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
                         <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
                       </>
                     )}
