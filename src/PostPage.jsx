@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi'; // Tambahkan ikon kirim dan cancel
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi'; // Ikon kirim dan cancel
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
@@ -252,11 +252,11 @@ function PostPage() {
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
-              <div className="mb-2 flex justify-between">
-                <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
-                <button onClick={() => setReplyTo(null)} className="text-red-500">
+              <div className="mb-2 flex items-center">
+                <button onClick={() => setReplyTo(null)} className="text-red-500 mr-2">
                   <HiX size={20} />
                 </button>
+                <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
               </div>
             )}
             <div className="relative">
@@ -264,7 +264,7 @@ function PostPage() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
-                className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-4 pr-12"
+                className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-10 pr-12 py-2 rounded-lg"
               />
               <button
                 onClick={handleCommentSubmit}
@@ -273,7 +273,7 @@ function PostPage() {
                 <HiPaperAirplane size={24} />
               </button>
             </div>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
           </div>
         )}
 
