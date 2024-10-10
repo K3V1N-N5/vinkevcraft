@@ -81,6 +81,7 @@ function PostPage() {
     };
   }, []);
 
+  // Memuat reCAPTCHA hanya sekali
   const loadRecaptchaScript = () => {
     if (!window.grecaptcha) {
       const script = document.createElement('script');
@@ -103,41 +104,6 @@ function PostPage() {
 
     loadRecaptchaScript();
   }, [theme, captchaRendered]);
-
-  const handleCommentSubmit = async () => {
-    if (comment.trim() === '') {
-      setError('Komentar tidak boleh kosong.');
-      return;
-    }
-    if (comment.length < 5) {
-      setError('Komentar terlalu pendek.');
-      return;
-    }
-
-    setError('');
-    if (auth.currentUser) {
-      if (replyTo) {
-        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
-          text: comment,
-          user: auth.currentUser.email,
-          repliedTo: replyTo.user,
-          createdAt: new Date(),
-        });
-        setReplyTo(null);
-      } else {
-        await addDoc(collection(db, "posts", postId, "comments"), {
-          text: comment,
-          user: auth.currentUser.email,
-          createdAt: new Date(),
-          likes: [],
-          dislikes: [],
-        });
-      }
-      setComment('');
-    } else {
-      setIsModalOpen(true);
-    }
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -191,8 +157,44 @@ function PostPage() {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    // Reset reCAPTCHA setiap kali modal dibuka/tutup
     if (window.grecaptcha) {
       grecaptcha.reset();
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (comment.trim() === '') {
+      setError('Komentar tidak boleh kosong.');
+      return;
+    }
+    if (comment.length < 5) {
+      setError('Komentar terlalu pendek.');
+      return;
+    }
+
+    setError('');
+    if (auth.currentUser) {
+      if (replyTo) {
+        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+          text: comment,
+          user: auth.currentUser.email,
+          repliedTo: replyTo.user,
+          createdAt: new Date(),
+        });
+        setReplyTo(null);
+      } else {
+        await addDoc(collection(db, "posts", postId, "comments"), {
+          text: comment,
+          user: auth.currentUser.email,
+          createdAt: new Date(),
+          likes: [],
+          dislikes: [],
+        });
+      }
+      setComment('');
+    } else {
+      setIsModalOpen(true);
     }
   };
 
@@ -459,6 +461,7 @@ function PostPage() {
               />
             )}
 
+            {/* Kontainer reCAPTCHA */}
             <div className="w-full flex justify-center">
               <div id="captcha-container" style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}></div>
             </div>
