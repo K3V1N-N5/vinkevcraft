@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, TextInput, Modal } from "flowbite-react";
 import { useParams } from 'react-router-dom';
-import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply } from 'react-icons/hi';
+import { HiArrowLeft, HiArrowRight, HiOutlineTrash, HiOutlinePencilAlt, HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane } from 'react-icons/hi'; // Tambahkan ikon kirim dan cancel
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { doc, getDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
@@ -252,19 +252,28 @@ function PostPage() {
         {auth.currentUser && (
           <div className="mb-4">
             {replyTo && (
-              <div className="mb-2">
+              <div className="mb-2 flex justify-between">
                 <p className="text-gray-500 dark:text-gray-400">Replying to {replyTo.user}</p>
-                <Button onClick={() => setReplyTo(null)} size="sm" color="red">Cancel</Button>
+                <button onClick={() => setReplyTo(null)} className="text-red-500">
+                  <HiX size={20} />
+                </button>
               </div>
             )}
-            <TextInput
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
-              className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-            />
-            {error && <p className="text-red-500">{error}</p>}
-            <Button onClick={handleCommentSubmit} className="mt-2">{replyTo ? "Kirim Balasan" : "Kirim Komentar"}</Button>
+            <div className="relative">
+              <TextInput
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={replyTo ? `Balas ${replyTo.user}` : "Tulis komentar Anda..."}
+                className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-4 pr-12"
+              />
+              <button
+                onClick={handleCommentSubmit}
+                className="absolute right-2 top-2 text-blue-500 hover:text-blue-700"
+              >
+                <HiPaperAirplane size={24} />
+              </button>
+            </div>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
           </div>
         )}
 
