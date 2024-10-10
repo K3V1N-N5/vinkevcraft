@@ -22,8 +22,6 @@ function PostPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [captchaLoaded, setCaptchaLoaded] = useState(false);
-  const [captchaRendered, setCaptchaRendered] = useState(false);
   const { isDarkMode } = useTheme();
   const [theme, setTheme] = useState('light');
 
@@ -81,45 +79,13 @@ function PostPage() {
     };
   }, []);
 
-  // Memuat reCAPTCHA hanya sekali
-  const loadRecaptchaScript = () => {
-    if (!window.grecaptcha) {
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=grecaptchaLoaded&render=explicit';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  };
-
-  useEffect(() => {
-    window.grecaptchaLoaded = () => {
-      if (!captchaRendered) {
-        window.grecaptcha.render('captcha-container', {
-          sitekey: '6Lf-JlwqAAAAACctWhsiWBb76IMJdjaCL75XQEbv',
-          theme: theme,
-        });
-        setCaptchaRendered(true);
-      }
-    };
-
-    loadRecaptchaScript();
-  }, [theme, captchaRendered]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
     try {
-      const recaptchaResponse = grecaptcha.getResponse();
-      if (!recaptchaResponse) {
-        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
-        setAuthLoading(false);
-        return;
-      }
-
       await signInWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset();
     } catch (error) {
       setAuthError('Login gagal: ' + error.message);
     }
@@ -135,16 +101,8 @@ function PostPage() {
     }
     setAuthLoading(true);
     try {
-      const recaptchaResponse = grecaptcha.getResponse();
-      if (!recaptchaResponse) {
-        setAuthError("Tolong selesaikan verifikasi reCAPTCHA.");
-        setAuthLoading(false);
-        return;
-      }
-
       await createUserWithEmailAndPassword(auth, email, password);
       setIsModalOpen(false);
-      grecaptcha.reset();
     } catch (error) {
       setAuthError('Registrasi gagal: ' + error.message);
     }
@@ -157,10 +115,6 @@ function PostPage() {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
-    // Reset reCAPTCHA setiap kali modal dibuka/tutup
-    if (window.grecaptcha) {
-      grecaptcha.reset();
-    }
   };
 
   const handleCommentSubmit = async () => {
@@ -460,11 +414,6 @@ function PostPage() {
                 className="dark:bg-gray-700 dark:text-white text-gray-900 w-full"
               />
             )}
-
-            {/* Kontainer reCAPTCHA */}
-            <div className="w-full flex justify-center">
-              <div id="captcha-container" style={{ transform: "scale(0.88)", transformOrigin: "0 0", width: '100%' }}></div>
-            </div>
 
             <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
               {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
