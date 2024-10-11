@@ -4,7 +4,6 @@ import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilA
 import { auth, db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 
-
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
@@ -53,7 +52,7 @@ function CommentSection({ postId, toggleModal }) {
         await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
           text: comment,
           user: auth.currentUser.email,
-          repliedTo: replyTo.user,
+          repliedTo: replyTo.user,  // Menyimpan siapa yang dibalas
           createdAt: new Date(),
           likes: [],
           dislikes: []
@@ -111,6 +110,15 @@ function CommentSection({ postId, toggleModal }) {
   return (
     <section className="mb-8 mt-4">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
+
+      {/* Tombol Login untuk pengguna yang belum login */}
+      {!auth.currentUser && (
+        <div className="text-center mb-4">
+          <Button color="blue" pill onClick={toggleModal}>
+            Login untuk meninggalkan komentar
+          </Button>
+        </div>
+      )}
 
       {auth.currentUser && (
         <div className="mb-4">
@@ -194,15 +202,18 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply, index) => (
                 <div key={reply.id} className="mb-4">
-                  {index === 0 ? (
+                  {reply.repliedTo ? (
                     <>
+                      {/* Balasan pertama tidak ada "membalas" */}
                       <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
                       <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
                     </>
                   ) : (
                     <>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
-                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                      {/* Balasan kedua dan seterusnya menampilkan "membalas" */}
+                      
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
+                      <p className="text-gray-700 dark:text-gray-400">{reply.text} membalas {reply.repliedTo}</p>
                     </>
                   )}
 
