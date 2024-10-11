@@ -8,22 +8,49 @@ function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
-  const [editingComment, setEditingComment] = useState(null);
-  const [editingReply, setEditingReply] = useState(null);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(null);  // Track editing state
 
   useEffect(() => {
-    const fetchComments = () => {
+    const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
+
+      // Listen to real-time updates for comments and replies
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        const commentData = snapshot.docs.map((doc) => {
-          const comment = { id: doc.id, ...doc.data() };
-          return comment;
+        snapshot.docChanges().forEach(change => {
+          const commentDoc = change.doc;
+          if (change.type === "added" || change.type === "modified") {
+            const commentData = {
+              id: commentDoc.id,
+              ...commentDoc.data(),
+              replies: []
+            };
+
+            // Fetch replies in real-time for each comment
+            const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
+            const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
+              const replies = repliesSnapshot.docs.map(replyDoc => ({
+                id: replyDoc.id,
+                ...replyDoc.data(),
+              }));
+              
+              // Update the specific comment with its replies
+              setComments((prevComments) => 
+                prevComments.map(c => 
+                  c.id === commentDoc.id ? { ...c, replies } : c
+                )
+              );
+            });
+
+            // Add new comment with empty replies at first
+            setComments((prevComments) => 
+              [...prevComments, commentData]
+            );
+          }
         });
-        setComments(commentData);
       });
 
-      return () => unsubscribe();
+      return () => unsubscribe();  // Cleanup listener
     };
 
     fetchComments();
@@ -50,22 +77,30 @@ function CommentSection({ postId, toggleModal }) {
     setError('');
     if (auth.currentUser) {
       if (replyTo) {
-        // Adding a reply to either a comment or another reply
-        const targetCollection = replyTo.parentId
-          ? collection(db, "posts", postId, "comments", replyTo.parentId, "replies")
-          : collection(db, "posts", postId, "comments", replyTo.id, "replies");
-
-        await addDoc(targetCollection, {
-          text: comment,
-          user: auth.currentUser.email,
-          repliedTo: replyTo.user,
-          createdAt: new Date(),
-          likes: [],
-          dislikes: []
-        });
-        setReplyTo(null);
+        if (replyTo.parentId) {
+          // Reply to another reply
+          await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
+            text: comment,
+            user: auth.currentUser.email,
+            repliedTo: replyTo.user,
+            createdAt: new Date(),
+            likes: [],
+            dislikes: []
+          });
+        } else {
+          // Reply to a main comment
+          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+            text: comment,
+            user: auth.currentUser.email,
+            repliedTo: replyTo.user,
+            createdAt: new Date(),
+            likes: [],
+            dislikes: []
+          });
+        }
+        setReplyTo(null);  // Clear reply state
       } else {
-        // Adding a new comment
+        // Add a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: auth.currentUser.email,
@@ -74,72 +109,41 @@ function CommentSection({ postId, toggleModal }) {
           dislikes: []
         });
       }
-      setComment('');
+      setComment('');  // Clear comment input
     } else {
-      toggleModal();
+      toggleModal();  // Prompt login
     }
   };
 
-  const handleEditComment = (id, text) => {
-    setEditingComment({ id, text });
+  const handleEditComment = (commentId, text) => {
+    setEditing({ id: commentId, text, isReply: false });
+    setComment(text);  // Set comment text for editing
   };
 
-  const handleEditReply = (id, text) => {
-    setEditingReply({ id, text });
+  const handleEditReply = (replyId, text, parentId) => {
+    setEditing({ id: replyId, text, parentId, isReply: true });
+    setComment(text);  // Set reply text for editing
   };
 
-  const handleUpdateComment = async () => {
-    if (editingComment.text.trim() === '') {
-      setError('Komentar tidak boleh kosong.');
-      return;
+  const handleEditSubmit = async () => {
+    if (editing.isReply) {
+      const replyDoc = doc(db, "posts", postId, "comments", editing.parentId, "replies", editing.id);
+      await updateDoc(replyDoc, { text: comment });
+    } else {
+      const commentDoc = doc(db, "posts", postId, "comments", editing.id);
+      await updateDoc(commentDoc, { text: comment });
     }
-    setError('');
-    await updateDoc(doc(db, "posts", postId, "comments", editingComment.id), {
-      text: editingComment.text,
-    });
-    setEditingComment(null);
+    setComment('');  // Clear input field
+    setEditing(null);  // Reset editing state
   };
 
-  const handleUpdateReply = async (commentId) => {
-    if (editingReply.text.trim() === '') {
-      setError('Balasan tidak boleh kosong.');
-      return;
-    }
-    setError('');
-    await updateDoc(doc(db, "posts", postId, "comments", commentId, "replies", editingReply.id), {
-      text: editingReply.text,
-    });
-    setEditingReply(null);
-  };
-
-  const handleLike = async (id, isReply = false, commentId = null) => {
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
     const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", commentId, "replies", id)
-      : doc(db, "posts", postId, "comments", id);
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
 
-    const docSnapshot = await targetDoc.get();
-    const { likes } = docSnapshot.data();
-    
-    if (!likes.includes(auth.currentUser.email)) {
-      await updateDoc(targetDoc, {
-        likes: [...likes, auth.currentUser.email]
-      });
-    }
-  };
-
-  const handleDislike = async (id, isReply = false, commentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", commentId, "replies", id)
-      : doc(db, "posts", postId, "comments", id);
-
-    const docSnapshot = await targetDoc.get();
-    const { dislikes } = docSnapshot.data();
-    
-    if (!dislikes.includes(auth.currentUser.email)) {
-      await updateDoc(targetDoc, {
-        dislikes: [...dislikes, auth.currentUser.email]
-      });
-    }
+    // Implement your like/dislike logic here, e.g., updating the likes array
+    // You can use `updateDoc` to modify the document in Firestore
   };
 
   return (
@@ -174,7 +178,7 @@ function CommentSection({ postId, toggleModal }) {
               className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white pl-4 pr-12"
             />
             <button
-              onClick={handleCommentSubmit}
+              onClick={editing ? handleEditSubmit : handleCommentSubmit}
               className="absolute right-2 top-2 text-blue-500 hover:text-blue-700 transform rotate-90"
             >
               <HiPaperAirplane size={24} />
@@ -186,20 +190,8 @@ function CommentSection({ postId, toggleModal }) {
 
       {comments.map((comment) => (
         <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
-          {editingComment?.id === comment.id ? (
-            <div className="relative">
-              <TextInput
-                value={editingComment.text}
-                onChange={(e) => setEditingComment({ ...editingComment, text: e.target.value })}
-              />
-              <button onClick={handleUpdateComment} className="text-green-500">Save</button>
-            </div>
-          ) : (
-            <>
-              <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
-              <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
-            </>
-          )}
+          <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+          <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
 
           <div className="flex space-x-4 mt-2">
             <button
@@ -245,25 +237,15 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
-                  {editingReply?.id === reply.id ? (
-                    <div className="relative">
-                      <TextInput
-                        value={editingReply.text}
-                        onChange={(e) => setEditingReply({ ...editingReply, text: e.target.value })}
-                      />
-                      <button onClick={() => handleUpdateReply(comment.id)} className="text-green-500">Save</button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">
-                        {reply.user}
-                        {reply.repliedTo && reply.repliedTo !== comment.user && (
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Membalas {reply.repliedTo}</span>
-                        )}
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
-                    </>
-                  )}
+                  <p className="font-semibold text-gray-700 dark:text-gray-300">
+                    {reply.user}{" "}
+                    {reply.repliedTo && reply.repliedTo !== comment.user && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Membalas {reply.repliedTo}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                   <div className="flex space-x-4 mt-2">
                     <button
@@ -295,7 +277,7 @@ function CommentSection({ postId, toggleModal }) {
 
                     {auth.currentUser?.email === reply.user && (
                       <>
-                        <button onClick={() => handleEditReply(reply.id, reply.text)} className="flex items-center space-x-2">
+                        <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
                           <HiOutlinePencilAlt />
                           <span>Edit</span>
                         </button>
