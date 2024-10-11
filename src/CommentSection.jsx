@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
 import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
 import { auth, db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot } from "firebase/firestore";
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
@@ -36,6 +36,14 @@ function CommentSection({ postId, toggleModal }) {
     fetchComments();
   }, [postId]);
 
+  const handleReplyToComment = (comment) => {
+    setReplyTo({ id: comment.id, user: comment.user, parentId: null });
+  };
+
+  const handleReplyToReply = (commentId, reply) => {
+    setReplyTo({ id: reply.id, user: reply.user, parentId: commentId });
+  };
+
   const handleCommentSubmit = async () => {
     if (comment.trim() === '') {
       setError('Komentar tidak boleh kosong.');
@@ -49,16 +57,30 @@ function CommentSection({ postId, toggleModal }) {
     setError('');
     if (auth.currentUser) {
       if (replyTo) {
-        await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
-          text: comment,
-          user: auth.currentUser.email,
-          repliedTo: replyTo.user,  // Menyimpan siapa yang dibalas
-          createdAt: new Date(),
-          likes: [],
-          dislikes: []
-        });
+        if (replyTo.parentId) {
+          // Balasan ke balasan lain
+          await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
+            text: comment,
+            user: auth.currentUser.email,
+            repliedTo: replyTo.user,
+            createdAt: new Date(),
+            likes: [],
+            dislikes: []
+          });
+        } else {
+          // Balasan ke komentar utama
+          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+            text: comment,
+            user: auth.currentUser.email,
+            repliedTo: replyTo.user,
+            createdAt: new Date(),
+            likes: [],
+            dislikes: []
+          });
+        }
         setReplyTo(null);
       } else {
+        // Komentar baru
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: auth.currentUser.email,
@@ -73,45 +95,10 @@ function CommentSection({ postId, toggleModal }) {
     }
   };
 
-  const handleLike = async (commentId, isReply = false, parentId = null) => {
-    const user = auth.currentUser.email;
-    const ref = isReply && parentId
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
-
-    const docSnap = await getDoc(ref);
-    if (docSnap.exists()) {
-      const { likes, dislikes } = docSnap.data();
-      if (likes.includes(user)) {
-        await updateDoc(ref, { likes: arrayRemove(user) });
-      } else {
-        await updateDoc(ref, { likes: arrayUnion(user), dislikes: arrayRemove(user) });
-      }
-    }
-  };
-
-  const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    const user = auth.currentUser.email;
-    const ref = isReply && parentId
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
-
-    const docSnap = await getDoc(ref);
-    if (docSnap.exists()) {
-      const { likes, dislikes } = docSnap.data();
-      if (dislikes.includes(user)) {
-        await updateDoc(ref, { dislikes: arrayRemove(user) });
-      } else {
-        await updateDoc(ref, { dislikes: arrayUnion(user), likes: arrayRemove(user) });
-      }
-    }
-  };
-
   return (
     <section className="mb-8 mt-4">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
-      {/* Tombol Login untuk pengguna yang belum login */}
       {!auth.currentUser && (
         <div className="text-center mb-4">
           <Button color="blue" pill onClick={toggleModal}>
@@ -174,10 +161,7 @@ function CommentSection({ postId, toggleModal }) {
             </button>
 
             {auth.currentUser && (
-              <button
-                className="flex items-center space-x-2"
-                onClick={() => setReplyTo(comment)}
-              >
+              <button className="flex items-center space-x-2" onClick={() => handleReplyToComment(comment)}>
                 <HiReply />
                 <span>Balas</span>
               </button>
@@ -200,24 +184,18 @@ function CommentSection({ postId, toggleModal }) {
           {/* Nested Replies */}
           {comment.replies && comment.replies.length > 0 && (
             <div className="ml-8 mt-4">
-              {comment.replies.map((reply, index) => (
+              {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
-                  {index === 0 && !reply.repliedTo ? (
-                    <>
-                      {/* Balasan pertama tidak ada "membalas" */}
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
-                    </>
-                  ) : (
-                    <>
-                      {/* Balasan kedua dan seterusnya menampilkan "membalas" */}
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {reply.user} membalas {reply.repliedTo}
-                      </p>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
-                    </>
-                  )}
+                  <p className="font-semibold text-gray-700 dark:text-gray-300">
+                    {reply.user}{" "}
+                    {/* Tampilkan "Membalas [nama user]" hanya jika ini balasan ke balasan lain */}
+                    {reply.repliedTo && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Membalas {reply.repliedTo}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                   <div className="flex space-x-4 mt-2">
                     <button
@@ -240,7 +218,7 @@ function CommentSection({ postId, toggleModal }) {
                     {auth.currentUser && (
                       <button
                         className="flex items-center space-x-2"
-                        onClick={() => setReplyTo({ id: comment.id, user: reply.user })}
+                        onClick={() => handleReplyToReply(comment.id, reply)}
                       >
                         <HiReply />
                         <span>Balas</span>
