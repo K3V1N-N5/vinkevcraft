@@ -2,31 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
 import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
 import { auth, db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editingReply, setEditingReply] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchComments = async () => {
+    const fetchComments = () => {
       const commentsRef = collection(db, "posts", postId, "comments");
-      const unsubscribe = onSnapshot(commentsRef, async (snapshot) => {
-        const commentData = await Promise.all(snapshot.docs.map(async (doc) => {
-          const repliesRef = collection(db, "posts", postId, "comments", doc.id, "replies");
-          const repliesSnapshot = await getDocs(repliesRef);
-          const replies = repliesSnapshot.docs.map(replyDoc => ({
-            id: replyDoc.id,
-            ...replyDoc.data(),
-          }));
-          return {
-            id: doc.id,
-            ...doc.data(),
-            replies,
-          };
-        }));
+      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+        const commentData = snapshot.docs.map((doc) => {
+          const comment = { id: doc.id, ...doc.data() };
+          return comment;
+        });
         setComments(commentData);
       });
 
@@ -57,30 +50,22 @@ function CommentSection({ postId, toggleModal }) {
     setError('');
     if (auth.currentUser) {
       if (replyTo) {
-        if (replyTo.parentId) {
-          // Balasan ke balasan lain
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
-            text: comment,
-            user: auth.currentUser.email,
-            repliedTo: replyTo.user,
-            createdAt: new Date(),
-            likes: [],
-            dislikes: []
-          });
-        } else {
-          // Balasan ke komentar utama
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
-            text: comment,
-            user: auth.currentUser.email,
-            repliedTo: replyTo.user,
-            createdAt: new Date(),
-            likes: [],
-            dislikes: []
-          });
-        }
+        // Adding a reply to either a comment or another reply
+        const targetCollection = replyTo.parentId
+          ? collection(db, "posts", postId, "comments", replyTo.parentId, "replies")
+          : collection(db, "posts", postId, "comments", replyTo.id, "replies");
+
+        await addDoc(targetCollection, {
+          text: comment,
+          user: auth.currentUser.email,
+          repliedTo: replyTo.user,
+          createdAt: new Date(),
+          likes: [],
+          dislikes: []
+        });
         setReplyTo(null);
       } else {
-        // Komentar baru
+        // Adding a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: auth.currentUser.email,
@@ -92,6 +77,68 @@ function CommentSection({ postId, toggleModal }) {
       setComment('');
     } else {
       toggleModal();
+    }
+  };
+
+  const handleEditComment = (id, text) => {
+    setEditingComment({ id, text });
+  };
+
+  const handleEditReply = (id, text) => {
+    setEditingReply({ id, text });
+  };
+
+  const handleUpdateComment = async () => {
+    if (editingComment.text.trim() === '') {
+      setError('Komentar tidak boleh kosong.');
+      return;
+    }
+    setError('');
+    await updateDoc(doc(db, "posts", postId, "comments", editingComment.id), {
+      text: editingComment.text,
+    });
+    setEditingComment(null);
+  };
+
+  const handleUpdateReply = async (commentId) => {
+    if (editingReply.text.trim() === '') {
+      setError('Balasan tidak boleh kosong.');
+      return;
+    }
+    setError('');
+    await updateDoc(doc(db, "posts", postId, "comments", commentId, "replies", editingReply.id), {
+      text: editingReply.text,
+    });
+    setEditingReply(null);
+  };
+
+  const handleLike = async (id, isReply = false, commentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", commentId, "replies", id)
+      : doc(db, "posts", postId, "comments", id);
+
+    const docSnapshot = await targetDoc.get();
+    const { likes } = docSnapshot.data();
+    
+    if (!likes.includes(auth.currentUser.email)) {
+      await updateDoc(targetDoc, {
+        likes: [...likes, auth.currentUser.email]
+      });
+    }
+  };
+
+  const handleDislike = async (id, isReply = false, commentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", commentId, "replies", id)
+      : doc(db, "posts", postId, "comments", id);
+
+    const docSnapshot = await targetDoc.get();
+    const { dislikes } = docSnapshot.data();
+    
+    if (!dislikes.includes(auth.currentUser.email)) {
+      await updateDoc(targetDoc, {
+        dislikes: [...dislikes, auth.currentUser.email]
+      });
     }
   };
 
@@ -139,8 +186,20 @@ function CommentSection({ postId, toggleModal }) {
 
       {comments.map((comment) => (
         <div key={comment.id} className="mb-4 border-b pb-4 border-gray-300 dark:border-gray-700">
-          <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
-          <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
+          {editingComment?.id === comment.id ? (
+            <div className="relative">
+              <TextInput
+                value={editingComment.text}
+                onChange={(e) => setEditingComment({ ...editingComment, text: e.target.value })}
+              />
+              <button onClick={handleUpdateComment} className="text-green-500">Save</button>
+            </div>
+          ) : (
+            <>
+              <p className="font-semibold text-gray-900 dark:text-white">{comment.user}</p>
+              <p className="text-gray-900 dark:text-gray-300">{comment.text}</p>
+            </>
+          )}
 
           <div className="flex space-x-4 mt-2">
             <button
@@ -186,16 +245,25 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">
-                    {reply.user}{" "}
-                    {/* Show "Membalas [nama user]" only if replying to another reply */}
-                    {reply.repliedTo && reply.repliedTo !== comment.user && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Membalas {reply.repliedTo}
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                  {editingReply?.id === reply.id ? (
+                    <div className="relative">
+                      <TextInput
+                        value={editingReply.text}
+                        onChange={(e) => setEditingReply({ ...editingReply, text: e.target.value })}
+                      />
+                      <button onClick={() => handleUpdateReply(comment.id)} className="text-green-500">Save</button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">
+                        {reply.user}
+                        {reply.repliedTo && reply.repliedTo !== comment.user && (
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Membalas {reply.repliedTo}</span>
+                        )}
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
+                    </>
+                  )}
 
                   <div className="flex space-x-4 mt-2">
                     <button
