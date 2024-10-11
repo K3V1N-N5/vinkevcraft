@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
-import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash, HiCheck } from 'react-icons/hi';
+import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
 import { auth, db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
 
@@ -142,20 +142,22 @@ function CommentSection({ postId, toggleModal }) {
       ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
       : doc(db, "posts", postId, "comments", commentId);
 
-    const user = auth.currentUser.email;
-    const commentData = (isReply 
-      ? comments.find((c) => c.id === parentId).replies.find((r) => r.id === commentId) 
-      : comments.find((c) => c.id === commentId)
-    );
+    // Check if user has already liked the comment/reply
+    const commentSnapshot = await targetDoc.get();
+    const commentData = commentSnapshot.data();
+    const userLiked = commentData.likes.includes(auth.currentUser.email);
 
-    const hasLiked = commentData.likes.includes(user);
-    const hasDisliked = commentData.dislikes.includes(user);
-
-    if (hasLiked) {
-      await updateDoc(targetDoc, { likes: arrayRemove(user) });
+    if (userLiked) {
+      // Remove like
+      await updateDoc(targetDoc, {
+        likes: arrayRemove(auth.currentUser.email),
+      });
     } else {
-      await updateDoc(targetDoc, { likes: arrayUnion(user) });
-      if (hasDisliked) await updateDoc(targetDoc, { dislikes: arrayRemove(user) });
+      // Add like
+      await updateDoc(targetDoc, {
+        likes: arrayUnion(auth.currentUser.email),
+        dislikes: arrayRemove(auth.currentUser.email),  // Remove dislike if present
+      });
     }
   };
 
@@ -164,20 +166,22 @@ function CommentSection({ postId, toggleModal }) {
       ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
       : doc(db, "posts", postId, "comments", commentId);
 
-    const user = auth.currentUser.email;
-    const commentData = (isReply 
-      ? comments.find((c) => c.id === parentId).replies.find((r) => r.id === commentId) 
-      : comments.find((c) => c.id === commentId)
-    );
+    // Check if user has already disliked the comment/reply
+    const commentSnapshot = await targetDoc.get();
+    const commentData = commentSnapshot.data();
+    const userDisliked = commentData.dislikes.includes(auth.currentUser.email);
 
-    const hasDisliked = commentData.dislikes.includes(user);
-    const hasLiked = commentData.likes.includes(user);
-
-    if (hasDisliked) {
-      await updateDoc(targetDoc, { dislikes: arrayRemove(user) });
+    if (userDisliked) {
+      // Remove dislike
+      await updateDoc(targetDoc, {
+        dislikes: arrayRemove(auth.currentUser.email),
+      });
     } else {
-      await updateDoc(targetDoc, { dislikes: arrayUnion(user) });
-      if (hasLiked) await updateDoc(targetDoc, { likes: arrayRemove(user) });
+      // Add dislike
+      await updateDoc(targetDoc, {
+        dislikes: arrayUnion(auth.currentUser.email),
+        likes: arrayRemove(auth.currentUser.email),  // Remove like if present
+      });
     }
   };
 
@@ -230,7 +234,7 @@ function CommentSection({ postId, toggleModal }) {
 
           <div className="flex space-x-4 mt-2">
             <button
-              className={`flex items-center space-x-2 ${comment.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.likes.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -238,7 +242,7 @@ function CommentSection({ postId, toggleModal }) {
               <span>{comment.likes.length}</span>
             </button>
             <button
-              className={`flex items-center space-x-2 ${comment.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.dislikes.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -281,7 +285,7 @@ function CommentSection({ postId, toggleModal }) {
 
                   <div className="flex space-x-4 mt-2">
                     <button
-                      className={`flex items-center space-x-2 ${reply.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.likes.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -289,7 +293,7 @@ function CommentSection({ postId, toggleModal }) {
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
-                      className={`flex items-center space-x-2 ${reply.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.dislikes.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
