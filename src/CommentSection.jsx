@@ -212,8 +212,8 @@ function CommentSection({ postId, toggleModal }) {
                     <>
                       {/* Balasan kedua dan seterusnya menampilkan "membalas" */}
                       
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
-                      <p className="text-gray-700 dark:text-gray-400">{reply.text} membalas {reply.repliedTo}</p>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
+                      <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
                     </>
                   )}
 
