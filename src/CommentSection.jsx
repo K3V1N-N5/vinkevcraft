@@ -1,50 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
-import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
+import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash, HiCheck } from 'react-icons/hi';
 import { auth, db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState('');
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState(null);  // Track editing state
 
   useEffect(() => {
     const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
 
-      // Real-time listener for comments and replies
+      // Listen to real-time updates for comments and replies
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        const updatedComments = snapshot.docs.map((commentDoc) => ({
-          id: commentDoc.id,
-          ...commentDoc.data(),
-          replies: [],
-        }));
+        snapshot.docChanges().forEach(change => {
+          const commentDoc = change.doc;
+          if (change.type === "added" || change.type === "modified") {
+            const commentData = {
+              id: commentDoc.id,
+              ...commentDoc.data(),
+              replies: []
+            };
 
-        // Fetch real-time replies for each comment
-        updatedComments.forEach((comment) => {
-          const repliesRef = collection(db, "posts", postId, "comments", comment.id, "replies");
+            // Fetch replies in real-time for each comment
+            const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
+            const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
+              const replies = repliesSnapshot.docs.map(replyDoc => ({
+                id: replyDoc.id,
+                ...replyDoc.data(),
+              }));
+              
+              // Update the specific comment with its replies
+              setComments((prevComments) => 
+                prevComments.map(c => 
+                  c.id === commentDoc.id ? { ...c, replies } : c
+                )
+              );
+            });
 
-          onSnapshot(repliesRef, (repliesSnapshot) => {
-            const updatedReplies = repliesSnapshot.docs.map(replyDoc => ({
-              id: replyDoc.id,
-              ...replyDoc.data(),
-            }));
-
-            setComments((prevComments) =>
-              prevComments.map(c =>
-                c.id === comment.id ? { ...c, replies: updatedReplies } : c
-              )
+            // Add new comment with empty replies at first
+            setComments((prevComments) => 
+              [...prevComments, commentData]
             );
-          });
+          }
         });
-
-        setComments(updatedComments);
       });
 
-      return () => unsubscribe();
+      return () => unsubscribe();  // Cleanup listener
     };
 
     fetchComments();
@@ -72,88 +78,51 @@ function CommentSection({ postId, toggleModal }) {
     if (auth.currentUser) {
       if (replyTo) {
         if (replyTo.parentId) {
+          // Reply to another reply
           await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
             text: comment,
             user: auth.currentUser.email,
             repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
-            dislikes: [],
+            dislikes: []
           });
         } else {
+          // Reply to a main comment
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: auth.currentUser.email,
             repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
-            dislikes: [],
+            dislikes: []
           });
         }
-        setReplyTo(null);
+        setReplyTo(null);  // Clear reply state
       } else {
+        // Add a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: auth.currentUser.email,
           createdAt: new Date(),
           likes: [],
-          dislikes: [],
+          dislikes: []
         });
       }
-      setComment('');
+      setComment('');  // Clear comment input
     } else {
-      toggleModal();
-    }
-  };
-
-  const handleLike = async (commentId, isReply = false, parentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
-
-    const snapshot = await targetDoc.get();
-    const data = snapshot.data();
-
-    if (!data.likes.includes(auth.currentUser.email)) {
-      await updateDoc(targetDoc, {
-        likes: [...data.likes, auth.currentUser.email],
-        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email),
-      });
-    } else {
-      await updateDoc(targetDoc, {
-        likes: data.likes.filter(user => user !== auth.currentUser.email),
-      });
-    }
-  };
-
-  const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
-
-    const snapshot = await targetDoc.get();
-    const data = snapshot.data();
-
-    if (!data.dislikes.includes(auth.currentUser.email)) {
-      await updateDoc(targetDoc, {
-        dislikes: [...data.dislikes, auth.currentUser.email],
-        likes: data.likes.filter(user => user !== auth.currentUser.email),
-      });
-    } else {
-      await updateDoc(targetDoc, {
-        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email),
-      });
+      toggleModal();  // Prompt login
     }
   };
 
   const handleEditComment = (commentId, text) => {
     setEditing({ id: commentId, text, isReply: false });
-    setComment(text);
+    setComment(text);  // Set comment text for editing
   };
 
   const handleEditReply = (replyId, text, parentId) => {
     setEditing({ id: replyId, text, parentId, isReply: true });
-    setComment(text);
+    setComment(text);  // Set reply text for editing
   };
 
   const handleEditSubmit = async () => {
@@ -164,12 +133,56 @@ function CommentSection({ postId, toggleModal }) {
       const commentDoc = doc(db, "posts", postId, "comments", editing.id);
       await updateDoc(commentDoc, { text: comment });
     }
-    setComment('');
-    setEditing(null);
+    setComment('');  // Clear input field
+    setEditing(null);  // Reset editing state
+  };
+
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
+
+    const user = auth.currentUser.email;
+    const commentData = (isReply 
+      ? comments.find((c) => c.id === parentId).replies.find((r) => r.id === commentId) 
+      : comments.find((c) => c.id === commentId)
+    );
+
+    const hasLiked = commentData.likes.includes(user);
+    const hasDisliked = commentData.dislikes.includes(user);
+
+    if (hasLiked) {
+      await updateDoc(targetDoc, { likes: arrayRemove(user) });
+    } else {
+      await updateDoc(targetDoc, { likes: arrayUnion(user) });
+      if (hasDisliked) await updateDoc(targetDoc, { dislikes: arrayRemove(user) });
+    }
+  };
+
+  const handleDislike = async (commentId, isReply = false, parentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
+
+    const user = auth.currentUser.email;
+    const commentData = (isReply 
+      ? comments.find((c) => c.id === parentId).replies.find((r) => r.id === commentId) 
+      : comments.find((c) => c.id === commentId)
+    );
+
+    const hasDisliked = commentData.dislikes.includes(user);
+    const hasLiked = commentData.likes.includes(user);
+
+    if (hasDisliked) {
+      await updateDoc(targetDoc, { dislikes: arrayRemove(user) });
+    } else {
+      await updateDoc(targetDoc, { dislikes: arrayUnion(user) });
+      if (hasLiked) await updateDoc(targetDoc, { likes: arrayRemove(user) });
+    }
   };
 
   return (
-    <section className="mb-8 mt-4 bg-white dark:bg-gray-900">
+    <section className="mb-8 mt-4">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
       {!auth.currentUser && (
@@ -259,7 +272,9 @@ function CommentSection({ postId, toggleModal }) {
                   <p className="font-semibold text-gray-700 dark:text-gray-300">
                     {reply.user}{" "}
                     {reply.repliedTo && reply.repliedTo !== comment.user && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Membalas {reply.repliedTo}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Membalas {reply.repliedTo}
+                      </span>
                     )}
                   </p>
                   <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
@@ -283,7 +298,10 @@ function CommentSection({ postId, toggleModal }) {
                     </button>
 
                     {auth.currentUser && (
-                      <button className="flex items-center space-x-2" onClick={() => handleReplyToReply(comment.id, reply)}>
+                      <button
+                        className="flex items-center space-x-2"
+                        onClick={() => handleReplyToReply(comment.id, reply)}
+                      >
                         <HiReply />
                       </button>
                     )}
