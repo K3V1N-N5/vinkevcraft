@@ -9,45 +9,42 @@ function CommentSection({ postId, toggleModal }) {
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState('');
-  const [editing, setEditing] = useState(null);  // Track editing state
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
 
+      // Real-time listener for comments and replies
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        snapshot.docChanges().forEach(change => {
-          const commentDoc = change.doc;
-          if (change.type === "added" || change.type === "modified") {
-            const commentData = {
-              id: commentDoc.id,
-              ...commentDoc.data(),
-              replies: []
-            };
+        const updatedComments = snapshot.docs.map((commentDoc) => ({
+          id: commentDoc.id,
+          ...commentDoc.data(),
+          replies: [],
+        }));
 
-            // Fetch replies in real-time for each comment
-            const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
-            const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
-              const replies = repliesSnapshot.docs.map(replyDoc => ({
-                id: replyDoc.id,
-                ...replyDoc.data(),
-              }));
-              
-              setComments((prevComments) => 
-                prevComments.map(c => 
-                  c.id === commentDoc.id ? { ...c, replies } : c
-                )
-              );
-            });
+        // Fetch real-time replies for each comment
+        updatedComments.forEach((comment) => {
+          const repliesRef = collection(db, "posts", postId, "comments", comment.id, "replies");
 
-            setComments((prevComments) => 
-              [...prevComments, commentData]
+          onSnapshot(repliesRef, (repliesSnapshot) => {
+            const updatedReplies = repliesSnapshot.docs.map(replyDoc => ({
+              id: replyDoc.id,
+              ...replyDoc.data(),
+            }));
+
+            setComments((prevComments) =>
+              prevComments.map(c =>
+                c.id === comment.id ? { ...c, replies: updatedReplies } : c
+              )
             );
-          }
+          });
         });
+
+        setComments(updatedComments);
       });
 
-      return () => unsubscribe();  // Cleanup listener
+      return () => unsubscribe();
     };
 
     fetchComments();
@@ -81,7 +78,7 @@ function CommentSection({ postId, toggleModal }) {
             repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
-            dislikes: []
+            dislikes: [],
           });
         } else {
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
@@ -90,7 +87,7 @@ function CommentSection({ postId, toggleModal }) {
             repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
-            dislikes: []
+            dislikes: [],
           });
         }
         setReplyTo(null);
@@ -100,7 +97,7 @@ function CommentSection({ postId, toggleModal }) {
           user: auth.currentUser.email,
           createdAt: new Date(),
           likes: [],
-          dislikes: []
+          dislikes: [],
         });
       }
       setComment('');
@@ -120,11 +117,11 @@ function CommentSection({ postId, toggleModal }) {
     if (!data.likes.includes(auth.currentUser.email)) {
       await updateDoc(targetDoc, {
         likes: [...data.likes, auth.currentUser.email],
-        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email)
+        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email),
       });
     } else {
       await updateDoc(targetDoc, {
-        likes: data.likes.filter(user => user !== auth.currentUser.email)
+        likes: data.likes.filter(user => user !== auth.currentUser.email),
       });
     }
   };
@@ -140,23 +137,23 @@ function CommentSection({ postId, toggleModal }) {
     if (!data.dislikes.includes(auth.currentUser.email)) {
       await updateDoc(targetDoc, {
         dislikes: [...data.dislikes, auth.currentUser.email],
-        likes: data.likes.filter(user => user !== auth.currentUser.email)
+        likes: data.likes.filter(user => user !== auth.currentUser.email),
       });
     } else {
       await updateDoc(targetDoc, {
-        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email)
+        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email),
       });
     }
   };
 
   const handleEditComment = (commentId, text) => {
     setEditing({ id: commentId, text, isReply: false });
-    setComment(text); 
+    setComment(text);
   };
 
   const handleEditReply = (replyId, text, parentId) => {
     setEditing({ id: replyId, text, parentId, isReply: true });
-    setComment(text); 
+    setComment(text);
   };
 
   const handleEditSubmit = async () => {
@@ -167,12 +164,12 @@ function CommentSection({ postId, toggleModal }) {
       const commentDoc = doc(db, "posts", postId, "comments", editing.id);
       await updateDoc(commentDoc, { text: comment });
     }
-    setComment(''); 
-    setEditing(null); 
+    setComment('');
+    setEditing(null);
   };
 
   return (
-    <section className="mb-8 mt-4">
+    <section className="mb-8 mt-4 bg-white dark:bg-gray-900">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
 
       {!auth.currentUser && (
@@ -220,7 +217,7 @@ function CommentSection({ postId, toggleModal }) {
 
           <div className="flex space-x-4 mt-2">
             <button
-              className={`flex items-center space-x-2 ${comment.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'} `}
+              className={`flex items-center space-x-2 ${comment.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'}`}
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -228,7 +225,7 @@ function CommentSection({ postId, toggleModal }) {
               <span>{comment.likes.length}</span>
             </button>
             <button
-              className={`flex items-center space-x-2 ${comment.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'} `}
+              className={`flex items-center space-x-2 ${comment.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'}`}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -262,16 +259,14 @@ function CommentSection({ postId, toggleModal }) {
                   <p className="font-semibold text-gray-700 dark:text-gray-300">
                     {reply.user}{" "}
                     {reply.repliedTo && reply.repliedTo !== comment.user && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Membalas {reply.repliedTo}
-                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Membalas {reply.repliedTo}</span>
                     )}
                   </p>
                   <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
                   <div className="flex space-x-4 mt-2">
                     <button
-                      className={`flex items-center space-x-2 ${reply.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'} `}
+                      className={`flex items-center space-x-2 ${reply.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'}`}
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -279,7 +274,7 @@ function CommentSection({ postId, toggleModal }) {
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
-                      className={`flex items-center space-x-2 ${reply.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'} `}
+                      className={`flex items-center space-x-2 ${reply.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'}`}
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -288,10 +283,7 @@ function CommentSection({ postId, toggleModal }) {
                     </button>
 
                     {auth.currentUser && (
-                      <button
-                        className="flex items-center space-x-2"
-                        onClick={() => handleReplyToReply(comment.id, reply)}
-                      >
+                      <button className="flex items-center space-x-2" onClick={() => handleReplyToReply(comment.id, reply)}>
                         <HiReply />
                       </button>
                     )}
