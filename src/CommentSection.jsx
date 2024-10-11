@@ -95,6 +95,22 @@ function CommentSection({ postId, toggleModal }) {
     }
   };
 
+  const handleLike = (commentId, isReply = false, parentId = null) => {
+    // Logic for liking comments and replies
+  };
+
+  const handleDislike = (commentId, isReply = false, parentId = null) => {
+    // Logic for disliking comments and replies
+  };
+
+  const handleEditComment = (commentId, text) => {
+    // Logic for editing a comment
+  };
+
+  const handleEditReply = (replyId, text) => {
+    // Logic for editing a reply
+  };
+
   return (
     <section className="mb-8 mt-4">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
@@ -186,11 +202,11 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">
-                    {reply.user}{" "}
-                    {/* Tampilkan "Membalas [nama user]" hanya jika ini balasan ke balasan lain */}
+                  <p className="font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                    {reply.user}
+                    {/* Show "Membalas [nama user]" only if this is a reply to another reply */}
                     {reply.repliedTo && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
                         Membalas {reply.repliedTo}
                       </span>
                     )}
