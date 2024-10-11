@@ -8,6 +8,7 @@ import { useTheme } from './ThemeContext';
 import CommentSection from './CommentSection';
 import AuthModal from './AuthModal';
 
+
 function PostPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
