@@ -72,6 +72,7 @@ function CommentSection({ postId, toggleModal }) {
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: auth.currentUser.email,
+            repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
             dislikes: []
@@ -185,11 +186,11 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
-                  <p className="font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                    {reply.user}
-                    {/* Show "Membalas [nama user]" only if this is a reply to a reply */}
+                  <p className="font-semibold text-gray-700 dark:text-gray-300">
+                    {reply.user}{" "}
+                    {/* Tampilkan "Membalas [nama user]" hanya jika ini balasan ke balasan lain */}
                     {reply.repliedTo && (
-                      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         Membalas {reply.repliedTo}
                       </span>
                     )}
