@@ -23,7 +23,6 @@ function CommentSection({ postId, toggleModal }) {
             replies: []
           };
 
-          // Fetch replies in real-time for each comment
           const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
           const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
             const replies = repliesSnapshot.docs.map(replyDoc => ({
@@ -181,8 +180,8 @@ function CommentSection({ postId, toggleModal }) {
     }
   };
 
-  const userLiked = (likes) => auth.currentUser && likes.includes(auth.currentUser.email);
-  const userDisliked = (dislikes) => auth.currentUser && dislikes.includes(auth.currentUser.email);
+  const userLiked = (likes) => auth.currentUser && likes && likes.includes(auth.currentUser.email);
+  const userDisliked = (dislikes) => auth.currentUser && dislikes && dislikes.includes(auth.currentUser.email);
 
   return (
     <section className="mb-8 mt-4">
@@ -237,16 +236,16 @@ function CommentSection({ postId, toggleModal }) {
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbUp color={userLiked(comment.likes) ? "blue" : "gray"} />
-              <span>{comment.likes.length}</span>
+              <HiThumbUp className={userLiked(comment.likes) ? 'text-blue-500' : 'text-gray-500'} />
+              <span>{comment.likes?.length || 0}</span>
             </button>
             <button
               className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbDown color={userDisliked(comment.dislikes) ? "red" : "gray"} />
-              <span>{comment.dislikes.length}</span>
+              <HiThumbDown className={userDisliked(comment.dislikes) ? 'text-red-500' : 'text-gray-500'} />
+              <span>{comment.dislikes?.length || 0}</span>
             </button>
 
             {auth.currentUser && (
@@ -291,7 +290,7 @@ function CommentSection({ postId, toggleModal }) {
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbUp color={userLiked(reply.likes) ? "blue" : "gray"} />
+                      <HiThumbUp className={userLiked(reply.likes) ? 'text-blue-500' : 'text-gray-500'} />
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
@@ -299,7 +298,7 @@ function CommentSection({ postId, toggleModal }) {
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbDown color={userDisliked(reply.dislikes) ? "red" : "gray"} />
+                      <HiThumbDown className={userDisliked(reply.dislikes) ? 'text-red-500' : 'text-gray-500'} />
                       <span>{reply.dislikes?.length || 0}</span>
                     </button>
 
