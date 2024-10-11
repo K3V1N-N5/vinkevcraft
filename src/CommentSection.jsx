@@ -130,7 +130,7 @@ function CommentSection({ postId, toggleModal }) {
   };
 
   const handleLike = async (commentId, isReply = false, parentId = null) => {
-    if (!auth.currentUser) return; // Pastikan user login sebelum memberi like
+    if (!auth.currentUser) return;
 
     const targetDoc = isReply
       ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
@@ -140,6 +140,7 @@ function CommentSection({ postId, toggleModal }) {
     if (docSnapshot.exists()) {
       const data = docSnapshot.data();
       const likes = data.likes || [];
+      const dislikes = data.dislikes || [];
 
       if (likes.includes(auth.currentUser.email)) {
         await updateDoc(targetDoc, {
@@ -147,14 +148,15 @@ function CommentSection({ postId, toggleModal }) {
         });
       } else {
         await updateDoc(targetDoc, {
-          likes: arrayUnion(auth.currentUser.email)
+          likes: arrayUnion(auth.currentUser.email),
+          dislikes: arrayRemove(auth.currentUser.email) // Hapus dislike jika ada
         });
       }
     }
   };
 
   const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    if (!auth.currentUser) return; // Pastikan user login sebelum memberi dislike
+    if (!auth.currentUser) return;
 
     const targetDoc = isReply
       ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
@@ -163,6 +165,7 @@ function CommentSection({ postId, toggleModal }) {
     const docSnapshot = await getDoc(targetDoc);
     if (docSnapshot.exists()) {
       const data = docSnapshot.data();
+      const likes = data.likes || [];
       const dislikes = data.dislikes || [];
 
       if (dislikes.includes(auth.currentUser.email)) {
@@ -171,11 +174,15 @@ function CommentSection({ postId, toggleModal }) {
         });
       } else {
         await updateDoc(targetDoc, {
-          dislikes: arrayUnion(auth.currentUser.email)
+          dislikes: arrayUnion(auth.currentUser.email),
+          likes: arrayRemove(auth.currentUser.email) // Hapus like jika ada
         });
       }
     }
   };
+
+  const userLiked = (likes) => auth.currentUser && likes.includes(auth.currentUser.email);
+  const userDisliked = (dislikes) => auth.currentUser && dislikes.includes(auth.currentUser.email);
 
   return (
     <section className="mb-8 mt-4">
@@ -230,7 +237,7 @@ function CommentSection({ postId, toggleModal }) {
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbUp />
+              <HiThumbUp color={userLiked(comment.likes) ? "blue" : "gray"} />
               <span>{comment.likes.length}</span>
             </button>
             <button
@@ -238,7 +245,7 @@ function CommentSection({ postId, toggleModal }) {
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbDown />
+              <HiThumbDown color={userDisliked(comment.dislikes) ? "red" : "gray"} />
               <span>{comment.dislikes.length}</span>
             </button>
 
@@ -284,7 +291,7 @@ function CommentSection({ postId, toggleModal }) {
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbUp />
+                      <HiThumbUp color={userLiked(reply.likes) ? "blue" : "gray"} />
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
@@ -292,7 +299,7 @@ function CommentSection({ postId, toggleModal }) {
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbDown />
+                      <HiThumbDown color={userDisliked(reply.dislikes) ? "red" : "gray"} />
                       <span>{reply.dislikes?.length || 0}</span>
                     </button>
 
