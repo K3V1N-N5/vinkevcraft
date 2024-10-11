@@ -72,7 +72,6 @@ function CommentSection({ postId, toggleModal }) {
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: auth.currentUser.email,
-            repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
             dislikes: []
@@ -93,22 +92,6 @@ function CommentSection({ postId, toggleModal }) {
     } else {
       toggleModal();
     }
-  };
-
-  const handleLike = (commentId, isReply = false, parentId = null) => {
-    // Logic for liking comments and replies
-  };
-
-  const handleDislike = (commentId, isReply = false, parentId = null) => {
-    // Logic for disliking comments and replies
-  };
-
-  const handleEditComment = (commentId, text) => {
-    // Logic for editing a comment
-  };
-
-  const handleEditReply = (replyId, text) => {
-    // Logic for editing a reply
   };
 
   return (
@@ -204,7 +187,7 @@ function CommentSection({ postId, toggleModal }) {
                 <div key={reply.id} className="mb-4">
                   <p className="font-semibold text-gray-700 dark:text-gray-300 flex items-center">
                     {reply.user}
-                    {/* Show "Membalas [nama user]" only if this is a reply to another reply */}
+                    {/* Show "Membalas [nama user]" only if this is a reply to a reply */}
                     {reply.repliedTo && (
                       <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
                         Membalas {reply.repliedTo}
