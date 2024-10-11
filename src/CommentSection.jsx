@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
-import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
+import { HiThumbUp, HiThumbDown, HiX, HiPaperAirplane } from 'react-icons/hi';
+import { MdReply, MdEdit, MdDelete } from 'react-icons/md'; // Ikon baru dari Material Design
 import { auth, db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
 
@@ -249,21 +250,18 @@ function CommentSection({ postId, toggleModal }) {
             </button>
 
             {auth.currentUser && (
-              <button className="flex items-center space-x-2" onClick={() => handleReplyToComment(comment)}>
-                <HiReply />
-                <span>Balas</span>
+              <button onClick={() => handleReplyToComment(comment)} className="flex items-center space-x-2">
+                <MdReply className="text-gray-500 hover:text-blue-500" size={24} />
               </button>
             )}
 
             {auth.currentUser?.email === comment.user && (
               <>
                 <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
-                  <HiOutlinePencilAlt />
-                  <span>Edit</span>
+                  <MdEdit className="text-gray-500 hover:text-blue-500" size={24} />
                 </button>
                 <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
-                  <HiOutlineTrash />
-                  <span>Hapus</span>
+                  <MdDelete className="text-gray-500 hover:text-red-500" size={24} />
                 </button>
               </>
             )}
@@ -303,24 +301,18 @@ function CommentSection({ postId, toggleModal }) {
                     </button>
 
                     {auth.currentUser && (
-                      <button
-                        className="flex items-center space-x-2"
-                        onClick={() => handleReplyToReply(comment.id, reply)}
-                      >
-                        <HiReply />
-                        <span>Balas</span>
+                      <button onClick={() => handleReplyToReply(comment.id, reply)} className="flex items-center space-x-2">
+                        <MdReply className="text-gray-500 hover:text-blue-500" size={24} />
                       </button>
                     )}
 
                     {auth.currentUser?.email === reply.user && (
                       <>
                         <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
-                          <HiOutlinePencilAlt />
-                          <span>Edit</span>
+                          <MdEdit className="text-gray-500 hover:text-blue-500" size={24} />
                         </button>
                         <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
-                          <HiOutlineTrash />
-                          <span>Hapus</span>
+                          <MdDelete className="text-gray-500 hover:text-red-500" size={24} />
                         </button>
                       </>
                     )}
