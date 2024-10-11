@@ -4,6 +4,7 @@ import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilA
 import { auth, db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 
+
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
