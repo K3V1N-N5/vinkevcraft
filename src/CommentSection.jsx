@@ -202,7 +202,7 @@ function CommentSection({ postId, toggleModal }) {
             <div className="ml-8 mt-4">
               {comment.replies.map((reply, index) => (
                 <div key={reply.id} className="mb-4">
-                  {reply.repliedTo ? (
+                  {index === 0 && !reply.repliedTo ? (
                     <>
                       {/* Balasan pertama tidak ada "membalas" */}
                       <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
@@ -211,8 +211,10 @@ function CommentSection({ postId, toggleModal }) {
                   ) : (
                     <>
                       {/* Balasan kedua dan seterusnya menampilkan "membalas" */}
-                      
-                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user} membalas {reply.repliedTo}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {reply.user} membalas {reply.repliedTo}
+                      </p>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300">{reply.user}</p>
                       <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
                     </>
                   )}
