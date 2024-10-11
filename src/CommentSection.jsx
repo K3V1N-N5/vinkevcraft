@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
 import { HiThumbUp, HiThumbDown, HiX, HiPaperAirplane } from 'react-icons/hi';
-import { FiCornerDownLeft, FiEdit, FiTrash } from 'react-icons/fi'; // Ikon Feather yang minimalis
-import { auth, db } from './firebase';
+import { FiCornerDownLeft, FiEdit, FiTrash } from 'react-icons/fi';
+import { auth, db, checkAdmin } from './firebase';  // Tambahkan checkAdmin
 import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
+import { Modal } from 'flowbite-react';
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
@@ -11,6 +12,9 @@ function CommentSection({ postId, toggleModal }) {
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); // State untuk admin
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Modal konfirmasi
+  const [commentToDelete, setCommentToDelete] = useState(null); // Komentar yang akan dihapus
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -31,7 +35,6 @@ function CommentSection({ postId, toggleModal }) {
               ...replyDoc.data(),
             }));
 
-            // Update replies of the specific comment
             setComments((prevComments) =>
               prevComments.map(c =>
                 c.id === commentDoc.id ? { ...c, replies } : c
@@ -44,6 +47,12 @@ function CommentSection({ postId, toggleModal }) {
 
         setComments(newComments);
       });
+
+      // Cek apakah pengguna adalah admin
+      if (auth.currentUser) {
+        const adminStatus = await checkAdmin(auth.currentUser.uid);  // Panggil fungsi checkAdmin
+        setIsAdmin(adminStatus);  // Set status admin di state
+      }
 
       return () => unsubscribe();
     };
@@ -184,6 +193,19 @@ function CommentSection({ postId, toggleModal }) {
   const userLiked = (likes) => auth.currentUser && likes && likes.includes(auth.currentUser.email);
   const userDisliked = (dislikes) => auth.currentUser && dislikes && dislikes.includes(auth.currentUser.email);
 
+  const handleDeleteComment = (commentId) => {
+    setShowDeleteConfirm(true);
+    setCommentToDelete(commentId);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (commentToDelete) {
+      await deleteDoc(doc(db, "posts", postId, "comments", commentToDelete));
+      setShowDeleteConfirm(false);
+      setCommentToDelete(null);
+    }
+  };
+
   return (
     <section className="mb-8 mt-4">
       <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Komentar</h2>
@@ -255,12 +277,12 @@ function CommentSection({ postId, toggleModal }) {
               </button>
             )}
 
-            {auth.currentUser?.email === comment.user && (
+            {(auth.currentUser?.email === comment.user || isAdmin) && (
               <>
                 <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
                   <FiEdit className="text-gray-500 hover:text-blue-500" />
                 </button>
-                <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
+                <button onClick={() => handleDeleteComment(comment.id)} className="flex items-center space-x-2">
                   <FiTrash className="text-gray-500 hover:text-red-500" />
                 </button>
               </>
@@ -306,7 +328,7 @@ function CommentSection({ postId, toggleModal }) {
                       </button>
                     )}
 
-                    {auth.currentUser?.email === reply.user && (
+                    {(auth.currentUser?.email === reply.user || isAdmin) && (
                       <>
                         <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
                           <FiEdit className="text-gray-500 hover:text-blue-500" />
@@ -323,6 +345,24 @@ function CommentSection({ postId, toggleModal }) {
           )}
         </div>
       ))}
+
+      {/* Modal Konfirmasi Penghapusan */}
+      {showDeleteConfirm && (
+        <Modal show={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} size="md" aria-labelledby="delete-confirmation">
+          <Modal.Header>Konfirmasi Penghapusan</Modal.Header>
+          <Modal.Body>
+            <p>Apakah kamu yakin ingin menghapus komentar ini?</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button color="red" onClick={confirmDeleteComment}>
+              Hapus
+            </Button>
+            <Button onClick={() => setShowDeleteConfirm(false)}>
+              Batal
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </section>
   );
 }
