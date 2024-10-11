@@ -15,7 +15,6 @@ function CommentSection({ postId, toggleModal }) {
     const fetchComments = async () => {
       const commentsRef = collection(db, "posts", postId, "comments");
 
-      // Listen to real-time updates for comments and replies
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
         snapshot.docChanges().forEach(change => {
           const commentDoc = change.doc;
@@ -34,7 +33,6 @@ function CommentSection({ postId, toggleModal }) {
                 ...replyDoc.data(),
               }));
               
-              // Update the specific comment with its replies
               setComments((prevComments) => 
                 prevComments.map(c => 
                   c.id === commentDoc.id ? { ...c, replies } : c
@@ -42,7 +40,6 @@ function CommentSection({ postId, toggleModal }) {
               );
             });
 
-            // Add new comment with empty replies at first
             setComments((prevComments) => 
               [...prevComments, commentData]
             );
@@ -78,7 +75,6 @@ function CommentSection({ postId, toggleModal }) {
     if (auth.currentUser) {
       if (replyTo) {
         if (replyTo.parentId) {
-          // Reply to another reply
           await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
             text: comment,
             user: auth.currentUser.email,
@@ -88,7 +84,6 @@ function CommentSection({ postId, toggleModal }) {
             dislikes: []
           });
         } else {
-          // Reply to a main comment
           await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
             text: comment,
             user: auth.currentUser.email,
@@ -98,9 +93,8 @@ function CommentSection({ postId, toggleModal }) {
             dislikes: []
           });
         }
-        setReplyTo(null);  // Clear reply state
+        setReplyTo(null);
       } else {
-        // Add a new comment
         await addDoc(collection(db, "posts", postId, "comments"), {
           text: comment,
           user: auth.currentUser.email,
@@ -109,20 +103,60 @@ function CommentSection({ postId, toggleModal }) {
           dislikes: []
         });
       }
-      setComment('');  // Clear comment input
+      setComment('');
     } else {
-      toggleModal();  // Prompt login
+      toggleModal();
+    }
+  };
+
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
+
+    const snapshot = await targetDoc.get();
+    const data = snapshot.data();
+
+    if (!data.likes.includes(auth.currentUser.email)) {
+      await updateDoc(targetDoc, {
+        likes: [...data.likes, auth.currentUser.email],
+        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email)
+      });
+    } else {
+      await updateDoc(targetDoc, {
+        likes: data.likes.filter(user => user !== auth.currentUser.email)
+      });
+    }
+  };
+
+  const handleDislike = async (commentId, isReply = false, parentId = null) => {
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
+
+    const snapshot = await targetDoc.get();
+    const data = snapshot.data();
+
+    if (!data.dislikes.includes(auth.currentUser.email)) {
+      await updateDoc(targetDoc, {
+        dislikes: [...data.dislikes, auth.currentUser.email],
+        likes: data.likes.filter(user => user !== auth.currentUser.email)
+      });
+    } else {
+      await updateDoc(targetDoc, {
+        dislikes: data.dislikes.filter(user => user !== auth.currentUser.email)
+      });
     }
   };
 
   const handleEditComment = (commentId, text) => {
     setEditing({ id: commentId, text, isReply: false });
-    setComment(text);  // Set comment text for editing
+    setComment(text); 
   };
 
   const handleEditReply = (replyId, text, parentId) => {
     setEditing({ id: replyId, text, parentId, isReply: true });
-    setComment(text);  // Set reply text for editing
+    setComment(text); 
   };
 
   const handleEditSubmit = async () => {
@@ -133,17 +167,8 @@ function CommentSection({ postId, toggleModal }) {
       const commentDoc = doc(db, "posts", postId, "comments", editing.id);
       await updateDoc(commentDoc, { text: comment });
     }
-    setComment('');  // Clear input field
-    setEditing(null);  // Reset editing state
-  };
-
-  const handleLike = async (commentId, isReply = false, parentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
-
-    // Implement your like/dislike logic here, e.g., updating the likes array
-    // You can use `updateDoc` to modify the document in Firestore
+    setComment(''); 
+    setEditing(null); 
   };
 
   return (
@@ -195,7 +220,7 @@ function CommentSection({ postId, toggleModal }) {
 
           <div className="flex space-x-4 mt-2">
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+              className={`flex items-center space-x-2 ${comment.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'} `}
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -203,7 +228,7 @@ function CommentSection({ postId, toggleModal }) {
               <span>{comment.likes.length}</span>
             </button>
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+              className={`flex items-center space-x-2 ${comment.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'} `}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
@@ -214,7 +239,6 @@ function CommentSection({ postId, toggleModal }) {
             {auth.currentUser && (
               <button className="flex items-center space-x-2" onClick={() => handleReplyToComment(comment)}>
                 <HiReply />
-                <span>Balas</span>
               </button>
             )}
 
@@ -222,11 +246,9 @@ function CommentSection({ postId, toggleModal }) {
               <>
                 <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
                   <HiOutlinePencilAlt />
-                  <span>Edit</span>
                 </button>
                 <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
                   <HiOutlineTrash />
-                  <span>Hapus</span>
                 </button>
               </>
             )}
@@ -249,7 +271,7 @@ function CommentSection({ postId, toggleModal }) {
 
                   <div className="flex space-x-4 mt-2">
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                      className={`flex items-center space-x-2 ${reply.likes.includes(auth.currentUser?.email) ? 'text-blue-500' : 'text-gray-500'} `}
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -257,7 +279,7 @@ function CommentSection({ postId, toggleModal }) {
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                      className={`flex items-center space-x-2 ${reply.dislikes.includes(auth.currentUser?.email) ? 'text-red-500' : 'text-gray-500'} `}
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -271,7 +293,6 @@ function CommentSection({ postId, toggleModal }) {
                         onClick={() => handleReplyToReply(comment.id, reply)}
                       >
                         <HiReply />
-                        <span>Balas</span>
                       </button>
                     )}
 
@@ -279,11 +300,9 @@ function CommentSection({ postId, toggleModal }) {
                       <>
                         <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
                           <HiOutlinePencilAlt />
-                          <span>Edit</span>
                         </button>
                         <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
                           <HiOutlineTrash />
-                          <span>Hapus</span>
                         </button>
                       </>
                     )}
