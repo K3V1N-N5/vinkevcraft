@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
 import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
 import { auth, db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
@@ -16,34 +16,33 @@ function CommentSection({ postId, toggleModal }) {
       const commentsRef = collection(db, "posts", postId, "comments");
 
       const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        snapshot.docChanges().forEach(change => {
-          const commentDoc = change.doc;
-          if (change.type === "added" || change.type === "modified") {
-            const commentData = {
-              id: commentDoc.id,
-              ...commentDoc.data(),
-              replies: []
-            };
+        const newComments = snapshot.docs.map(commentDoc => {
+          const commentData = {
+            id: commentDoc.id,
+            ...commentDoc.data(),
+            replies: []
+          };
 
-            const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
-            const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
-              const replies = repliesSnapshot.docs.map(replyDoc => ({
-                id: replyDoc.id,
-                ...replyDoc.data(),
-              }));
+          // Fetch replies in real-time for each comment
+          const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
+          const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
+            const replies = repliesSnapshot.docs.map(replyDoc => ({
+              id: replyDoc.id,
+              ...replyDoc.data(),
+            }));
 
-              setComments((prevComments) =>
-                prevComments.map(c =>
-                  c.id === commentDoc.id ? { ...c, replies } : c
-                )
-              );
-            });
-
+            // Update replies of the specific comment
             setComments((prevComments) =>
-              [...prevComments, commentData]
+              prevComments.map(c =>
+                c.id === commentDoc.id ? { ...c, replies } : c
+              )
             );
-          }
+          });
+
+          return commentData;
         });
+
+        setComments(newComments);
       });
 
       return () => unsubscribe();
@@ -132,24 +131,50 @@ function CommentSection({ postId, toggleModal }) {
 
   const handleLike = async (commentId, isReply = false, parentId = null) => {
     if (!auth.currentUser) return; // Pastikan user login sebelum memberi like
-    
+
     const targetDoc = isReply
       ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
       : doc(db, "posts", postId, "comments", commentId);
 
-    // Cek apakah user sudah like atau belum
-    const docSnapshot = await targetDoc.get();
-    const data = docSnapshot.data();
-    const likes = data.likes || [];
-    
-    // Jika user sudah like, hapus like. Jika belum, tambahkan like.
-    const newLikes = likes.includes(auth.currentUser.email)
-      ? arrayRemove(auth.currentUser.email)
-      : arrayUnion(auth.currentUser.email);
-    
-    await updateDoc(targetDoc, {
-      likes: newLikes,
-    });
+    const docSnapshot = await getDoc(targetDoc);
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const likes = data.likes || [];
+
+      if (likes.includes(auth.currentUser.email)) {
+        await updateDoc(targetDoc, {
+          likes: arrayRemove(auth.currentUser.email)
+        });
+      } else {
+        await updateDoc(targetDoc, {
+          likes: arrayUnion(auth.currentUser.email)
+        });
+      }
+    }
+  };
+
+  const handleDislike = async (commentId, isReply = false, parentId = null) => {
+    if (!auth.currentUser) return; // Pastikan user login sebelum memberi dislike
+
+    const targetDoc = isReply
+      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+      : doc(db, "posts", postId, "comments", commentId);
+
+    const docSnapshot = await getDoc(targetDoc);
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const dislikes = data.dislikes || [];
+
+      if (dislikes.includes(auth.currentUser.email)) {
+        await updateDoc(targetDoc, {
+          dislikes: arrayRemove(auth.currentUser.email)
+        });
+      } else {
+        await updateDoc(targetDoc, {
+          dislikes: arrayUnion(auth.currentUser.email)
+        });
+      }
+    }
   };
 
   return (
