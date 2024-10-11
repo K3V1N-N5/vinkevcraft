@@ -27,5 +27,10 @@ const storage = getStorage(app);
 // Initialize Firebase Auth
 const auth = getAuth(app);
 
+const checkAdmin = async (uid) => {
+  const adminDoc = await getDoc(doc(db, "admins", uid));
+  return adminDoc.exists();  // Jika dokumen ada, pengguna adalah admin
+};
+
 // Export Firestore, Storage, and Auth
-export { db, storage, auth };
+export { db, storage, auth, checkAdmin };
