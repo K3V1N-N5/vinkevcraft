@@ -9,48 +9,55 @@ function CommentSection({ postId, toggleModal }) {
   const [comments, setComments] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState('');
-  const [editing, setEditing] = useState(null);  // Track editing state
+  const [editing, setEditing] = useState(null);
+  const [loading, setLoading] = useState(true);  // New state for loading
 
   useEffect(() => {
     const fetchComments = async () => {
-      const commentsRef = collection(db, "posts", postId, "comments");
+      try {
+        const commentsRef = collection(db, "posts", postId, "comments");
 
-      // Listen to real-time updates for comments and replies
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        snapshot.docChanges().forEach(change => {
-          const commentDoc = change.doc;
-          if (change.type === "added" || change.type === "modified") {
-            const commentData = {
-              id: commentDoc.id,
-              ...commentDoc.data(),
-              replies: []
-            };
+        // Listen to real-time updates for comments and replies
+        const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+          snapshot.docChanges().forEach(change => {
+            const commentDoc = change.doc;
+            if (change.type === "added" || change.type === "modified") {
+              const commentData = {
+                id: commentDoc.id,
+                ...commentDoc.data(),
+                replies: []
+              };
 
-            // Fetch replies in real-time for each comment
-            const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
-            const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
-              const replies = repliesSnapshot.docs.map(replyDoc => ({
-                id: replyDoc.id,
-                ...replyDoc.data(),
-              }));
-              
-              // Update the specific comment with its replies
+              // Fetch replies in real-time for each comment
+              const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
+              const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
+                const replies = repliesSnapshot.docs.map(replyDoc => ({
+                  id: replyDoc.id,
+                  ...replyDoc.data(),
+                }));
+                
+                // Update the specific comment with its replies
+                setComments((prevComments) => 
+                  prevComments.map(c => 
+                    c.id === commentDoc.id ? { ...c, replies } : c
+                  )
+                );
+              });
+
+              // Add new comment with empty replies at first
               setComments((prevComments) => 
-                prevComments.map(c => 
-                  c.id === commentDoc.id ? { ...c, replies } : c
-                )
+                [...prevComments, commentData]
               );
-            });
-
-            // Add new comment with empty replies at first
-            setComments((prevComments) => 
-              [...prevComments, commentData]
-            );
-          }
+            }
+          });
         });
-      });
 
-      return () => unsubscribe();  // Cleanup listener
+        setLoading(false);  // Set loading to false after data is fetched
+
+        return () => unsubscribe();  // Cleanup listener
+      } catch (error) {
+        console.error("Error fetching comments: ", error);
+      }
     };
 
     fetchComments();
@@ -75,43 +82,48 @@ function CommentSection({ postId, toggleModal }) {
     }
 
     setError('');
-    if (auth.currentUser) {
-      if (replyTo) {
-        if (replyTo.parentId) {
-          // Reply to another reply
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
-            text: comment,
-            user: auth.currentUser.email,
-            repliedTo: replyTo.user,
-            createdAt: new Date(),
-            likes: [],
-            dislikes: []
-          });
+    try {
+      if (auth.currentUser) {
+        if (replyTo) {
+          if (replyTo.parentId) {
+            // Reply to another reply
+            await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
+              text: comment,
+              user: auth.currentUser.email,
+              repliedTo: replyTo.user,
+              createdAt: new Date(),
+              likes: [],
+              dislikes: []
+            });
+          } else {
+            // Reply to a main comment
+            await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+              text: comment,
+              user: auth.currentUser.email,
+              repliedTo: replyTo.user,
+              createdAt: new Date(),
+              likes: [],
+              dislikes: []
+            });
+          }
+          setReplyTo(null);  // Clear reply state
         } else {
-          // Reply to a main comment
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+          // Add a new comment
+          await addDoc(collection(db, "posts", postId, "comments"), {
             text: comment,
             user: auth.currentUser.email,
-            repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
             dislikes: []
           });
         }
-        setReplyTo(null);  // Clear reply state
+        setComment('');  // Clear comment input
       } else {
-        // Add a new comment
-        await addDoc(collection(db, "posts", postId, "comments"), {
-          text: comment,
-          user: auth.currentUser.email,
-          createdAt: new Date(),
-          likes: [],
-          dislikes: []
-        });
+        toggleModal();  // Prompt login
       }
-      setComment('');  // Clear comment input
-    } else {
-      toggleModal();  // Prompt login
+    } catch (error) {
+      console.error("Error submitting comment: ", error);
+      setError("Terjadi kesalahan saat mengirim komentar.");
     }
   };
 
@@ -126,64 +138,72 @@ function CommentSection({ postId, toggleModal }) {
   };
 
   const handleEditSubmit = async () => {
-    if (editing.isReply) {
-      const replyDoc = doc(db, "posts", postId, "comments", editing.parentId, "replies", editing.id);
-      await updateDoc(replyDoc, { text: comment });
-    } else {
-      const commentDoc = doc(db, "posts", postId, "comments", editing.id);
-      await updateDoc(commentDoc, { text: comment });
+    try {
+      if (editing.isReply) {
+        const replyDoc = doc(db, "posts", postId, "comments", editing.parentId, "replies", editing.id);
+        await updateDoc(replyDoc, { text: comment });
+      } else {
+        const commentDoc = doc(db, "posts", postId, "comments", editing.id);
+        await updateDoc(commentDoc, { text: comment });
+      }
+      setComment('');  // Clear input field
+      setEditing(null);  // Reset editing state
+    } catch (error) {
+      console.error("Error editing comment/reply: ", error);
     }
-    setComment('');  // Clear input field
-    setEditing(null);  // Reset editing state
   };
 
   const handleLike = async (commentId, isReply = false, parentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
+    try {
+      const targetDoc = isReply
+        ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+        : doc(db, "posts", postId, "comments", commentId);
 
-    // Check if user has already liked the comment/reply
-    const commentSnapshot = await targetDoc.get();
-    const commentData = commentSnapshot.data();
-    const userLiked = commentData.likes.includes(auth.currentUser.email);
+      const commentSnapshot = await targetDoc.get();
+      const commentData = commentSnapshot.data();
+      const userLiked = commentData.likes?.includes(auth.currentUser.email);
 
-    if (userLiked) {
-      // Remove like
-      await updateDoc(targetDoc, {
-        likes: arrayRemove(auth.currentUser.email),
-      });
-    } else {
-      // Add like
-      await updateDoc(targetDoc, {
-        likes: arrayUnion(auth.currentUser.email),
-        dislikes: arrayRemove(auth.currentUser.email),  // Remove dislike if present
-      });
+      if (userLiked) {
+        await updateDoc(targetDoc, {
+          likes: arrayRemove(auth.currentUser.email),
+        });
+      } else {
+        await updateDoc(targetDoc, {
+          likes: arrayUnion(auth.currentUser.email),
+          dislikes: arrayRemove(auth.currentUser.email),  // Remove dislike if present
+        });
+      }
+    } catch (error) {
+      console.error("Error liking comment/reply: ", error);
     }
   };
 
   const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
+    try {
+      const targetDoc = isReply
+        ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+        : doc(db, "posts", postId, "comments", commentId);
 
-    // Check if user has already disliked the comment/reply
-    const commentSnapshot = await targetDoc.get();
-    const commentData = commentSnapshot.data();
-    const userDisliked = commentData.dislikes.includes(auth.currentUser.email);
+      const commentSnapshot = await targetDoc.get();
+      const commentData = commentSnapshot.data();
+      const userDisliked = commentData.dislikes?.includes(auth.currentUser.email);
 
-    if (userDisliked) {
-      // Remove dislike
-      await updateDoc(targetDoc, {
-        dislikes: arrayRemove(auth.currentUser.email),
-      });
-    } else {
-      // Add dislike
-      await updateDoc(targetDoc, {
-        dislikes: arrayUnion(auth.currentUser.email),
-        likes: arrayRemove(auth.currentUser.email),  // Remove like if present
-      });
+      if (userDisliked) {
+        await updateDoc(targetDoc, {
+          dislikes: arrayRemove(auth.currentUser.email),
+        });
+      } else {
+        await updateDoc(targetDoc, {
+          dislikes: arrayUnion(auth.currentUser.email),
+          likes: arrayRemove(auth.currentUser.email),  // Remove like if present
+        });
+      }
+    } catch (error) {
+      console.error("Error disliking comment/reply: ", error);
     }
   };
+
+  if (loading) return <div className="text-center text-gray-500">Loading comments...</div>;  // Loading state
 
   return (
     <section className="mb-8 mt-4">
@@ -234,20 +254,20 @@ function CommentSection({ postId, toggleModal }) {
 
           <div className="flex space-x-4 mt-2">
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.likes.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.likes?.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
               <HiThumbUp />
-              <span>{comment.likes.length}</span>
+              <span>{comment.likes?.length || 0}</span>
             </button>
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.dislikes.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.dislikes?.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
               <HiThumbDown />
-              <span>{comment.dislikes.length}</span>
+              <span>{comment.dislikes?.length || 0}</span>
             </button>
 
             {auth.currentUser && (
@@ -285,7 +305,7 @@ function CommentSection({ postId, toggleModal }) {
 
                   <div className="flex space-x-4 mt-2">
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.likes.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.likes?.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
@@ -293,7 +313,7 @@ function CommentSection({ postId, toggleModal }) {
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.dislikes.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.dislikes?.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
