@@ -250,17 +250,17 @@ function CommentSection({ postId, toggleModal }) {
             </button>
 
             {auth.currentUser && (
-              <button onClick={() => handleReplyToComment(comment)} className="flex items-center">
+              <button onClick={() => handleReplyToComment(comment)} className="flex items-center space-x-2">
                 <FiCornerDownLeft className="text-gray-500 hover:text-blue-500" />
               </button>
             )}
 
             {auth.currentUser?.email === comment.user && (
               <>
-                <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center">
+                <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
                   <FiEdit className="text-gray-500 hover:text-blue-500" />
                 </button>
-                <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center">
+                <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
                   <FiTrash className="text-gray-500 hover:text-red-500" />
                 </button>
               </>
@@ -301,17 +301,17 @@ function CommentSection({ postId, toggleModal }) {
                     </button>
 
                     {auth.currentUser && (
-                      <button onClick={() => handleReplyToReply(comment.id, reply)} className="flex items-center">
+                      <button onClick={() => handleReplyToReply(comment.id, reply)} className="flex items-center space-x-2">
                         <FiCornerDownLeft className="text-gray-500 hover:text-blue-500" />
                       </button>
                     )}
 
                     {auth.currentUser?.email === reply.user && (
                       <>
-                        <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center">
+                        <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
                           <FiEdit className="text-gray-500 hover:text-blue-500" />
                         </button>
-                        <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center">
+                        <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
                           <FiTrash className="text-gray-500 hover:text-red-500" />
                         </button>
                       </>
