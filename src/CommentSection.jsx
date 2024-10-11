@@ -188,7 +188,7 @@ function CommentSection({ postId, toggleModal }) {
                 <div key={reply.id} className="mb-4">
                   <p className="font-semibold text-gray-700 dark:text-gray-300">
                     {reply.user}{" "}
-                    {/* Hanya tampilkan "Membalas [nama user]" jika ini balasan ke balasan lain */}
+                    {/* Tampilkan "Membalas [nama user]" hanya jika ini balasan ke balasan lain */}
                     {reply.repliedTo && (
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         Membalas {reply.repliedTo}
