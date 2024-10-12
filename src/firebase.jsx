@@ -27,9 +27,14 @@ const storage = getStorage(app);
 // Initialize Firebase Auth
 const auth = getAuth(app);
 
-const checkAdmin = async (uid) => {
-  const adminDoc = await getDoc(doc(db, "admins", uid));
-  return adminDoc.exists();  // Jika dokumen ada, pengguna adalah admin
+export const checkAdmin = async (uid) => {
+  try {
+    const adminDoc = await getDoc(doc(db, "admins", uid));
+    return adminDoc.exists();  // Mengembalikan true jika user adalah admin
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    throw error;  // Lempar error jika terjadi kesalahan
+  }
 };
 
 // Export Firestore, Storage, and Auth
