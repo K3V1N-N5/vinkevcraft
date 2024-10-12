@@ -1,118 +1,121 @@
+// AuthModal.js
 import React, { useState } from 'react';
-import { Modal, Button, TextInput, Label } from 'flowbite-react';
-import { auth, db, checkAdmin } from './firebase'; // Firebase imports
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { Modal, Button, TextInput } from 'flowbite-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db, checkAdmin } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-function AuthModal({ showModal, onClose, setIsAdmin }) {
-  const [isLogin, setIsLogin] = useState(true); // State to toggle between login and registration
+function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState(''); // Only used in registration
-  const [error, setError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Toggle between Login and Register form
-  const handleToggleForm = () => {
-    setIsLogin(!isLogin);
-    setError(''); // Clear error on form switch
+  // Handle user login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const isAdmin = await checkAdmin(user.uid);
+      setIsAdmin(isAdmin);
+      toggleModal();
+    } catch (error) {
+      setAuthError('Login gagal: ' + error.message);
+    }
+    setAuthLoading(false);
   };
 
-  // Handle Registration
-  const handleRegister = async () => {
-    if (!email || !password || !username) {
-      setError('Please fill in all fields.');
+  // Handle user registration
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (password !== confirmPassword) {
+      setAuthError("Password tidak cocok!");
       return;
     }
+    setAuthLoading(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Save the user to Firestore with additional username and admin status
-      await setDoc(doc(db, "users", user.uid), {
-        username,
-        email: user.email,
-        isAdmin: false, // Default to non-admin
-      });
+      // Simpan username ke Firestore
+      await setDoc(doc(db, "usernames", username), { email });
 
-      // Check admin status after registration
-      const adminStatus = await checkAdmin(user.uid);
-      setIsAdmin(adminStatus); // Set admin status in parent state
+      // Cek jika user adalah admin
+      const isAdmin = await checkAdmin(user.uid);
+      setIsAdmin(isAdmin);
 
-      onClose(); // Close modal on successful registration
+      toggleModal();
     } catch (error) {
-      setError(error.message); // Display error from Firebase
+      setAuthError('Registrasi gagal: ' + error.message);
     }
-  };
-
-  // Handle Login
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter both email and password.');
-      return;
-    }
-
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Check admin status after login
-      const adminStatus = await checkAdmin(user.uid);
-      setIsAdmin(adminStatus); // Set admin status in parent state
-
-      onClose(); // Close modal on successful login
-    } catch (error) {
-      setError(error.message); // Display error from Firebase
-    }
+    setAuthLoading(false);
   };
 
   return (
-    <Modal show={showModal} onClose={onClose}>
-      <Modal.Header>{isLogin ? 'Login' : 'Register'}</Modal.Header>
+    <Modal show={isModalOpen} onClose={toggleModal} size="lg">
+      <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
       <Modal.Body>
-        {/* If user is registering, show username field */}
-        {!isLogin && (
-          <div className="mb-4">
-            <Label htmlFor="username" value="Username" />
+        <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+          {authError && <p className="text-red-500">{authError}</p>}
+          {!isLogin && (
             <TextInput
-              id="username"
               type="text"
+              placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              required
             />
-          </div>
-        )}
-        <div className="mb-4">
-          <Label htmlFor="email" value="Email" />
+          )}
           <TextInput
-            id="email"
             type="email"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
+            required
           />
-        </div>
-        <div className="mb-4">
-          <Label htmlFor="password" value="Password" />
           <TextInput
-            id="password"
             type="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
+            required
           />
+          {!isLogin && (
+            <TextInput
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          )}
+          <Button type="submit" color="blue" disabled={authLoading}>
+            {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
+          </Button>
+        </form>
+        <div className="text-center mt-4">
+          {isLogin ? (
+            <p>
+              Don't have an account?{" "}
+              <button onClick={() => setIsLogin(false)} className="text-blue-500">Register</button>
+            </p>
+          ) : (
+            <p>
+              Already have an account?{" "}
+              <button onClick={() => setIsLogin(true)} className="text-blue-500">Login</button>
+            </p>
+          )}
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
       </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={isLogin ? handleLogin : handleRegister}>
-          {isLogin ? 'Login' : 'Register'}
-        </Button>
-        <Button onClick={handleToggleForm}>
-          {isLogin ? 'Switch to Register' : 'Switch to Login'}
-        </Button>
-      </Modal.Footer>
     </Modal>
   );
 }
