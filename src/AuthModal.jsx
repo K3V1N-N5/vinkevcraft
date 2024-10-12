@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { Modal, Button, TextInput, Label } from 'flowbite-react';
 import { auth, db, checkAdmin } from './firebase'; // Firebase imports
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'; 
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 function AuthModal({ showModal, onClose, setIsAdmin }) {
-  const [isLogin, setIsLogin] = useState(true); // Toggle between login and register
+  const [isLogin, setIsLogin] = useState(true); // State to toggle between login and registration
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState(''); // For registration
+  const [username, setUsername] = useState(''); // Only used in registration
   const [error, setError] = useState('');
 
-  // Switch between login and registration
+  // Toggle between Login and Register form
   const handleToggleForm = () => {
     setIsLogin(!isLogin);
-    setError(''); // Clear errors when switching forms
+    setError(''); // Clear error on form switch
   };
 
-  // Registration handler
+  // Handle Registration
   const handleRegister = async () => {
     if (!email || !password || !username) {
-      setError('All fields are required.');
+      setError('Please fill in all fields.');
       return;
     }
 
@@ -28,26 +28,27 @@ function AuthModal({ showModal, onClose, setIsAdmin }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Store user info in Firestore
+      // Save the user to Firestore with additional username and admin status
       await setDoc(doc(db, "users", user.uid), {
         username,
         email: user.email,
-        isAdmin: false, // Default role is non-admin
+        isAdmin: false, // Default to non-admin
       });
 
-      const adminStatus = await checkAdmin(user.uid); // Check admin status
-      setIsAdmin(adminStatus); // Set admin state
+      // Check admin status after registration
+      const adminStatus = await checkAdmin(user.uid);
+      setIsAdmin(adminStatus); // Set admin status in parent state
 
-      onClose(); // Close modal after success
+      onClose(); // Close modal on successful registration
     } catch (error) {
-      setError(error.message); // Display Firebase error
+      setError(error.message); // Display error from Firebase
     }
   };
 
-  // Login handler
+  // Handle Login
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Please enter email and password.');
+      setError('Please enter both email and password.');
       return;
     }
 
@@ -55,12 +56,13 @@ function AuthModal({ showModal, onClose, setIsAdmin }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const adminStatus = await checkAdmin(user.uid); // Check admin status
-      setIsAdmin(adminStatus); // Set admin state
+      // Check admin status after login
+      const adminStatus = await checkAdmin(user.uid);
+      setIsAdmin(adminStatus); // Set admin status in parent state
 
-      onClose(); // Close modal after success
+      onClose(); // Close modal on successful login
     } catch (error) {
-      setError(error.message); // Display Firebase error
+      setError(error.message); // Display error from Firebase
     }
   };
 
@@ -68,6 +70,7 @@ function AuthModal({ showModal, onClose, setIsAdmin }) {
     <Modal show={showModal} onClose={onClose}>
       <Modal.Header>{isLogin ? 'Login' : 'Register'}</Modal.Header>
       <Modal.Body>
+        {/* If user is registering, show username field */}
         {!isLogin && (
           <div className="mb-4">
             <Label htmlFor="username" value="Username" />
@@ -76,7 +79,7 @@ function AuthModal({ showModal, onClose, setIsAdmin }) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Your username"
+              placeholder="Enter your username"
             />
           </div>
         )}
@@ -94,10 +97,10 @@ function AuthModal({ showModal, onClose, setIsAdmin }) {
           <Label htmlFor="password" value="Password" />
           <TextInput
             id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Your password"
           />
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
