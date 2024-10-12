@@ -59,8 +59,10 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
       // Simpan username ke Firestore
       await setDoc(doc(db, "usernames", username), { email });
 
-      // Tidak perlu cek admin saat register
-      setIsAdmin(false); // Set status admin ke false setelah register
+      // Cek apakah user adalah admin di Firestore
+      const adminDoc = await getDoc(doc(db, "admins", user.uid));
+      const isAdmin = adminDoc.exists(); // Jika dokumen ada, berarti user adalah admin
+      setIsAdmin(isAdmin); // Set status admin di state
 
       toggleModal(); // Tutup modal setelah berhasil register
     } catch (error) {
