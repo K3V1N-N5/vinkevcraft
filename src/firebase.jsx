@@ -1,6 +1,6 @@
 // Import Firebase SDK functions
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc } from "firebase/firestore"; // Firestore import
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore"; // Firestore import
 import { getStorage } from "firebase/storage"; // Import Firebase Storage
 import { getAuth } from "firebase/auth"; // Import Firebase Authentication
 
