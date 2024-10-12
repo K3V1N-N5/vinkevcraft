@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Modal, Button, TextInput } from 'flowbite-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db, checkAdmin } from './firebase';  // Import checkAdmin
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan setIsAdmin di props
+function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,36 +13,35 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
 
+  // Fungsi untuk handle login
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
 
-    let loginEmail = email;
-
-    const usernameDoc = await getDoc(doc(db, "usernames", email));
-    if (usernameDoc.exists()) {
-      loginEmail = usernameDoc.data().email;
-    }
-
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
+      // Autentikasi menggunakan email dan password
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Cek apakah user adalah admin
-      const isAdmin = await checkAdmin(user.uid);
-      setIsAdmin(isAdmin);  // Simpan status admin di state aplikasi
+      // Cek apakah user adalah admin di Firestore
+      const adminDoc = await getDoc(doc(db, "admins", user.uid));
+      const isAdmin = adminDoc.exists(); // Jika dokumen ada, berarti user adalah admin
+      setIsAdmin(isAdmin); // Set status admin di state
 
-      toggleModal();
+      toggleModal(); // Tutup modal setelah berhasil login
     } catch (error) {
-      setAuthError('Login gagal: ' + error.message);
+      setAuthError('Login gagal: ' + error.message); // Tampilkan pesan error jika login gagal
     }
-    setAuthLoading(false);
+    setAuthLoading(false); // Matikan loading state
   };
 
+  // Fungsi untuk handle register
   const handleRegister = async (e) => {
     e.preventDefault();
     setAuthError(null);
+
+    // Cek apakah password dan konfirmasi password cocok
     if (password !== confirmPassword) {
       setAuthError("Password tidak cocok!");
       return;
@@ -50,21 +49,26 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
     setAuthLoading(true);
 
     try {
+      // Buat user baru dengan email dan password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Update profil user dengan username
       await updateProfile(user, { displayName: username });
+
+      // Simpan username ke Firestore
       await setDoc(doc(db, "usernames", username), { email });
 
-      // Jika user baru login, cek apakah dia admin
-      const isAdmin = await checkAdmin(user.uid);
-      setIsAdmin(isAdmin);
+      // Cek apakah user adalah admin di Firestore
+      const adminDoc = await getDoc(doc(db, "admins", user.uid));
+      const isAdmin = adminDoc.exists(); // Jika dokumen ada, berarti user adalah admin
+      setIsAdmin(isAdmin); // Set status admin di state
 
-      toggleModal();
+      toggleModal(); // Tutup modal setelah berhasil register
     } catch (error) {
-      setAuthError('Registrasi gagal: ' + error.message);
+      setAuthError('Registrasi gagal: ' + error.message); // Tampilkan pesan error jika registrasi gagal
     }
-    setAuthLoading(false);
+    setAuthLoading(false); // Matikan loading state
   };
 
   return (
@@ -72,7 +76,7 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
       <Modal.Header>{isLogin ? "Login" : "Register"}</Modal.Header>
       <Modal.Body className="p-8">
         <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
-          {authError && <p className="text-red-500 text-center">{authError}</p>}
+          {authError && <p className="text-red-500">{authError}</p>}
           {!isLogin && (
             <TextInput
               type="text"
@@ -80,16 +84,14 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="w-full"
             />
           )}
           <TextInput
             type="email"
-            placeholder="Email or Username"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full"
           />
           <TextInput
             type="password"
@@ -97,7 +99,6 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full"
           />
           {!isLogin && (
             <TextInput
@@ -106,11 +107,9 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {  // Tambahkan set
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full"
             />
           )}
-
-          <Button type="submit" color="blue" className="w-full" disabled={authLoading}>
+          <Button type="submit" color="blue" disabled={authLoading}>
             {authLoading ? (isLogin ? "Logging in..." : "Registering...") : (isLogin ? "Login" : "Register")}
           </Button>
         </form>
