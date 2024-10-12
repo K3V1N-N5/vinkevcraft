@@ -1,7 +1,6 @@
-
 // Import Firebase SDK functions
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // Firestore import
+import { getFirestore, doc, getDoc } from "firebase/firestore"; // Firestore import
 import { getStorage } from "firebase/storage"; // Import Firebase Storage
 import { getAuth } from "firebase/auth"; // Import Firebase Authentication
 
@@ -28,5 +27,10 @@ const storage = getStorage(app);
 // Initialize Firebase Auth
 const auth = getAuth(app);
 
+const checkAdmin = async (uid) => {
+  const adminDoc = await getDoc(doc(db, "admins", uid));
+  return adminDoc.exists();  // Jika dokumen ada, pengguna adalah admin
+};
+
 // Export Firestore, Storage, and Auth
-export { db, storage, auth };
+export { db, storage, auth, checkAdmin };
