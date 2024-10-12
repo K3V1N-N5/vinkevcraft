@@ -13,6 +13,7 @@ const LinktreePage = lazy(() => import('./LinkTree'));
 const PostPage = lazy(() => import('./PostPage'));
 const ManagePosts = lazy(() => import('./ManagePosts')); // Import untuk halaman Edit Post
 const NotFound = lazy(() => import('./NotFound'));
+const UserList = lazy(() => import('./UserList'));
 
 function App() {
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
@@ -80,6 +81,7 @@ function App() {
               <Route path="/link" element={<LinktreePage />} />
               <Route path="/post/:postId" element={<PostPage />} />
               <Route path="/manage-posts" element={<ManagePosts />} /> {/* Rute untuk Edit Post */}
+              <Route path="/userlist" element={<UserList />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
 
