@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Button, Modal } from 'flowbite-react'; // Flowbite digunakan untuk styling modal dll.
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -28,20 +27,12 @@ function UserList() {
     const deleteUserData = httpsCallable(functions, 'deleteUserData');
 
     if (selectedUser) {
-      // Hapus akun dari Firebase Authentication
       await deleteUser({ uid: selectedUser.uid });
-
-      // Hapus data terkait pengguna dari Firestore (misalnya, komentar)
       await deleteUserData({ uid: selectedUser.uid });
-
-      // Tutup modal dan reset user terpilih
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
-      
-      // Refresh daftar pengguna
       fetchUsers();
     }
-
     setDeleting(false);
   };
 
@@ -59,28 +50,42 @@ function UserList() {
         {users.map(user => (
           <li key={user.uid} className="flex justify-between items-center bg-gray-100 p-3 rounded-lg shadow-md">
             <span>{user.email}</span>
-            <Button color="red" onClick={() => openDeleteModal(user)}>
+            <button
+              className="bg-red-500 text-white py-2 px-4 rounded"
+              onClick={() => openDeleteModal(user)}
+            >
               Hapus Akun
-            </Button>
+            </button>
           </li>
         ))}
       </ul>
 
-      {/* Modal konfirmasi hapus */}
-      <Modal show={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-        <Modal.Header>Konfirmasi Penghapusan</Modal.Header>
-        <Modal.Body>
-          <p>Apakah kamu yakin ingin menghapus akun <strong>{selectedUser?.email}</strong> dan semua data terkait?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button color="gray" onClick={() => setIsDeleteModalOpen(false)}>
-            Batal
-          </Button>
-          <Button color="red" onClick={handleDelete} disabled={deleting}>
-            {deleting ? "Menghapus..." : "Hapus"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* Modal Konfirmasi */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Konfirmasi Penghapusan</h2>
+            <p>
+              Apakah kamu yakin ingin menghapus akun <strong>{selectedUser?.email}</strong> dan semua data terkait?
+            </p>
+            <div className="flex justify-end space-x-4 mt-4">
+              <button
+                className="bg-gray-500 text-white py-2 px-4 rounded"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="bg-red-500 text-white py-2 px-4 rounded"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Menghapus...' : 'Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
