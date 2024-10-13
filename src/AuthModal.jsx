@@ -14,12 +14,12 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Fungsi untuk cek apakah pengguna adalah admin
+  // Fungsi untuk mengecek apakah pengguna adalah admin di koleksi 'admins'
   const checkAdminStatus = async (uid) => {
     try {
-      const userDocRef = doc(db, 'users', uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists() && userDoc.data().isAdmin === true) {
+      const adminDocRef = doc(db, 'admins', uid);
+      const adminDoc = await getDoc(adminDocRef);
+      if (adminDoc.exists()) {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);
@@ -39,10 +39,12 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Cek apakah user adalah admin setelah login
       await checkAdminStatus(user.uid);
-      toggleModal(); // Tutup modal setelah login berhasil
+      toggleModal(); // Tutup modal jika login berhasil
     } catch (error) {
-      setAuthError('Login gagal: ' + error.message);
+      setAuthError('Login gagal: ' + (error.message || 'Terjadi kesalahan.'));
     } finally {
       setAuthLoading(false);
     }
@@ -68,14 +70,14 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
         email,
-        username,
-        isAdmin: false // Default isAdmin menjadi false
+        username
       });
 
-      await checkAdminStatus(user.uid); // Cek status admin setelah registrasi
-      toggleModal(); // Tutup modal setelah registrasi berhasil
+      // Cek status admin setelah registrasi
+      await checkAdminStatus(user.uid);
+      toggleModal(); // Tutup modal jika registrasi berhasil
     } catch (error) {
-      setAuthError('Registrasi gagal: ' + error.message);
+      setAuthError('Registrasi gagal: ' + (error.message || 'Terjadi kesalahan.'));
     } finally {
       setAuthLoading(false);
     }
