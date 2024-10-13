@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HiMenu, HiX, HiOutlineCollection, HiOutlineExternalLink, HiInformationCircle } from "react-icons/hi";
 import Loading from './utils/Loading'; // Import komponen Loading
 import { useTheme } from './ThemeContext'; // Import context tema
+import { signIn, useSession } from "next-auth/react";
 
 // Lazy loading untuk halaman-halaman
 const LandingPage = lazy(() => import('./LandingPage'));
@@ -16,6 +17,7 @@ const NotFound = lazy(() => import('./NotFound'));
 const UserList = lazy(() => import('./UserList'));
 
 function App() {
+  const dataSession = useSession();
   const [isOpen, setIsOpen] = useState(false); // Untuk Drawer (Sidebar)
   const [loading, setLoading] = useState(true); // Untuk memantau loading halaman
   const { isDarkMode, setIsDarkMode } = useTheme(); // Menggunakan tema dari context
@@ -65,6 +67,9 @@ function App() {
   }
 
   return (
+    <>
+    <button onClick={() => signIn("google")}>Login With Google</button>
+    <button onClick={() => console.log(dataSession)}>Logs The Session</button>
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
@@ -179,6 +184,7 @@ function App() {
         </Suspense>
       </Flowbite>
     </Router>
+    </>
   );
 }
 
