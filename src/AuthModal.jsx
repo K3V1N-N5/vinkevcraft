@@ -14,18 +14,23 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Fungsi untuk cek apakah user adalah admin
-  const checkAdmin = async (uid) => {
+  // Fungsi untuk cek apakah pengguna adalah admin
+  const checkAdminStatus = async (uid) => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
-      return userDoc.exists() && userDoc.data().isAdmin === true;
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists() && userDoc.data().isAdmin === true) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     } catch (error) {
       console.error("Error checking admin status:", error);
-      return false;
+      setIsAdmin(false);
     }
   };
 
-  // Fungsi untuk login
+  // Fungsi untuk menangani login
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
@@ -34,46 +39,43 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // Cek apakah user adalah admin
-      const isAdmin = await checkAdmin(user.uid);
-      setIsAdmin(isAdmin);
-      toggleModal(); // Tutup modal jika berhasil login
+      await checkAdminStatus(user.uid);
+      toggleModal(); // Tutup modal setelah login berhasil
     } catch (error) {
-      setAuthError('Login gagal: ' + (error.message || 'Terjadi kesalahan.'));
+      setAuthError('Login gagal: ' + error.message);
     } finally {
       setAuthLoading(false);
     }
   };
 
-  // Fungsi untuk registrasi
+  // Fungsi untuk menangani registrasi
   const handleRegister = async (e) => {
     e.preventDefault();
     setAuthError(null);
+
     if (password !== confirmPassword) {
       setAuthError("Password tidak cocok!");
       return;
     }
+
     setAuthLoading(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Simpan data user di Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      // Simpan data pengguna ke Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, {
         email,
         username,
-        isAdmin: false // Set default admin ke false
+        isAdmin: false // Default isAdmin menjadi false
       });
 
-      // Cek apakah user adalah admin
-      const isAdmin = await checkAdmin(user.uid);
-      setIsAdmin(isAdmin);
-
-      toggleModal(); // Tutup modal jika registrasi berhasil
+      await checkAdminStatus(user.uid); // Cek status admin setelah registrasi
+      toggleModal(); // Tutup modal setelah registrasi berhasil
     } catch (error) {
-      setAuthError('Registrasi gagal: ' + (error.message || 'Terjadi kesalahan.'));
+      setAuthError('Registrasi gagal: ' + error.message);
     } finally {
       setAuthLoading(false);
     }
