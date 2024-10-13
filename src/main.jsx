@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css'; // Ganti dengan file CSS yang kamu gunakan
 import App from './App';
 import { ThemeProvider } from './ThemeContext';
+import { SessionProvider } from "next-auth/react";
 
 // Cek apakah tema tersimpan di localStorage
 const savedTheme = localStorage.getItem('theme');
@@ -18,9 +19,11 @@ if (savedTheme) {
 
 ReactDOM.render(
   <React.StrictMode>
+    <SessionProvider>
     <ThemeProvider>
       <App />
     </ThemeProvider>
+    </SessionProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
