@@ -68,8 +68,6 @@ function App() {
 
   return (
     <>
-    <button onClick={() => signIn("google")}>Login With Google</button>
-    <button onClick={() => console.log(dataSession)}>Logs The Session</button>
     <Router>
       <Flowbite>
         <Suspense fallback={<Loading />}> {/* Lazy loading dengan fallback ke Loading */}
@@ -114,6 +112,8 @@ function App() {
                       <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-800 dark:text-white">
                         VinKev Craft
                       </span>
+                      <button onClick={() => signIn("google")}>Login With Google</button>
+    <button onClick={() => console.log(dataSession)}>Logs The Session</button>
                     </Link>
                   </div>
 
