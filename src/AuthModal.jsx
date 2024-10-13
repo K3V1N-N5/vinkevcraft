@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Modal, Button, TextInput } from 'flowbite-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db, checkAdmin } from './firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from './firebase'; // Pastikan checkAdmin tidak terpakai langsung di sini
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,7 +14,19 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Handle user login
+  const checkAdmin = async (uid) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists() && userDoc.data().isAdmin) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      return false;
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError(null);
@@ -23,16 +35,18 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // Cek admin setelah login berhasil
       const isAdmin = await checkAdmin(user.uid);
       setIsAdmin(isAdmin);
       toggleModal();
     } catch (error) {
       setAuthError('Login gagal: ' + error.message);
+    } finally {
+      setAuthLoading(false);
     }
-    setAuthLoading(false);
   };
 
-  // Handle user registration
   const handleRegister = async (e) => {
     e.preventDefault();
     setAuthError(null);
@@ -46,18 +60,23 @@ function AuthModal({ isModalOpen, toggleModal, setIsAdmin }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Simpan username ke Firestore
-      await setDoc(doc(db, "usernames", username), { email });
+      // Simpan username dan informasi tambahan ke Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        email,
+        username,
+        isAdmin: false, // Atur default admin sebagai false
+      });
 
-      // Cek jika user adalah admin
+      // Cek admin setelah registrasi berhasil
       const isAdmin = await checkAdmin(user.uid);
       setIsAdmin(isAdmin);
 
       toggleModal();
     } catch (error) {
       setAuthError('Registrasi gagal: ' + error.message);
+    } finally {
+      setAuthLoading(false);
     }
-    setAuthLoading(false);
   };
 
   return (
