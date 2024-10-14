@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TextInput, Button } from "flowbite-react";
-import { HiThumbUp, HiThumbDown, HiX, HiPaperAirplane } from 'react-icons/hi';
-import { FiCornerDownLeft, FiEdit, FiTrash } from 'react-icons/fi';
-import { auth, db, checkAdmin } from './firebase';  // Tambahkan checkAdmin
-import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
-import { Modal } from 'flowbite-react';
+import { HiThumbUp, HiThumbDown, HiReply, HiX, HiPaperAirplane, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi';
+import { auth, db } from './firebase';
+import { addDoc, collection, deleteDoc, doc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
 
 function CommentSection({ postId, toggleModal }) {
   const [comment, setComment] = useState('');
@@ -12,49 +10,54 @@ function CommentSection({ postId, toggleModal }) {
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); // State untuk admin
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Modal konfirmasi
-  const [commentToDelete, setCommentToDelete] = useState(null); // Komentar yang akan dihapus
+  const [loading, setLoading] = useState(true);  // New state for loading
 
   useEffect(() => {
     const fetchComments = async () => {
-      const commentsRef = collection(db, "posts", postId, "comments");
+      try {
+        const commentsRef = collection(db, "posts", postId, "comments");
 
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        const newComments = snapshot.docs.map(commentDoc => {
-          const commentData = {
-            id: commentDoc.id,
-            ...commentDoc.data(),
-            replies: []
-          };
+        // Listen to real-time updates for comments and replies
+        const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+          snapshot.docChanges().forEach(change => {
+            const commentDoc = change.doc;
+            if (change.type === "added" || change.type === "modified") {
+              const commentData = {
+                id: commentDoc.id,
+                ...commentDoc.data(),
+                replies: []
+              };
 
-          const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
-          const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
-            const replies = repliesSnapshot.docs.map(replyDoc => ({
-              id: replyDoc.id,
-              ...replyDoc.data(),
-            }));
+              // Fetch replies in real-time for each comment
+              const repliesRef = collection(db, "posts", postId, "comments", commentDoc.id, "replies");
+              const unsubscribeReplies = onSnapshot(repliesRef, (repliesSnapshot) => {
+                const replies = repliesSnapshot.docs.map(replyDoc => ({
+                  id: replyDoc.id,
+                  ...replyDoc.data(),
+                }));
+                
+                // Update the specific comment with its replies
+                setComments((prevComments) => 
+                  prevComments.map(c => 
+                    c.id === commentDoc.id ? { ...c, replies } : c
+                  )
+                );
+              });
 
-            setComments((prevComments) =>
-              prevComments.map(c =>
-                c.id === commentDoc.id ? { ...c, replies } : c
-              )
-            );
+              // Add new comment with empty replies at first
+              setComments((prevComments) => 
+                [...prevComments, commentData]
+              );
+            }
           });
-
-          return commentData;
         });
 
-        setComments(newComments);
-      });
+        setLoading(false);  // Set loading to false after data is fetched
 
-      // Cek apakah pengguna adalah admin
-      if (auth.currentUser) {
-        const adminStatus = await checkAdmin(auth.currentUser.uid);  // Panggil fungsi checkAdmin
-        setIsAdmin(adminStatus);  // Set status admin di state
+        return () => unsubscribe();  // Cleanup listener
+      } catch (error) {
+        console.error("Error fetching comments: ", error);
       }
-
-      return () => unsubscribe();
     };
 
     fetchComments();
@@ -79,132 +82,128 @@ function CommentSection({ postId, toggleModal }) {
     }
 
     setError('');
-    if (auth.currentUser) {
-      if (replyTo) {
-        if (replyTo.parentId) {
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
-            text: comment,
-            user: auth.currentUser.email,
-            repliedTo: replyTo.user,
-            createdAt: new Date(),
-            likes: [],
-            dislikes: []
-          });
+    try {
+      if (auth.currentUser) {
+        if (replyTo) {
+          if (replyTo.parentId) {
+            // Reply to another reply
+            await addDoc(collection(db, "posts", postId, "comments", replyTo.parentId, "replies"), {
+              text: comment,
+              user: auth.currentUser.email,
+              repliedTo: replyTo.user,
+              createdAt: new Date(),
+              likes: [],
+              dislikes: []
+            });
+          } else {
+            // Reply to a main comment
+            await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+              text: comment,
+              user: auth.currentUser.email,
+              repliedTo: replyTo.user,
+              createdAt: new Date(),
+              likes: [],
+              dislikes: []
+            });
+          }
+          setReplyTo(null);  // Clear reply state
         } else {
-          await addDoc(collection(db, "posts", postId, "comments", replyTo.id, "replies"), {
+          // Add a new comment
+          await addDoc(collection(db, "posts", postId, "comments"), {
             text: comment,
             user: auth.currentUser.email,
-            repliedTo: replyTo.user,
             createdAt: new Date(),
             likes: [],
             dislikes: []
           });
         }
-        setReplyTo(null);
+        setComment('');  // Clear comment input
       } else {
-        await addDoc(collection(db, "posts", postId, "comments"), {
-          text: comment,
-          user: auth.currentUser.email,
-          createdAt: new Date(),
-          likes: [],
-          dislikes: []
-        });
+        toggleModal();  // Prompt login
       }
-      setComment('');
-    } else {
-      toggleModal();
+    } catch (error) {
+      console.error("Error submitting comment: ", error);
+      setError("Terjadi kesalahan saat mengirim komentar.");
     }
   };
 
   const handleEditComment = (commentId, text) => {
     setEditing({ id: commentId, text, isReply: false });
-    setComment(text);
+    setComment(text);  // Set comment text for editing
   };
 
   const handleEditReply = (replyId, text, parentId) => {
     setEditing({ id: replyId, text, parentId, isReply: true });
-    setComment(text);
+    setComment(text);  // Set reply text for editing
   };
 
   const handleEditSubmit = async () => {
-    if (editing.isReply) {
-      const replyDoc = doc(db, "posts", postId, "comments", editing.parentId, "replies", editing.id);
-      await updateDoc(replyDoc, { text: comment });
-    } else {
-      const commentDoc = doc(db, "posts", postId, "comments", editing.id);
-      await updateDoc(commentDoc, { text: comment });
+    try {
+      if (editing.isReply) {
+        const replyDoc = doc(db, "posts", postId, "comments", editing.parentId, "replies", editing.id);
+        await updateDoc(replyDoc, { text: comment });
+      } else {
+        const commentDoc = doc(db, "posts", postId, "comments", editing.id);
+        await updateDoc(commentDoc, { text: comment });
+      }
+      setComment('');  // Clear input field
+      setEditing(null);  // Reset editing state
+    } catch (error) {
+      console.error("Error editing comment/reply: ", error);
     }
-    setComment('');
-    setEditing(null);
   };
 
   const handleLike = async (commentId, isReply = false, parentId = null) => {
-    if (!auth.currentUser) return;
+    try {
+      const targetDoc = isReply
+        ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+        : doc(db, "posts", postId, "comments", commentId);
 
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
+      const commentSnapshot = await targetDoc.get();
+      const commentData = commentSnapshot.data();
+      const userLiked = commentData.likes?.includes(auth.currentUser.email);
 
-    const docSnapshot = await getDoc(targetDoc);
-    if (docSnapshot.exists()) {
-      const data = docSnapshot.data();
-      const likes = data.likes || [];
-      const dislikes = data.dislikes || [];
-
-      if (likes.includes(auth.currentUser.email)) {
+      if (userLiked) {
         await updateDoc(targetDoc, {
-          likes: arrayRemove(auth.currentUser.email)
+          likes: arrayRemove(auth.currentUser.email),
         });
       } else {
         await updateDoc(targetDoc, {
           likes: arrayUnion(auth.currentUser.email),
-          dislikes: arrayRemove(auth.currentUser.email) // Hapus dislike jika ada
+          dislikes: arrayRemove(auth.currentUser.email),  // Remove dislike if present
         });
       }
+    } catch (error) {
+      console.error("Error liking comment/reply: ", error);
     }
   };
 
   const handleDislike = async (commentId, isReply = false, parentId = null) => {
-    if (!auth.currentUser) return;
+    try {
+      const targetDoc = isReply
+        ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
+        : doc(db, "posts", postId, "comments", commentId);
 
-    const targetDoc = isReply
-      ? doc(db, "posts", postId, "comments", parentId, "replies", commentId)
-      : doc(db, "posts", postId, "comments", commentId);
+      const commentSnapshot = await targetDoc.get();
+      const commentData = commentSnapshot.data();
+      const userDisliked = commentData.dislikes?.includes(auth.currentUser.email);
 
-    const docSnapshot = await getDoc(targetDoc);
-    if (docSnapshot.exists()) {
-      const data = docSnapshot.data();
-      const likes = data.likes || [];
-      const dislikes = data.dislikes || [];
-
-      if (dislikes.includes(auth.currentUser.email)) {
+      if (userDisliked) {
         await updateDoc(targetDoc, {
-          dislikes: arrayRemove(auth.currentUser.email)
+          dislikes: arrayRemove(auth.currentUser.email),
         });
       } else {
         await updateDoc(targetDoc, {
           dislikes: arrayUnion(auth.currentUser.email),
-          likes: arrayRemove(auth.currentUser.email) // Hapus like jika ada
+          likes: arrayRemove(auth.currentUser.email),  // Remove like if present
         });
       }
+    } catch (error) {
+      console.error("Error disliking comment/reply: ", error);
     }
   };
 
-  const userLiked = (likes) => auth.currentUser && likes && likes.includes(auth.currentUser.email);
-  const userDisliked = (dislikes) => auth.currentUser && dislikes && dislikes.includes(auth.currentUser.email);
-
-  const handleDeleteComment = (commentId) => {
-    setShowDeleteConfirm(true);
-    setCommentToDelete(commentId);
-  };
-
-  const confirmDeleteComment = async () => {
-    if (commentToDelete) {
-      await deleteDoc(doc(db, "posts", postId, "comments", commentToDelete));
-      setShowDeleteConfirm(false);
-      setCommentToDelete(null);
-    }
-  };
+  if (loading) return <div className="text-center text-gray-500">Loading comments...</div>;  // Loading state
 
   return (
     <section className="mb-8 mt-4">
@@ -255,35 +254,35 @@ function CommentSection({ postId, toggleModal }) {
 
           <div className="flex space-x-4 mt-2">
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.likes?.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
               onClick={() => handleLike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbUp className={userLiked(comment.likes) ? 'text-blue-500' : 'text-gray-500'} />
+              <HiThumbUp />
               <span>{comment.likes?.length || 0}</span>
             </button>
             <button
-              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+              className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${comment.dislikes?.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
               onClick={() => handleDislike(comment.id)}
               disabled={!auth.currentUser}
             >
-              <HiThumbDown className={userDisliked(comment.dislikes) ? 'text-red-500' : 'text-gray-500'} />
+              <HiThumbDown />
               <span>{comment.dislikes?.length || 0}</span>
             </button>
 
             {auth.currentUser && (
-              <button onClick={() => handleReplyToComment(comment)} className="flex items-center space-x-2">
-                <FiCornerDownLeft className="text-gray-500 hover:text-blue-500" />
+              <button className="flex items-center space-x-2" onClick={() => handleReplyToComment(comment)}>
+                <HiReply />
               </button>
             )}
 
-            {(auth.currentUser?.email === comment.user || isAdmin) && (
+            {auth.currentUser?.email === comment.user && (
               <>
                 <button onClick={() => handleEditComment(comment.id, comment.text)} className="flex items-center space-x-2">
-                  <FiEdit className="text-gray-500 hover:text-blue-500" />
+                  <HiOutlinePencilAlt />
                 </button>
-                <button onClick={() => handleDeleteComment(comment.id)} className="flex items-center space-x-2">
-                  <FiTrash className="text-gray-500 hover:text-red-500" />
+                <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id))} className="flex items-center space-x-2">
+                  <HiOutlineTrash />
                 </button>
               </>
             )}
@@ -306,35 +305,38 @@ function CommentSection({ postId, toggleModal }) {
 
                   <div className="flex space-x-4 mt-2">
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.likes?.includes(auth.currentUser.email) ? 'text-blue-500' : ''}`}
                       onClick={() => handleLike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbUp className={userLiked(reply.likes) ? 'text-blue-500' : 'text-gray-500'} />
+                      <HiThumbUp />
                       <span>{reply.likes?.length || 0}</span>
                     </button>
                     <button
-                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'}`}
+                      className={`flex items-center space-x-2 ${!auth.currentUser && 'opacity-50 cursor-not-allowed'} ${reply.dislikes?.includes(auth.currentUser.email) ? 'text-red-500' : ''}`}
                       onClick={() => handleDislike(reply.id, true, comment.id)}
                       disabled={!auth.currentUser}
                     >
-                      <HiThumbDown className={userDisliked(reply.dislikes) ? 'text-red-500' : 'text-gray-500'} />
+                      <HiThumbDown />
                       <span>{reply.dislikes?.length || 0}</span>
                     </button>
 
                     {auth.currentUser && (
-                      <button onClick={() => handleReplyToReply(comment.id, reply)} className="flex items-center space-x-2">
-                        <FiCornerDownLeft className="text-gray-500 hover:text-blue-500" />
+                      <button
+                        className="flex items-center space-x-2"
+                        onClick={() => handleReplyToReply(comment.id, reply)}
+                      >
+                        <HiReply />
                       </button>
                     )}
 
-                    {(auth.currentUser?.email === reply.user || isAdmin) && (
+                    {auth.currentUser?.email === reply.user && (
                       <>
                         <button onClick={() => handleEditReply(reply.id, reply.text, comment.id)} className="flex items-center space-x-2">
-                          <FiEdit className="text-gray-500 hover:text-blue-500" />
+                          <HiOutlinePencilAlt />
                         </button>
                         <button onClick={() => deleteDoc(doc(db, "posts", postId, "comments", comment.id, "replies", reply.id))} className="flex items-center space-x-2">
-                          <FiTrash className="text-gray-500 hover:text-red-500" />
+                          <HiOutlineTrash />
                         </button>
                       </>
                     )}
@@ -345,24 +347,6 @@ function CommentSection({ postId, toggleModal }) {
           )}
         </div>
       ))}
-
-      {/* Modal Konfirmasi Penghapusan */}
-      {showDeleteConfirm && (
-        <Modal show={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} size="md" aria-labelledby="delete-confirmation">
-          <Modal.Header>Konfirmasi Penghapusan</Modal.Header>
-          <Modal.Body>
-            <p>Apakah kamu yakin ingin menghapus komentar ini?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button color="red" onClick={confirmDeleteComment}>
-              Hapus
-            </Button>
-            <Button onClick={() => setShowDeleteConfirm(false)}>
-              Batal
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      )}
     </section>
   );
 }
