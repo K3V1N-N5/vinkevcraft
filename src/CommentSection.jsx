@@ -238,12 +238,9 @@ function CommentSection({ postId, toggleModal }) {
               {comment.replies.map((reply) => (
                 <div key={reply.id} className="mb-4">
                   <p className="font-semibold text-gray-700 dark:text-gray-300">
-                    {reply.user}{" "}
                     {reply.repliedTo && reply.repliedTo !== comment.user && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Membalas {reply.repliedTo}
-                      </span>
-                    )}
+    <span className="text-blue-500">membalas {reply.repliedTo}</span>
+  )}{" "}
                   </p>
                   <p className="text-gray-700 dark:text-gray-400">{reply.text}</p>
 
